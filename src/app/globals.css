@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Brend ranglari admin panelidagi "Sayt sozlamalari"dan keladi (layout.tsx da --brand va --accent o'rnatiladi) */
+:root {
+  --brand: #0e7c66;
+  --accent: #f97316;
+  --page: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e5e7eb;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-50: color-mix(in oklab, var(--brand) 7%, white);
+  --color-brand-100: color-mix(in oklab, var(--brand) 14%, white);
+  --color-brand-200: color-mix(in oklab, var(--brand) 28%, white);
+  --color-brand-600: color-mix(in oklab, var(--brand) 88%, black);
+  --color-brand-700: color-mix(in oklab, var(--brand) 75%, black);
+  --color-accent: var(--accent);
+  --color-accent-50: color-mix(in oklab, var(--accent) 10%, white);
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.06);
+  --shadow-pop: 0 10px 40px rgb(15 23 42 / 0.16);
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-up: slide-up 0.25s ease-out;
+  --animate-shimmer: shimmer 1.4s infinite linear;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    from { background-position: -400px 0; }
+    to { background-position: 400px 0; }
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef0f3 0px, #f7f8fa 160px, #eef0f3 320px);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Markdown kontent (CMS sahifalar, mahsulot tavsifi) */
+.prose-dk { line-height: 1.7; color: #334155; }
+.prose-dk h2 { font-size: 1.25rem; font-weight: 700; color: var(--ink); margin: 1.5rem 0 0.5rem; }
+.prose-dk h3 { font-size: 1.05rem; font-weight: 600; color: var(--ink); margin: 1.25rem 0 0.5rem; }
+.prose-dk p { margin: 0.5rem 0; }
+.prose-dk ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+.prose-dk ol { list-style: decimal; padding-left: 1.25rem; margin: 0.5rem 0; }
+.prose-dk a { color: var(--brand); text-decoration: underline; }
+.prose-dk strong { color: var(--ink); }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}
+
+/* FAQ akkordeoni */
+.faq details { border-bottom: 1px solid var(--line); padding: 0.25rem 0; }
+.faq summary { cursor: pointer; list-style: none; padding: 0.85rem 2rem 0.85rem 0; font-weight: 600; color: var(--ink); position: relative; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; position: absolute; right: 0.25rem; top: 0.7rem; font-size: 1.25rem; color: var(--brand); }
+.faq details[open] summary::after { content: '−'; }
+.faq .faq-body { padding: 0 0 0.85rem; }
