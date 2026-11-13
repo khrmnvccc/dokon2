@@ -27,15 +27,17 @@ export function CategoriesManager({ categories, productCount }: { categories: Ca
 
   const Row = ({ c, list, index, depth }: { c: Category; list: Category[]; index: number; depth: number }) => (
     <>
-      <li className="flex items-center gap-3 border-t border-line px-4 py-2.5 first:border-t-0" style={{ paddingLeft: 16 + depth * 28 }}>
+      <li className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-2.5 first:border-t-0 sm:flex-nowrap" style={{ paddingLeft: 16 + depth * 18 }}>
         <MoveButtons list={list} index={index} onReorder={crud.reorder} />
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary"><DynamicIcon name={c.icon} className="h-5 w-5" /></span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{c.name} {c.show_on_home && depth === 0 && <Badge tone="brand" className="ml-1">Bosh sahifada</Badge>}</p>
+        <div className="min-w-[50%] flex-1 sm:min-w-0">
+          <p className="font-medium sm:truncate">{c.name} {c.show_on_home && depth === 0 && <Badge tone="brand" className="ml-1">Bosh sahifada</Badge>}</p>
           <p className="text-xs text-ink-3">/{c.slug} · {productCount[c.id] ?? 0} ta mahsulot</p>
         </div>
-        <Toggle checked={c.is_active} label="Faol" onChange={(v) => crud.toggle(c.id, v)} disabled={crud.pending} />
-        <RowActions onEdit={() => setEditing(c)} onDelete={() => crud.remove(c.id, `“${c.name}” kategoriyasini o‘chirish?`)} />
+        <div className="ml-auto flex items-center gap-2">
+          <Toggle checked={c.is_active} label="Faol" onChange={(v) => crud.toggle(c.id, v)} disabled={crud.pending} />
+          <RowActions onEdit={() => setEditing(c)} onDelete={() => crud.remove(c.id, `“${c.name}” kategoriyasini o‘chirish?`)} />
+        </div>
       </li>
       {childrenOf(c.id).map((ch, i, arr) => <Row key={ch.id} c={ch} list={arr} index={i} depth={depth + 1} />)}
     </>

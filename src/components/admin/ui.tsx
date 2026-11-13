@@ -25,11 +25,11 @@ export function Panel({ title, subtitle, actions, children, className, padded = 
   );
 }
 
-/** Jadval: th 12px text-ink-3; td 14px py-3; telefonda gorizontal aylantirish faqat jadval ichida. */
+/** Jadval: th 12px text-ink-3; td 14px py-3. Telefonda (rtable) har qator kartaga aylanadi: ustun nomi katakning chap tomonida. */
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn('overflow-x-auto scrollbar-thin', className)}>
-      <table className="w-full min-w-[640px] text-left text-sm [&_td]:px-3 [&_td]:py-3 [&_td]:text-ink sm:[&_td]:px-4 [&_th]:whitespace-nowrap [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-xs [&_th]:font-medium [&_th]:text-ink-3 sm:[&_th]:px-4 [&_tbody_tr]:border-t [&_tbody_tr]:border-line [&_tbody_tr:hover]:bg-surface-2">
+      <table className="rtable w-full min-w-[640px] text-left text-sm [&_td]:px-3 [&_td]:py-3 [&_td]:text-ink sm:[&_td]:px-4 [&_th]:whitespace-nowrap [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-xs [&_th]:font-medium [&_th]:text-ink-3 sm:[&_th]:px-4 [&_tbody_tr]:border-t [&_tbody_tr]:border-line [&_tbody_tr:hover]:bg-surface-2">
         {children}
       </table>
     </div>

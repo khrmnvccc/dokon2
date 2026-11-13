@@ -236,3 +236,21 @@ body:has(.admin-ui)::before { display: none; }
 }
 .admin-ui .bg-surface, .admin-ui .glass { background: var(--panel); }
 .admin-ui .shadow-soft.bg-surface { box-shadow: 0 1px 2px rgb(16 24 40 / 0.04); }
+
+/* ===== Telefonda jadvallar kartaga aylanadi =====
+   Ustun nomlari AdminShell'dagi effekt orqali har katakka data-label boʻlib yoziladi. */
+@media (max-width: 639px) {
+  .rtable { min-width: 0 !important; display: block; }
+  .rtable thead { display: none; }
+  .rtable tbody { display: block; padding: 4px 8px 8px; }
+  .rtable tbody tr { display: block; margin-top: 8px; padding: 6px 14px; border: 1px solid var(--line) !important; border-radius: 16px; background: var(--panel); }
+  .rtable tbody tr:hover { background: var(--panel) !important; }
+  .rtable td { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; padding: 6px 0 !important; text-align: right; }
+  .rtable td + td { border-top: 1px dashed var(--line); }
+  .rtable td::before { content: attr(data-label); flex-shrink: 0; max-width: 45%; text-align: left; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+  .rtable td[data-label=""]::before, .rtable td:not([data-label])::before { display: none; }
+  .rtable td:first-child { justify-content: flex-start; text-align: left; font-size: 15px; }
+  .rtable td:first-child::before { display: none; }
+  .rtable td[colspan] { display: block; text-align: center; }
+  .rtable td > * { min-width: 0; }
+}

@@ -35,7 +35,7 @@ export default async function StaffPage() {
         isOwner={ctx.roles.includes('super_admin')} branches={branch.all.filter((b) => b.is_active).map(({ id, name }) => ({ id, name }))} />
       <Panel title="Rollar va ruxsatlar" className="mt-4" padded={false}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="rtable w-full min-w-[640px] text-sm">
             <thead className="bg-surface-2 text-xs uppercase text-ink-3"><tr><th className="px-4 py-2 text-left">Ruxsat</th>{roles.map((r) => <th key={r} className="px-4 py-2">{ROLE_LABELS[r]}</th>)}</tr></thead>
             <tbody>
               {perms.map((p) => (
