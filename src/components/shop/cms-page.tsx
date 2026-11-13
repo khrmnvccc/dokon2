@@ -23,10 +23,10 @@ export async function CmsPageView({ slug, accordion, aside }: { slug: string; ac
     <div>
       <Breadcrumbs items={[{ name: page.title }]} />
       <div className={aside ? 'grid gap-4 lg:grid-cols-[1fr_340px] lg:items-start' : 'mx-auto max-w-3xl'}>
-        <article className="rounded-2xl bg-white p-5 shadow-card sm:p-8">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{page.title}</h1>
+        <article className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-8">
+          <h1 className="text-[22px] font-semibold tracking-tight sm:text-2xl sm:text-3xl">{page.title}</h1>
           <Markdown content={page.content} accordion={accordion} className="mt-4" />
-          <p className="mt-8 text-xs text-muted">Yangilangan: {formatDate(page.updated_at)}</p>
+          <p className="mt-8 text-xs text-ink-3">Yangilangan: {formatDate(page.updated_at)}</p>
         </article>
         {aside}
       </div>

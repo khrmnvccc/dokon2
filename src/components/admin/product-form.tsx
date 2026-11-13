@@ -117,7 +117,7 @@ export function ProductForm({ id, defaults, categories, canStock, canDelete, can
           </Button>
         }>
           {variants.fields.length === 0 ? (
-            <p className="text-sm text-muted">Rang/o‘lcham kabi variantlar bo‘lmasa, bo‘sh qoldiring. Variant qo‘shilsa, umumiy qoldiq variantlar yig‘indisidan hisoblanadi.</p>
+            <p className="text-sm text-ink-3">Rang/o‘lcham kabi variantlar bo‘lmasa, bo‘sh qoldiring. Variant qo‘shilsa, umumiy qoldiq variantlar yig‘indisidan hisoblanadi.</p>
           ) : (
             <div className="space-y-3">
               {variants.fields.map((f, i) => {
@@ -133,7 +133,7 @@ export function ProductForm({ id, defaults, categories, canStock, canDelete, can
                     <Field label="SKU"><Input {...register(`variants.${i}.sku`)} /></Field>
                     <div className="col-span-2 flex items-center justify-between sm:col-span-4 lg:col-span-8">
                       <Checkbox label="Faol" {...register(`variants.${i}.is_active`)} />
-                      <button type="button" onClick={() => variants.remove(i)} className="flex items-center gap-1 text-sm text-red-600"><Trash2 className="h-4 w-4" /> O‘chirish</button>
+                      <button type="button" onClick={() => variants.remove(i)} className="flex items-center gap-1 text-sm text-danger"><Trash2 className="h-4 w-4" /> O‘chirish</button>
                     </div>
                   </div>
                 );
@@ -143,13 +143,13 @@ export function ProductForm({ id, defaults, categories, canStock, canDelete, can
         </Panel>
 
         <Panel title="Xususiyatlar" actions={<Button type="button" size="sm" variant="secondary" onClick={() => attrs.append({ name: '', value: '' })}><Plus className="h-4 w-4" /> Qo‘shish</Button>}>
-          {attrs.fields.length === 0 && <p className="text-sm text-muted">Masalan: Material — Paxta, Kafolat — 12 oy.</p>}
+          {attrs.fields.length === 0 && <p className="text-sm text-ink-3">Masalan: Material — Paxta, Kafolat — 12 oy.</p>}
           <div className="space-y-2">
             {attrs.fields.map((f, i) => (
               <div key={f.id} className="flex gap-2">
                 <Input placeholder="Nomi" aria-label="Xususiyat nomi" {...register(`attributes.${i}.name`)} />
                 <Input placeholder="Qiymati" aria-label="Xususiyat qiymati" {...register(`attributes.${i}.value`)} />
-                <Button type="button" variant="ghost" size="icon" onClick={() => attrs.remove(i)} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-red-600" /></Button>
+                <Button type="button" variant="ghost" size="icon" onClick={() => attrs.remove(i)} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-danger" /></Button>
               </div>
             ))}
           </div>
@@ -173,13 +173,13 @@ export function ProductForm({ id, defaults, categories, canStock, canDelete, can
           </div>
           <Button type="submit" className="mt-5 w-full" loading={isSubmitting} disabled={Boolean(id) && !isDirty}>{id ? 'O‘zgarishlarni saqlash' : 'Mahsulot yaratish'}</Button>
           {id && (
-            <Link href={`/product/${watch('slug')}`} target="_blank" className="mt-2 flex items-center justify-center gap-1.5 text-sm text-brand hover:underline">
+            <Link href={`/product/${watch('slug')}`} target="_blank" className="mt-2 flex items-center justify-center gap-1.5 text-sm text-primary hover:underline">
               Saytda ko‘rish <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           )}
         </Panel>
         {id && canDelete && (
-          <Button type="button" variant="outline" className="w-full text-red-600" onClick={async () => {
+          <Button type="button" variant="outline" className="w-full text-danger" onClick={async () => {
             if (!(await confirm({ title: 'Mahsulotni o‘chirish?', text: 'Buyurtmalar tarixida nomi saqlanib qoladi. Vaqtincha yashirish uchun “faol” belgisini olib tashlang.', danger: true, confirmText: 'O‘chirish' }))) return;
             const res = await deleteProducts([id]);
             toast(res.ok ? res.message ?? 'O‘chirildi' : res.error, res.ok ? 'success' : 'error');

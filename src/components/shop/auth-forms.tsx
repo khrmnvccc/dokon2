@@ -23,7 +23,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement> & { re
   return (
     <div className="relative">
       <Input {...props} type={show ? 'text' : 'password'} className="pr-11" />
-      <button type="button" onClick={() => setShow((s) => !s)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted" aria-label={show ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}>
+      <button type="button" onClick={() => setShow((s) => !s)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-3" aria-label={show ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}>
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
     </div>
@@ -31,7 +31,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement> & { re
 }
 
 function FormError({ text }: { text: string | null }) {
-  return text ? <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{text}</p> : null;
+  return text ? <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">{text}</p> : null;
 }
 
 export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
@@ -58,7 +58,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
       <Field label="Parol" error={errors.password?.message} htmlFor="password">
         <PasswordInput id="password" autoComplete="current-password" aria-invalid={!!errors.password} {...register('password')} />
       </Field>
-      <div className="text-right text-sm"><Link href="/forgot-password" className="font-medium text-brand hover:underline">Parolni unutdingizmi?</Link></div>
+      <div className="text-right text-sm"><Link href="/forgot-password" className="font-medium text-primary hover:underline">Parolni unutdingizmi?</Link></div>
       <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>Kirish</Button>
     </form>
   );
@@ -73,9 +73,9 @@ export function RegisterForm({ next }: { next?: string }) {
   if (sent) {
     return (
       <div className="text-center">
-        <MailCheck className="mx-auto h-12 w-12 text-brand" />
-        <h2 className="mt-3 text-lg font-bold">Pochtangizni tekshiring</h2>
-        <p className="mt-1 text-sm text-muted">Hisobni faollashtirish uchun emailga yuborilgan havolani bosing.</p>
+        <MailCheck className="mx-auto h-12 w-12 text-primary" />
+        <h2 className="mt-3 text-[15px] font-semibold tracking-tight">Pochtangizni tekshiring</h2>
+        <p className="mt-1 text-sm text-ink-3">Hisobni faollashtirish uchun emailga yuborilgan havolani bosing.</p>
       </div>
     );
   }
@@ -112,8 +112,8 @@ export function RegisterForm({ next }: { next?: string }) {
         <PasswordInput id="password_confirm" autoComplete="new-password" aria-invalid={!!errors.password_confirm} {...register('password_confirm')} />
       </Field>
       <div>
-        <Checkbox label={<>Men <Link href="/terms" className="text-brand underline" target="_blank">foydalanish shartlari</Link> va <Link href="/privacy" className="text-brand underline" target="_blank">maxfiylik siyosati</Link>ga roziman</>} {...register('accept')} />
-        {errors.accept && <p className="mt-1 text-xs text-red-600">{errors.accept.message}</p>}
+        <Checkbox label={<>Men <Link href="/terms" className="text-primary underline" target="_blank">foydalanish shartlari</Link> va <Link href="/privacy" className="text-primary underline" target="_blank">maxfiylik siyosati</Link>ga roziman</>} {...register('accept')} />
+        {errors.accept && <p className="mt-1 text-xs text-danger">{errors.accept.message}</p>}
       </div>
       <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>Ro‘yxatdan o‘tish</Button>
     </form>
@@ -125,7 +125,7 @@ export function ForgotForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setErr] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.input<typeof forgotSchema>>({ resolver: zodResolver(forgotSchema) });
-  if (message) return <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p>;
+  if (message) return <p className="rounded-xl bg-success-soft px-4 py-3 text-sm text-success">{message}</p>;
   return (
     <form className="space-y-4" noValidate onSubmit={handleSubmit(async (v) => {
       const res = await requestPasswordReset(v);
@@ -147,7 +147,7 @@ export function ResetForm() {
   const [error, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.input<typeof resetSchema>>({ resolver: zodResolver(resetSchema) });
-  if (done) return <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">Parol yangilandi. <Link href="/account" className="font-semibold underline">Profilga o‘tish</Link></p>;
+  if (done) return <p className="rounded-xl bg-success-soft px-4 py-3 text-sm text-success">Parol yangilandi. <Link href="/account" className="font-semibold underline">Profilga o‘tish</Link></p>;
   return (
     <form className="space-y-4" noValidate onSubmit={handleSubmit(async (v) => {
       const res = await updatePassword(v);

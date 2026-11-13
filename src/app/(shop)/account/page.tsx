@@ -14,12 +14,12 @@ export default async function AccountPage() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="sm:p-5"><p className="text-sm text-muted">Buyurtmalar</p><p className="mt-1 text-2xl font-bold">{total}</p><Link href="/account/orders" className="text-sm font-medium text-brand">Ko‘rish →</Link></Card>
-        <Card className="sm:p-5"><p className="text-sm text-muted">Telefon</p><p className="mt-1 font-semibold">{formatUzPhone(profile?.phone) || '—'}</p></Card>
-        <Card className="sm:p-5"><p className="text-sm text-muted">Ro‘yxatdan o‘tgan</p><p className="mt-1 font-semibold">{formatDate(profile?.created_at)}</p></Card>
+        <Card className="sm:p-5"><p className="text-sm text-ink-3">Buyurtmalar</p><p className="mt-1 text-[22px] font-semibold tracking-tight sm:text-2xl">{total}</p><Link href="/account/orders" className="text-sm font-medium text-primary">Ko‘rish →</Link></Card>
+        <Card className="sm:p-5"><p className="text-sm text-ink-3">Telefon</p><p className="mt-1 font-semibold">{formatUzPhone(profile?.phone) || '—'}</p></Card>
+        <Card className="sm:p-5"><p className="text-sm text-ink-3">Ro‘yxatdan o‘tgan</p><p className="mt-1 font-semibold">{formatDate(profile?.created_at)}</p></Card>
       </div>
       <Card>
-        <h1 className="mb-4 text-xl font-bold">Shaxsiy ma’lumotlar</h1>
+        <h1 className="mb-4 text-xl font-semibold">Shaxsiy ma’lumotlar</h1>
         <ProfileForm defaults={{ full_name: profile?.full_name ?? '', phone: profile?.phone ? formatUzPhone(profile.phone) : '' }} email={profile?.email ?? ''} />
       </Card>
     </div>

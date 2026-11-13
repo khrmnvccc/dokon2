@@ -21,51 +21,53 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
   const liked = wishlist.ids.has(product.id);
   const href = `/product/${product.slug}`;
 
+  // Kassa 1.13: Card uslubi (rounded-xl, shisha, shadow-soft), rasm tepada (aspect-square, rounded-lg),
+  // nom 15px, narx katta .num, "Savatga" primary tugma.
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card transition hover:-translate-y-0.5 hover:shadow-pop">
-      <Link href={href} className="relative block aspect-square overflow-hidden" tabIndex={-1} aria-hidden>
+    <article className="group relative flex flex-col rounded-xl border border-line bg-surface p-2 shadow-soft anim-rise sm:p-2.5">
+      <Link href={href} className="relative block aspect-square overflow-hidden rounded-lg bg-surface-2" tabIndex={-1} aria-hidden>
         <ProductImage
           src={product.image_url}
           alt={product.name}
           priority={priority}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          className={cn('transition duration-300 group-hover:scale-[1.04]', outOfStock && 'opacity-60')}
+          className={cn('transition duration-300 group-hover:scale-[1.03]', outOfStock && 'opacity-60')}
         />
-        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-          {discount > 0 && <span className="rounded-lg bg-accent px-2 py-0.5 text-xs font-bold text-white">−{discount}%</span>}
-          {product.is_new && <span className="rounded-lg bg-brand px-2 py-0.5 text-xs font-bold text-white">{t('product.new')}</span>}
-          {product.is_bestseller && <span className="rounded-lg bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{t('product.hit')}</span>}
+        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
+          {discount > 0 && <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-white num">−{discount}%</span>}
+          {product.is_new && <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-fg">{t('product.new')}</span>}
+          {product.is_bestseller && <span className="rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-bg">{t('product.hit')}</span>}
         </div>
       </Link>
       <button
         type="button"
         onClick={() => wishlist.toggle(product.id)}
-        className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:scale-105"
-        aria-label={liked ? 'Sevimlilardan olib tashlash' : 'Sevimlilarga qo‘shish'}
+        className="absolute right-3.5 top-3.5 flex size-8 items-center justify-center rounded-full border border-line bg-surface glass transition-transform active:scale-95"
+        aria-label={liked ? 'Sevimlilardan olib tashlash' : 'Sevimlilarga qoʻshish'}
         aria-pressed={liked}
       >
-        <Heart className={cn('h-[18px] w-[18px]', liked ? 'fill-red-500 text-red-500' : 'text-slate-600')} />
+        <Heart className={cn('size-4', liked ? 'fill-danger text-danger' : 'text-ink-2')} />
       </button>
 
-      <div className="flex flex-1 flex-col p-2.5 sm:p-3.5">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className={cn('text-base font-extrabold sm:text-lg', discount > 0 ? 'text-accent' : 'text-ink')}>{price(product.price)}</span>
-          {discount > 0 && <span className="text-xs text-muted line-through">{price(product.compare_at_price)}</span>}
-        </div>
-        <Link href={href} className="mt-1 line-clamp-2 text-[13px] leading-snug text-slate-700 hover:text-brand sm:text-sm">
+      <div className="flex flex-1 flex-col px-1 pb-0.5 pt-2.5 sm:px-1.5">
+        <Link href={href} className="line-clamp-2 text-[13px] font-medium leading-snug text-ink hover:text-primary sm:text-[15px]">
           {product.name}
         </Link>
-        <div className="mt-1.5 flex items-center justify-between gap-2">
+        <div className="mt-1 flex items-center justify-between gap-2">
           <Rating value={Number(product.rating_avg)} count={product.rating_count} />
           {outOfStock ? (
-            <span className="text-xs font-medium text-red-600">{t('product.outOfStock')}</span>
+            <span className="text-xs font-medium text-danger">{t('product.outOfStock')}</span>
           ) : product.track_stock && product.stock <= 5 ? (
-            <span className="text-xs font-medium text-amber-600">{t('product.lowStock', { n: product.stock })}</span>
+            <span className="text-xs font-medium text-warn">{t('product.lowStock', { n: product.stock })}</span>
           ) : null}
+        </div>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-base font-semibold tracking-tight text-ink num sm:text-lg">{price(product.price)}</span>
+          {discount > 0 && <span className="text-xs text-ink-3 line-through num">{price(product.compare_at_price)}</span>}
         </div>
         <div className="mt-auto pt-2.5">
           {product.has_variants ? (
-            <Link href={href} className="flex h-10 w-full items-center justify-center rounded-xl bg-brand-50 text-sm font-semibold text-brand-700 hover:bg-brand-100">
+            <Link href={href} className="flex h-9 w-full items-center justify-center rounded-lg border border-line bg-surface text-sm font-medium text-ink shadow-soft transition-all hover:bg-surface-2 active:scale-[0.98]">
               {t('product.choose')}
             </Link>
           ) : (
@@ -74,14 +76,14 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
               disabled={outOfStock}
               onClick={() => {
                 cart.add(product.id, null, 1);
-                toast(`${product.name.slice(0, 40)} — savatchaga qo‘shildi`);
+                toast(`${product.name.slice(0, 40)} — savatga qoʻshildi`);
               }}
               className={cn(
-                'flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400',
-                inCart ? 'bg-brand-50 text-brand-700 hover:bg-brand-100' : 'bg-brand text-white hover:bg-brand-600',
+                'flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-medium shadow-soft transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+                inCart ? 'bg-success-soft text-success' : 'bg-primary text-primary-fg hover:opacity-90',
               )}
             >
-              {inCart ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
+              {inCart ? <Check className="size-4" /> : <ShoppingCart className="size-4" />}
               {outOfStock ? t('product.outOfStock') : inCart ? t('product.inCart') : t('product.addToCart')}
             </button>
           )}
@@ -117,12 +119,12 @@ export function ProductGridSkeleton({ count = 10 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-card">
-          <div className="skeleton aspect-square" />
-          <div className="space-y-2 p-3">
-            <div className="skeleton h-5 w-2/3 rounded" />
-            <div className="skeleton h-4 w-full rounded" />
-            <div className="skeleton h-9 w-full rounded-xl" />
+        <div key={i} className="rounded-xl border border-line bg-surface p-2 shadow-soft sm:p-2.5">
+          <div className="skeleton aspect-square !rounded-lg" />
+          <div className="space-y-2 px-1 pt-3">
+            <div className="skeleton h-4 w-full" />
+            <div className="skeleton h-5 w-2/3" />
+            <div className="skeleton h-9 w-full !rounded-lg" />
           </div>
         </div>
       ))}

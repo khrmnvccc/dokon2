@@ -55,7 +55,7 @@ export function OrderControls({ orderId, status, nextStatuses, paymentStatus, tr
           </Button>
         </div>
       ) : (
-        <p className="rounded-lg bg-slate-50 p-3 text-sm text-muted">Bu holatdan keyingi o‘zgarish yo‘q yoki sizda ruxsat yo‘q.</p>
+        <p className="rounded-lg bg-surface-2 p-3 text-sm text-ink-3">Bu holatdan keyingi o‘zgarish yo‘q yoki sizda ruxsat yo‘q.</p>
       )}
 
       {canFulfill && (

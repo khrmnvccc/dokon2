@@ -53,20 +53,13 @@ export function useCrud(name: EntityName) {
   };
 }
 
-export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} disabled={disabled} onClick={() => onChange(!checked)}
-      className={cn('relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-50', checked ? 'bg-brand' : 'bg-slate-300')}>
-      <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition', checked ? 'translate-x-5.5' : 'translate-x-0.5')} />
-    </button>
-  );
-}
+export { Toggle } from '@/components/ui/kit';
 
 export function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete?: () => void }) {
   return (
     <div className="flex justify-end gap-1">
-      <button type="button" onClick={onEdit} className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-ink" aria-label="Tahrirlash"><Pencil className="h-4 w-4" /></button>
-      {onDelete && <button type="button" onClick={onDelete} className="rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600" aria-label="O‘chirish"><Trash2 className="h-4 w-4" /></button>}
+      <button type="button" onClick={onEdit} className="rounded-lg p-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink" aria-label="Tahrirlash"><Pencil className="h-4 w-4" /></button>
+      {onDelete && <button type="button" onClick={onDelete} className="rounded-lg p-1.5 text-ink-3 hover:bg-danger-soft hover:text-danger" aria-label="O‘chirish"><Trash2 className="h-4 w-4" /></button>}
     </div>
   );
 }
@@ -81,8 +74,8 @@ export function MoveButtons<T extends { id: string }>({ list, index, onReorder }
   };
   return (
     <div className="flex gap-0.5">
-      <button type="button" onClick={() => move(-1)} disabled={index === 0} className="rounded p-1 text-muted hover:bg-slate-100 disabled:opacity-30" aria-label="Yuqoriga"><ArrowUp className="h-3.5 w-3.5" /></button>
-      <button type="button" onClick={() => move(1)} disabled={index === list.length - 1} className="rounded p-1 text-muted hover:bg-slate-100 disabled:opacity-30" aria-label="Pastga"><ArrowDown className="h-3.5 w-3.5" /></button>
+      <button type="button" onClick={() => move(-1)} disabled={index === 0} className="rounded p-1 text-ink-3 hover:bg-surface-2 disabled:opacity-30" aria-label="Yuqoriga"><ArrowUp className="h-3.5 w-3.5" /></button>
+      <button type="button" onClick={() => move(1)} disabled={index === list.length - 1} className="rounded p-1 text-ink-3 hover:bg-surface-2 disabled:opacity-30" aria-label="Pastga"><ArrowDown className="h-3.5 w-3.5" /></button>
     </div>
   );
 }

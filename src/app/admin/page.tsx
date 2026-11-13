@@ -29,9 +29,9 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   return (
     <div>
       <PageHeader title="Dashboard" description="Bugungi holat va oxirgi 30 kunlik ko‘rsatkichlar" />
-      {denied && <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">Sizda bu bo‘limga kirish huquqi yo‘q.</p>}
+      {denied && <p className="mb-4 rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn">Sizda bu bo‘limga kirish huquqi yo‘q.</p>}
       {error || !d ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">Ma’lumotlarni yuklab bo‘lmadi.</p>
+        <p className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">Ma’lumotlarni yuklab bo‘lmadi.</p>
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -41,7 +41,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
             <StatCard label="Mijozlar" value={formatNumber(d.customers_count)} hint={`Mahsulotlar: ${d.active_products} / ${d.products_count}`} />
           </div>
           {d.low_stock > 0 && (
-            <Link href="/admin/inventory?low=1" className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 hover:bg-amber-100">
+            <Link href="/admin/inventory?low=1" className="flex items-center gap-2 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm font-medium text-warn hover:opacity-90">
               <AlertTriangle className="h-4 w-4" /> {d.low_stock} ta mahsulot qoldig‘i kam — ko‘rish →
             </Link>
           )}
@@ -58,13 +58,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
               />
             </Panel>
             <Panel title="Top mahsulotlar (30 kun)">
-              {d.top_products.length === 0 ? <p className="py-8 text-center text-sm text-muted">Hali savdo yo‘q</p> : (
+              {d.top_products.length === 0 ? <p className="py-8 text-center text-sm text-ink-3">Hali savdo yo‘q</p> : (
                 <ol className="space-y-3">
                   {d.top_products.map((t, i) => (
                     <li key={t.product_id ?? i} className="flex items-center gap-3 text-sm">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold">{i + 1}</span>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold">{i + 1}</span>
                       <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                      <span className="shrink-0 text-right tabular-nums"><b>{t.quantity}</b> <span className="text-muted">dona</span></span>
+                      <span className="shrink-0 text-right tabular-nums"><b>{t.quantity}</b> <span className="text-ink-3">dona</span></span>
                     </li>
                   ))}
                 </ol>
@@ -72,18 +72,18 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
             </Panel>
           </div>
           {ctx.permissions.has('orders.read') && (
-            <Panel title="Oxirgi buyurtmalar" padded={false} actions={<Link href="/admin/orders" className="text-sm font-medium text-brand">Barchasi →</Link>}>
+            <Panel title="Oxirgi buyurtmalar" padded={false} actions={<Link href="/admin/orders" className="text-sm font-medium text-primary">Barchasi →</Link>}>
               <Table>
                 <thead><tr><th>№</th><th>Mijoz</th><th>Summa</th><th>Holat</th><th>Sana</th></tr></thead>
                 <tbody>
                   {d.recent_orders.length === 0 && <EmptyRow cols={5} text="Hali buyurtma yo‘q" />}
                   {d.recent_orders.map((o) => (
                     <tr key={o.id}>
-                      <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand">#{o.number}</Link></td>
+                      <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary">#{o.number}</Link></td>
                       <td>{o.customer_name}</td>
                       <td className="tabular-nums">{p(o.total)}</td>
                       <td><Badge tone={orderStatusTone[o.status]}>{orderStatusLabel[o.status]}</Badge></td>
-                      <td className="text-muted">{formatDateTime(o.created_at)}</td>
+                      <td className="text-ink-3">{formatDateTime(o.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>

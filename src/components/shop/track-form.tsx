@@ -39,7 +39,7 @@ export function TrackForm() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 rounded-2xl bg-white p-4 shadow-card sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:p-6" noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:p-6" noValidate>
         <Field label="Buyurtma raqami" error={errors.number?.message} htmlFor="number">
           <Input id="number" inputMode="numeric" placeholder="100001" {...register('number')} />
         </Field>
@@ -48,18 +48,18 @@ export function TrackForm() {
         </Field>
         <Button type="submit" loading={isSubmitting}><Search className="h-4 w-4" /> Tekshirish</Button>
       </form>
-      {error && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
       {result && (
-        <div className="rounded-2xl bg-white p-4 shadow-card sm:p-6 animate-fade-in">
+        <div className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6 anim-fade">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-lg font-bold">Buyurtma #{result.number}</h2>
-              <p className="text-sm text-muted">{formatDateTime(result.created_at)} · {result.items_count} dona · {price(result.total)}</p>
+              <h2 className="text-[15px] font-semibold tracking-tight">Buyurtma #{result.number}</h2>
+              <p className="text-sm text-ink-3">{formatDateTime(result.created_at)} · {result.items_count} dona · {price(result.total)}</p>
             </div>
             <Badge tone={orderStatusTone[result.status]}>{orderStatusLabel[result.status]}</Badge>
           </div>
           <StatusTimeline status={result.status} history={result.history} />
-          <p className="mt-4 text-sm text-muted">Yetkazib berish: {result.shipping_method_name}{result.tracking_number ? ` · Kuzatuv raqami: ${result.tracking_number}` : ''}</p>
+          <p className="mt-4 text-sm text-ink-3">Yetkazib berish: {result.shipping_method_name}{result.tracking_number ? ` · Kuzatuv raqami: ${result.tracking_number}` : ''}</p>
         </div>
       )}
     </div>

@@ -18,7 +18,7 @@ export function ProductGallery({ images, name }: { images: Img[]; name: string }
               key={img.id}
               type="button"
               onClick={() => setActive(i)}
-              className={cn('relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 md:w-full', i === active ? 'border-brand' : 'border-transparent opacity-75 hover:opacity-100')}
+              className={cn('relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl border-2 md:w-full', i === active ? 'border-primary' : 'border-transparent opacity-75 hover:opacity-100')}
               aria-label={`Rasm ${i + 1}`}
               aria-current={i === active}
             >
@@ -27,7 +27,7 @@ export function ProductGallery({ images, name }: { images: Img[]; name: string }
           ))}
         </div>
       )}
-      <div className="relative aspect-square flex-1 overflow-hidden rounded-2xl bg-white">
+      <div className="relative aspect-square flex-1 overflow-hidden rounded-2xl bg-surface">
         <ProductImage src={current.url || null} alt={current.alt || name} sizes="(max-width: 768px) 100vw, 50vw" priority />
       </div>
     </div>

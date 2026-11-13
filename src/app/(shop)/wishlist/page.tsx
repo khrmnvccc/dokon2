@@ -24,7 +24,7 @@ export default async function WishlistPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold">Sevimlilar <span className="text-base font-medium text-muted">({ordered.length})</span></h1>
+      <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl">Sevimlilar <span className="text-base font-medium text-ink-3">({ordered.length})</span></h1>
       {ordered.length === 0 ? (
         <EmptyState icon={<Heart className="h-8 w-8" />} title="Hozircha bo‘sh" text="Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi."
           action={<Link href="/catalog" className={buttonClass('primary')}>Katalogga o‘tish</Link>} />

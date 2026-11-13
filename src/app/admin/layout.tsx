@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
-import { getStaffContext, requireUser } from '@/lib/auth';
+import { getCurrentProfile, getStaffContext, requireUser } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getSettings } from '@/lib/data/public';
 import { ADMIN_NAV } from '@/lib/admin/nav';
@@ -17,18 +17,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Oddiy mijoz: admin panelga kirish yo'q (rol faqat super admin tomonidan beriladi)
     return (
       <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <ShieldAlert className="h-12 w-12 text-red-500" />
-        <h1 className="mt-4 text-2xl font-bold">Kirish taqiqlangan</h1>
-        <p className="mt-2 max-w-sm text-muted">Admin panel faqat xodimlar uchun. Agar xodim bo‘lsangiz, administratorga murojaat qiling.</p>
-        <Link href="/" className="mt-6 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white">Saytga qaytish</Link>
+        <div className="flex size-11 items-center justify-center rounded-xl bg-danger-soft text-danger"><ShieldAlert className="size-5" /></div>
+        <h1 className="mt-4 text-[22px] font-semibold tracking-tight">Kirish taqiqlangan</h1>
+        <p className="mt-1 max-w-sm text-sm text-ink-3">Admin panel faqat xodimlar uchun. Agar xodim boʻlsangiz, Egaga murojaat qiling.</p>
+        <Link href="/" className="mt-6 inline-flex h-11 items-center rounded-lg bg-primary px-5 text-[15px] font-medium text-primary-fg shadow-soft">Saytga qaytish</Link>
       </main>
     );
   }
 
   const supabase = await getServerSupabase();
   const canSeeNotifications = ctx.permissions.has('orders.read');
-  const [settings, notif] = await Promise.all([
+  const [settings, profile, notif] = await Promise.all([
     getSettings(),
+    getCurrentProfile(),
     canSeeNotifications
       ? supabase.from('notifications').select('*', { count: 'exact' }).is('user_id', null).eq('is_read', false).order('created_at', { ascending: false }).limit(8)
       : Promise.resolve({ data: [], count: 0 }),
@@ -38,8 +39,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <AdminShell
       nav={nav}
-      storeName={settings.store.name}
       email={ctx.email}
+      name={profile?.full_name ?? null}
+      languages={settings.localization.languages}
+      primaryAction={ctx.permissions.has('products.write') ? { href: '/admin/products/new', label: 'Yangi mahsulot' } : null}
       roles={ctx.roles}
       notifications={(notif.data ?? []) as Notification[]}
       unread={notif.count ?? 0}

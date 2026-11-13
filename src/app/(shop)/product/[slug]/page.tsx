@@ -69,17 +69,17 @@ export default async function ProductPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <Breadcrumbs items={[{ name: 'Katalog', href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` })), { name: product.name }]} />
 
-      <div className="grid gap-6 rounded-3xl bg-white p-4 shadow-card sm:p-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
+      <div className="grid gap-6 rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
         <ProductGallery images={images} name={product.name} />
         <div>
-          {product.brand && <div className="text-sm font-semibold text-brand">{product.brand}</div>}
-          <h1 className="mt-1 text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">{product.name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted">
+          {product.brand && <div className="text-sm font-semibold text-primary">{product.brand}</div>}
+          <h1 className="mt-1 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{product.name}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-3">
             <Rating value={Number(product.rating_avg)} count={product.rating_count} size="md" />
             {product.sku && <span>Kod: {product.sku}</span>}
             {(product.sold_count ?? 0) > 0 && <span>{product.sold_count} marta sotib olingan</span>}
           </div>
-          {product.short_description && <p className="mt-3 text-sm text-slate-600">{product.short_description}</p>}
+          {product.short_description && <p className="mt-3 text-sm text-ink-2">{product.short_description}</p>}
           <div className="mt-5">
             <ProductPurchase
               product={{ id: product.id, name: product.name, price: product.price, compare_at_price: product.compare_at_price, stock: product.stock, track_stock: product.track_stock, has_variants: product.has_variants }}
@@ -91,30 +91,30 @@ export default async function ProductPage({ params }: Props) {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <section className="rounded-3xl bg-white p-5 shadow-card sm:p-6">
-          <h2 className="text-lg font-bold">Tavsif</h2>
-          {product.description ? <Markdown content={product.description} className="mt-2" /> : <p className="mt-2 text-sm text-muted">Tavsif qo‘shilmagan.</p>}
+        <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
+          <h2 className="text-[15px] font-semibold tracking-tight">Tavsif</h2>
+          {product.description ? <Markdown content={product.description} className="mt-2" /> : <p className="mt-2 text-sm text-ink-3">Tavsif qo‘shilmagan.</p>}
         </section>
         {product.attributes?.length > 0 && (
-          <section className="rounded-3xl bg-white p-5 shadow-card sm:p-6">
-            <h2 className="text-lg font-bold">Xususiyatlar</h2>
+          <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
+            <h2 className="text-[15px] font-semibold tracking-tight">Xususiyatlar</h2>
             <dl className="mt-3 divide-y divide-line text-sm">
               {product.attributes.map((a) => (
                 <div key={a.name} className="flex justify-between gap-4 py-2.5">
-                  <dt className="text-muted">{a.name}</dt>
+                  <dt className="text-ink-3">{a.name}</dt>
                   <dd className="text-right font-medium">{a.value}</dd>
                 </div>
               ))}
-              {product.weight_grams ? <div className="flex justify-between gap-4 py-2.5"><dt className="text-muted">Og‘irligi</dt><dd className="font-medium">{product.weight_grams} g</dd></div> : null}
+              {product.weight_grams ? <div className="flex justify-between gap-4 py-2.5"><dt className="text-ink-3">Og‘irligi</dt><dd className="font-medium">{product.weight_grams} g</dd></div> : null}
             </dl>
           </section>
         )}
       </div>
 
-      <section className="mt-6 rounded-3xl bg-white p-5 shadow-card sm:p-6" id="reviews">
+      <section className="mt-6 rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6" id="reviews">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-bold">Sharhlar <span className="text-muted">({product.rating_count})</span></h2>
-          {product.rating_count > 0 && <div className="flex items-center gap-2"><Stars value={Number(product.rating_avg)} /><span className="font-bold">{Number(product.rating_avg).toFixed(1)}</span></div>}
+          <h2 className="text-[15px] font-semibold tracking-tight">Sharhlar <span className="text-ink-3">({product.rating_count})</span></h2>
+          {product.rating_count > 0 && <div className="flex items-center gap-2"><Stars value={Number(product.rating_avg)} /><span className="font-semibold">{Number(product.rating_avg).toFixed(1)}</span></div>}
         </div>
         <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
@@ -122,12 +122,12 @@ export default async function ProductPage({ params }: Props) {
               <article key={r.id} className="border-b border-line pb-4 last:border-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold">{r.author_name ?? 'Xaridor'}</span>
-                  <time className="text-xs text-muted">{formatDate(r.created_at)}</time>
+                  <time className="text-xs text-ink-3">{formatDate(r.created_at)}</time>
                 </div>
                 <Stars value={r.rating} className="mt-1" />
-                {r.body && <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{r.body}</p>}
+                {r.body && <p className="mt-2 whitespace-pre-line text-sm text-ink-2">{r.body}</p>}
               </article>
-            )) : <p className="text-sm text-muted">Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!</p>}
+            )) : <p className="text-sm text-ink-3">Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!</p>}
           </div>
           <ReviewForm productId={product.id} slug={product.slug} />
         </div>

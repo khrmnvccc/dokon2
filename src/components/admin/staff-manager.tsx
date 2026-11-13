@@ -33,11 +33,11 @@ export function StaffManager({ staff, currentEmail }: { staff: { user_id: string
           <tbody>
             {staff.map((s) => (
               <tr key={s.user_id}>
-                <td><div className="font-medium">{s.full_name || '—'}</div><div className="text-xs text-muted">{s.email}{s.email === currentEmail && ' (siz)'}</div></td>
+                <td><div className="font-medium">{s.full_name || '—'}</div><div className="text-xs text-ink-3">{s.email}{s.email === currentEmail && ' (siz)'}</div></td>
                 <td>
                   <div className="flex flex-wrap gap-1.5">
                     {s.roles.map((r) => (
-                      <span key={r} className="flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                      <span key={r} className="flex items-center gap-1 rounded-full bg-pochta/10 px-2.5 py-1 text-xs font-semibold text-pochta">
                         {ROLE_LABELS[r] ?? r}
                         {s.email && (
                           <button aria-label={`${ROLE_LABELS[r]} rolini olib tashlash`} disabled={pending} onClick={async () => {

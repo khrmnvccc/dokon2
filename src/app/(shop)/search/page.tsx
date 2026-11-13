@@ -11,7 +11,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <Breadcrumbs items={[{ name: 'Qidiruv' }]} />
-      <h1 className="mb-4 text-xl font-extrabold tracking-tight sm:text-2xl">
+      <h1 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
         {params.q ? <>“{params.q}” bo‘yicha natijalar</> : 'Qidiruv'}
       </h1>
       <CatalogView params={params} page={page} basePath="/search" searchParams={sp} />

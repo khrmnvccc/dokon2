@@ -20,7 +20,7 @@ export function ReviewActions({ id, approved }: { id: string; approved: boolean 
   return (
     <div className="flex gap-2">
       <Button size="sm" variant="outline" loading={pending} onClick={() => run(approved ? 'hide' : 'approve')}>{approved ? 'Yashirish' : 'Ko‘rsatish'}</Button>
-      <Button size="sm" variant="ghost" className="text-red-600" disabled={pending} onClick={async () => { if (await confirm({ title: 'Sharhni o‘chirish?', danger: true, confirmText: 'O‘chirish' })) run('delete'); }}>O‘chirish</Button>
+      <Button size="sm" variant="ghost" className="text-danger" disabled={pending} onClick={async () => { if (await confirm({ title: 'Sharhni o‘chirish?', danger: true, confirmText: 'O‘chirish' })) run('delete'); }}>O‘chirish</Button>
     </div>
   );
 }

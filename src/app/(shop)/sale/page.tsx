@@ -18,14 +18,14 @@ export default async function SalePage({ searchParams }: { searchParams: Promise
   return (
     <>
       <Breadcrumbs items={[{ name: 'Chegirmalar' }]} />
-      <h1 className="mb-4 text-2xl font-extrabold tracking-tight sm:text-3xl">Chegirmalar va aksiyalar</h1>
+      <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">Chegirmalar va aksiyalar</h1>
       {banners[0] && <div className="mb-6 aspect-[16/6] overflow-hidden rounded-2xl sm:aspect-[16/5]"><BannerSlide banner={banners[0]} priority /></div>}
       {promotions.length > 0 && (
         <section className="mb-8">
-          <h2 className="mb-3 text-lg font-bold">Faol aksiyalar</h2>
+          <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Faol aksiyalar</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {promotions.map((p) => (
-              <article key={p.id} className="overflow-hidden rounded-2xl bg-white shadow-card">
+              <article key={p.id} className="overflow-hidden rounded-xl border border-line bg-surface shadow-soft">
                 {p.image_url && (
                   <div className="relative aspect-[16/7]">
                     <Image src={p.image_url} alt={p.title} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover" unoptimized={isUnoptimizable(p.image_url)} />
@@ -33,11 +33,11 @@ export default async function SalePage({ searchParams }: { searchParams: Promise
                 )}
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-bold">{p.title}</h3>
-                    <span className="rounded-lg bg-accent px-2 py-0.5 text-sm font-bold text-white">−{p.discount_type === 'percent' ? `${p.value}%` : `${p.value.toLocaleString('ru-RU')} so‘m`}</span>
+                    <h3 className="font-semibold">{p.title}</h3>
+                    <span className="rounded-lg bg-primary px-2 py-0.5 text-sm font-semibold text-primary-fg">−{p.discount_type === 'percent' ? `${p.value}%` : `${p.value.toLocaleString('ru-RU')} so‘m`}</span>
                   </div>
-                  {p.description && <p className="mt-1 text-sm text-muted">{p.description}</p>}
-                  {p.ends_at && <p className="mt-2 text-xs text-muted">Amal qiladi: {formatDate(p.ends_at)} gacha</p>}
+                  {p.description && <p className="mt-1 text-sm text-ink-3">{p.description}</p>}
+                  {p.ends_at && <p className="mt-2 text-xs text-ink-3">Amal qiladi: {formatDate(p.ends_at)} gacha</p>}
                 </div>
               </article>
             ))}

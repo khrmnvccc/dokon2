@@ -14,10 +14,10 @@ export function BannerSlide({ banner, priority, className }: { banner: Banner; p
       <Image src={banner.image_url} alt={banner.title ?? ''} fill priority={priority} sizes="(max-width: 1280px) 100vw, 1280px" className="object-cover" unoptimized={isUnoptimizable(banner.image_url)} />
       {(banner.title || banner.subtitle || banner.button_text) && (
         <div className="absolute inset-0 flex flex-col justify-center gap-2 bg-gradient-to-r from-black/35 via-black/10 to-transparent p-5 sm:gap-3 sm:p-10 md:p-14" style={{ color: banner.text_color ?? '#fff' }}>
-          {banner.title && <h2 className="max-w-[70%] text-xl font-extrabold leading-tight sm:text-3xl md:text-4xl">{banner.title}</h2>}
+          {banner.title && <h2 className="max-w-[70%] text-xl font-semibold leading-tight tracking-tight sm:text-3xl md:text-4xl">{banner.title}</h2>}
           {banner.subtitle && <p className="max-w-[60%] text-sm opacity-90 sm:text-base md:text-lg">{banner.subtitle}</p>}
           {banner.button_text && banner.link_url && (
-            <span className="mt-1 inline-flex w-fit rounded-xl bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm sm:px-5 sm:py-2.5">{banner.button_text}</span>
+            <span className="mt-1 inline-flex h-9 w-fit items-center rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-fg shadow-soft sm:h-11 sm:px-5 sm:text-[15px]">{banner.button_text}</span>
           )}
         </div>
       )}
@@ -44,7 +44,7 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Aksiya bannerlari"
-      className="group relative aspect-[16/9] overflow-hidden rounded-2xl bg-slate-200 sm:aspect-[16/6] sm:rounded-3xl"
+      className="group relative aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-soft sm:aspect-[16/6]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
@@ -64,15 +64,15 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
       </div>
       {count > 1 && (
         <>
-          <button onClick={() => go(index - 1)} className="absolute left-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow opacity-0 transition group-hover:opacity-100 sm:flex" aria-label="Oldingi">
-            <ChevronLeft className="h-5 w-5" />
+          <button onClick={() => go(index - 1)} className="absolute left-3 top-1/2 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface glass opacity-0 transition group-hover:opacity-100 sm:flex" aria-label="Oldingi">
+            <ChevronLeft className="size-5" />
           </button>
-          <button onClick={() => go(index + 1)} className="absolute right-3 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow opacity-0 transition group-hover:opacity-100 sm:flex" aria-label="Keyingi">
-            <ChevronRight className="h-5 w-5" />
+          <button onClick={() => go(index + 1)} className="absolute right-3 top-1/2 hidden size-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface glass opacity-0 transition group-hover:opacity-100 sm:flex" aria-label="Keyingi">
+            <ChevronRight className="size-5" />
           </button>
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
             {banners.map((b, i) => (
-              <button key={b.id} onClick={() => go(i)} aria-label={`${i + 1}-banner`} aria-current={i === index} className={cn('h-2 rounded-full bg-white transition-all', i === index ? 'w-6' : 'w-2 opacity-60')} />
+              <button key={b.id} onClick={() => go(i)} aria-label={`${i + 1}-banner`} aria-current={i === index} className={cn('h-2 rounded-full bg-surface transition-all', i === index ? 'w-6' : 'w-2 opacity-60')} />
             ))}
           </div>
         </>

@@ -32,18 +32,18 @@ export default async function StaffPage() {
       <Panel title="Rollar va ruxsatlar" className="mt-4" padded={false}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-muted"><tr><th className="px-4 py-2 text-left">Ruxsat</th>{roles.map((r) => <th key={r} className="px-4 py-2">{ROLE_LABELS[r]}</th>)}</tr></thead>
+            <thead className="bg-surface-2 text-xs uppercase text-ink-3"><tr><th className="px-4 py-2 text-left">Ruxsat</th>{roles.map((r) => <th key={r} className="px-4 py-2">{ROLE_LABELS[r]}</th>)}</tr></thead>
             <tbody>
               {perms.map((p) => (
                 <tr key={p} className="border-t border-line">
-                  <td className="px-4 py-2">{PERM_LABELS[p]} <span className="text-xs text-muted">({p})</span></td>
-                  {roles.map((r) => <td key={r} className="px-4 py-2 text-center">{has.has(`${r}:${p}`) ? <span className="text-emerald-600" aria-label="bor">✓</span> : <span className="text-slate-300" aria-label="yo‘q">—</span>}</td>)}
+                  <td className="px-4 py-2">{PERM_LABELS[p]} <span className="text-xs text-ink-3">({p})</span></td>
+                  {roles.map((r) => <td key={r} className="px-4 py-2 text-center">{has.has(`${r}:${p}`) ? <span className="text-success" aria-label="bor">✓</span> : <span className="text-ink-3" aria-label="yo‘q">—</span>}</td>)}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="border-t border-line px-4 py-3 text-xs text-muted">Ruxsatlar bazadagi role_permissions jadvalidan olinadi va har bir amalda serverda (RLS va funksiyalarda) tekshiriladi.</p>
+        <p className="border-t border-line px-4 py-3 text-xs text-ink-3">Ruxsatlar bazadagi role_permissions jadvalidan olinadi va har bir amalda serverda (RLS va funksiyalarda) tekshiriladi.</p>
       </Panel>
     </div>
   );

@@ -152,10 +152,10 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
-      {serverError && <div role="alert" className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{serverError}</div>}
+      <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl">{t('checkout.title')}</h1>
+      {serverError && <div role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">{serverError}</div>}
       {isGuest && (
-        <p className="mb-4 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-800">
+        <p className="mb-4 rounded-xl bg-card/10 px-4 py-3 text-sm text-card">
           Buyurtmalaringizni kuzatish uchun <Link href="/login?next=/checkout" className="font-semibold underline">tizimga kiring</Link> yoki ro‘yxatdan o‘tmasdan davom eting.
         </p>
       )}
@@ -176,40 +176,40 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
           </Section>
 
           <Section n={2} title="Yetkazib berish">
-            {shippingMethods.length === 0 && <p className="text-sm text-red-600">Yetkazib berish usullari sozlanmagan.</p>}
+            {shippingMethods.length === 0 && <p className="text-sm text-danger">Yetkazib berish usullari sozlanmagan.</p>}
             <div className="grid gap-2 sm:grid-cols-2">
               {shippingMethods.map((m) => {
                 const Icon = shipIcon[m.kind];
                 return (
-                  <label key={m.id} className={cn('flex cursor-pointer gap-3 rounded-xl border-2 p-3 transition', shippingId === m.id ? 'border-brand bg-brand-50/50' : 'border-line hover:border-slate-300')}>
+                  <label key={m.id} className={cn('flex cursor-pointer gap-3 rounded-xl border-2 p-3 transition', shippingId === m.id ? 'border-primary bg-primary-soft' : 'border-line hover:border-line-strong')}>
                     <input type="radio" value={m.id} className="sr-only" {...register('shippingMethodId')} />
-                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
+                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span className="min-w-0 flex-1">
                       <span className="flex justify-between gap-2 text-sm font-semibold">
                         {m.name}
                         <span>{m.kind === 'pickup' || m.price === 0 ? t('cart.free') : price(m.price)}</span>
                       </span>
-                      {m.eta && <span className="block text-xs text-muted">{m.eta}</span>}
-                      {m.free_from ? <span className="block text-xs text-muted">{price(m.free_from)} dan bepul</span> : null}
-                      {m.description && <span className="mt-0.5 block text-xs text-muted">{m.description}</span>}
+                      {m.eta && <span className="block text-xs text-ink-3">{m.eta}</span>}
+                      {m.free_from ? <span className="block text-xs text-ink-3">{price(m.free_from)} dan bepul</span> : null}
+                      {m.description && <span className="mt-0.5 block text-xs text-ink-3">{m.description}</span>}
                     </span>
                   </label>
                 );
               })}
             </div>
-            {errors.shippingMethodId && <p className="mt-2 text-xs text-red-600">{errors.shippingMethodId.message}</p>}
+            {errors.shippingMethodId && <p className="mt-2 text-xs text-danger">{errors.shippingMethodId.message}</p>}
 
             {needsAddress && (
               <div className="mt-4 space-y-3">
                 {addresses.length > 0 && (
                   <div className="space-y-2">
                     {addresses.map((a) => (
-                      <label key={a.id} className={cn('flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === a.id ? 'border-brand bg-brand-50/50' : 'border-line')}>
+                      <label key={a.id} className={cn('flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === a.id ? 'border-primary bg-primary-soft' : 'border-line')}>
                         <input type="radio" name="saved-address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} className="mt-1 accent-[var(--brand)]" />
-                        <span><MapPin className="mr-1 inline h-4 w-4 text-brand" />{a.label && <b>{a.label}: </b>}{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</span>
+                        <span><MapPin className="mr-1 inline h-4 w-4 text-primary" />{a.label && <b>{a.label}: </b>}{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</span>
                       </label>
                     ))}
-                    <label className={cn('flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === 'new' ? 'border-brand bg-brand-50/50' : 'border-line')}>
+                    <label className={cn('flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === 'new' ? 'border-primary bg-primary-soft' : 'border-line')}>
                       <input type="radio" name="saved-address" checked={selectedAddress === 'new'} onChange={() => setSelectedAddress('new')} className="accent-[var(--brand)]" />
                       Yangi manzil
                     </label>
@@ -242,23 +242,23 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
           </Section>
 
           <Section n={3} title="To‘lov usuli">
-            {paymentMethods.length === 0 && <p className="text-sm text-red-600">To‘lov usullari sozlanmagan.</p>}
+            {paymentMethods.length === 0 && <p className="text-sm text-danger">To‘lov usullari sozlanmagan.</p>}
             <div className="grid gap-2 sm:grid-cols-2">
               {paymentMethods.map((m) => {
                 const Icon = payIcon[m.kind];
                 return (
-                  <label key={m.id} className={cn('flex cursor-pointer gap-3 rounded-xl border-2 p-3 transition', watch('paymentMethodId') === m.id ? 'border-brand bg-brand-50/50' : 'border-line hover:border-slate-300')}>
+                  <label key={m.id} className={cn('flex cursor-pointer gap-3 rounded-xl border-2 p-3 transition', watch('paymentMethodId') === m.id ? 'border-primary bg-primary-soft' : 'border-line hover:border-line-strong')}>
                     <input type="radio" value={m.id} className="sr-only" {...register('paymentMethodId')} />
-                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
+                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                     <span>
                       <span className="block text-sm font-semibold">{m.name}</span>
-                      {m.description && <span className="block text-xs text-muted">{m.description}</span>}
+                      {m.description && <span className="block text-xs text-ink-3">{m.description}</span>}
                     </span>
                   </label>
                 );
               })}
             </div>
-            {errors.paymentMethodId && <p className="mt-2 text-xs text-red-600">{errors.paymentMethodId.message}</p>}
+            {errors.paymentMethodId && <p className="mt-2 text-xs text-danger">{errors.paymentMethodId.message}</p>}
             <Field label="Izoh" hint="Kuryer uchun qo‘shimcha ma’lumot" htmlFor="comment" className="mt-4">
               <Textarea id="comment" rows={3} maxLength={1000} {...register('comment')} />
             </Field>
@@ -268,16 +268,16 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
         <aside className="space-y-3 lg:sticky lg:top-24">
           <CouponBox applied={quote?.coupon?.code ?? null} requested={coupon} error={quote?.couponError ?? null}
             onApply={(c) => { setCoupon(c); saveCoupon(c); }} />
-          <div className={cn('rounded-2xl bg-white p-4 shadow-card sm:p-5', loading && 'opacity-70')}>
-            <h2 className="mb-3 font-bold">Buyurtmangiz</h2>
+          <div className={cn('rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-5', loading && 'opacity-70')}>
+            <h2 className="mb-3 font-semibold">Buyurtmangiz</h2>
             <ul className="max-h-72 space-y-3 overflow-auto pr-1">
               {(quote?.lines ?? []).map((l) => (
                 <li key={`${l.productId}:${l.variantId ?? ''}`} className="flex gap-3 text-sm">
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg"><ProductImage src={l.imageUrl} alt={l.name} sizes="56px" /></div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2">{l.name}</p>
-                    <p className="text-xs text-muted">{l.variantName ? `${l.variantName} · ` : ''}{l.quantity} dona</p>
-                    {l.error && <p className="text-xs font-medium text-red-600">{lineErrorText[l.error]}</p>}
+                    <p className="text-xs text-ink-3">{l.variantName ? `${l.variantName} · ` : ''}{l.quantity} dona</p>
+                    {l.error && <p className="text-xs font-medium text-danger">{lineErrorText[l.error]}</p>}
                   </div>
                   <span className="shrink-0 font-semibold">{price(l.lineTotal)}</span>
                 </li>
@@ -285,19 +285,19 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
             </ul>
             {quote && (
               <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
-                <div className="flex justify-between"><dt className="text-muted">{t('cart.subtotal')}</dt><dd>{price(quote.subtotal)}</dd></div>
-                {quote.discount > 0 && <div className="flex justify-between text-emerald-700"><dt>{t('cart.discount')}</dt><dd>−{price(quote.discount)}</dd></div>}
-                <div className="flex justify-between"><dt className="text-muted">{t('cart.shipping')}</dt><dd>{quote.shipping === 0 ? t('cart.free') : price(quote.shipping)}</dd></div>
-                <div className="flex justify-between border-t border-line pt-3 text-lg"><dt className="font-bold">{t('cart.total')}</dt><dd className="font-extrabold">{price(quote.total)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-3">{t('cart.subtotal')}</dt><dd>{price(quote.subtotal)}</dd></div>
+                {quote.discount > 0 && <div className="flex justify-between text-success"><dt>{t('cart.discount')}</dt><dd>−{price(quote.discount)}</dd></div>}
+                <div className="flex justify-between"><dt className="text-ink-3">{t('cart.shipping')}</dt><dd>{quote.shipping === 0 ? t('cart.free') : price(quote.shipping)}</dd></div>
+                <div className="flex justify-between border-t border-line pt-3 text-lg"><dt className="font-semibold">{t('cart.total')}</dt><dd className="font-semibold">{price(quote.total)}</dd></div>
               </dl>
             )}
-            {quote?.belowMinimum && <p className="mt-3 text-xs font-medium text-amber-700">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
-            {quote?.hasErrors && <p className="mt-3 text-xs font-medium text-red-600">Savatchadagi xatolarni tuzating. <Link href="/cart" className="underline">Savatchaga qaytish</Link></p>}
+            {quote?.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
+            {quote?.hasErrors && <p className="mt-3 text-xs font-medium text-danger">Savatchadagi xatolarni tuzating. <Link href="/cart" className="underline">Savatchaga qaytish</Link></p>}
             <Button type="submit" size="lg" className="mt-4 w-full" loading={submitting} disabled={blocked || submitting}>
               {t('checkout.place')}
             </Button>
-            {orderNote && <p className="mt-3 flex gap-1.5 text-xs text-muted"><Info className="h-4 w-4 shrink-0" />{orderNote}</p>}
-            <p className="mt-2 text-center text-xs text-muted">
+            {orderNote && <p className="mt-3 flex gap-1.5 text-xs text-ink-3"><Info className="h-4 w-4 shrink-0" />{orderNote}</p>}
+            <p className="mt-2 text-center text-xs text-ink-3">
               Buyurtma berish orqali <Link href="/terms" className="underline">foydalanish shartlariga</Link> rozilik bildirasiz
             </p>
           </div>
@@ -309,9 +309,9 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
 
 function Section({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-card sm:p-6">
-      <h2 className="mb-4 flex items-center gap-2.5 text-lg font-bold">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm text-white">{n}</span>
+    <section className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6">
+      <h2 className="mb-4 flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm text-primary-fg">{n}</span>
         {title}
       </h2>
       {children}

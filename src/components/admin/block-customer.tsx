@@ -21,7 +21,7 @@ export function BlockCustomer({ userId, blocked, reason }: { userId: string; blo
   if (blocked) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-red-700">Bloklangan{reason ? `: ${reason}` : ''}. Mijoz yangi buyurtma bera olmaydi va sharh qoldira olmaydi.</p>
+        <p className="text-sm text-danger">Bloklangan{reason ? `: ${reason}` : ''}. Mijoz yangi buyurtma bera olmaydi va sharh qoldira olmaydi.</p>
         <Button variant="outline" loading={pending} onClick={() => run(false)}>Blokdan chiqarish</Button>
       </div>
     );

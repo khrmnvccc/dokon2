@@ -29,10 +29,10 @@ export function CategoriesManager({ categories, productCount }: { categories: Ca
     <>
       <li className="flex items-center gap-3 border-t border-line px-4 py-2.5 first:border-t-0" style={{ paddingLeft: 16 + depth * 28 }}>
         <MoveButtons list={list} index={index} onReorder={crud.reorder} />
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand"><DynamicIcon name={c.icon} className="h-5 w-5" /></span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary"><DynamicIcon name={c.icon} className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{c.name} {c.show_on_home && depth === 0 && <Badge tone="brand" className="ml-1">Bosh sahifada</Badge>}</p>
-          <p className="text-xs text-muted">/{c.slug} · {productCount[c.id] ?? 0} ta mahsulot</p>
+          <p className="text-xs text-ink-3">/{c.slug} · {productCount[c.id] ?? 0} ta mahsulot</p>
         </div>
         <Toggle checked={c.is_active} label="Faol" onChange={(v) => crud.toggle(c.id, v)} disabled={crud.pending} />
         <RowActions onEdit={() => setEditing(c)} onDelete={() => crud.remove(c.id, `“${c.name}” kategoriyasini o‘chirish?`)} />
@@ -44,11 +44,11 @@ export function CategoriesManager({ categories, productCount }: { categories: Ca
   return (
     <div>
       <div className="mb-3 flex justify-end"><Button size="sm" onClick={() => setEditing('new')}><Plus className="h-4 w-4" /> Kategoriya qo‘shish</Button></div>
-      <ul className="overflow-hidden rounded-xl border border-line bg-white">
-        {roots.length === 0 && <li className="p-10 text-center text-muted">Kategoriyalar yo‘q</li>}
+      <ul className="overflow-hidden rounded-xl border border-line bg-surface">
+        {roots.length === 0 && <li className="p-10 text-center text-ink-3">Kategoriyalar yo‘q</li>}
         {roots.map((c, i) => <Row key={c.id} c={c} list={roots} index={i} depth={0} />)}
       </ul>
-      <p className="mt-2 text-xs text-muted">O‘chirilgan kategoriyadagi mahsulotlar “kategoriyasiz” bo‘lib qoladi, ichki kategoriyalar yuqori darajaga ko‘tariladi.</p>
+      <p className="mt-2 text-xs text-ink-3">O‘chirilgan kategoriyadagi mahsulotlar “kategoriyasiz” bo‘lib qoladi, ichki kategoriyalar yuqori darajaga ko‘tariladi.</p>
       <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? 'Yangi kategoriya' : 'Kategoriyani tahrirlash'} className="max-w-2xl">
         {editing !== null && (
           <CategoryForm category={editing === 'new' ? null : editing} categories={categories} onDone={() => setEditing(null)} save={crud.save} />

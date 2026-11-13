@@ -28,14 +28,14 @@ export default async function AdminSearch({ searchParams }: { searchParams: Prom
   return (
     <div className="max-w-4xl">
       <PageHeader title={`Qidiruv: “${q}”`} />
-      {empty && <p className="rounded-xl border border-line bg-white p-10 text-center text-muted">Hech narsa topilmadi</p>}
+      {empty && <p className="rounded-xl border border-line bg-surface p-10 text-center text-ink-3">Hech narsa topilmadi</p>}
       <div className="space-y-4">
         {(orders.data ?? []).length > 0 && (
           <Panel title="Buyurtmalar" padded={false}>
             <ul className="divide-y divide-line">
               {(orders.data ?? []).map((o) => (
-                <li key={o.id}><Link href={`/admin/orders/${o.id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-slate-50">
-                  <span><b>#{o.number}</b> · {o.customer_name} · {formatUzPhone(o.customer_phone)}<span className="block text-xs text-muted">{formatDateTime(o.created_at)}</span></span>
+                <li key={o.id}><Link href={`/admin/orders/${o.id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-2">
+                  <span><b>#{o.number}</b> · {o.customer_name} · {formatUzPhone(o.customer_phone)}<span className="block text-xs text-ink-3">{formatDateTime(o.created_at)}</span></span>
                   <span className="text-right">{formatPrice(o.total)} <Badge tone={orderStatusTone[o.status as OrderStatus]}>{orderStatusLabel[o.status as OrderStatus]}</Badge></span>
                 </Link></li>
               ))}
@@ -46,7 +46,7 @@ export default async function AdminSearch({ searchParams }: { searchParams: Prom
           <Panel title="Mahsulotlar" padded={false}>
             <ul className="divide-y divide-line">
               {(products.data ?? []).map((p) => (
-                <li key={p.id}><Link href={`/admin/products/${p.id}`} className="flex justify-between gap-3 px-5 py-3 hover:bg-slate-50"><span>{p.name} <span className="text-xs text-muted">{p.sku}</span></span><span>{formatPrice(p.price)} · {p.stock} dona</span></Link></li>
+                <li key={p.id}><Link href={`/admin/products/${p.id}`} className="flex justify-between gap-3 px-5 py-3 hover:bg-surface-2"><span>{p.name} <span className="text-xs text-ink-3">{p.sku}</span></span><span>{formatPrice(p.price)} · {p.stock} dona</span></Link></li>
               ))}
             </ul>
           </Panel>
@@ -55,7 +55,7 @@ export default async function AdminSearch({ searchParams }: { searchParams: Prom
           <Panel title="Mijozlar" padded={false}>
             <ul className="divide-y divide-line">
               {custItems.map((c) => (
-                <li key={c.id}><Link href={`/admin/customers/${c.id}`} className="block px-5 py-3 hover:bg-slate-50">{c.full_name || 'Ismsiz'} <span className="text-sm text-muted">· {formatUzPhone(c.phone)} · {c.email}</span></Link></li>
+                <li key={c.id}><Link href={`/admin/customers/${c.id}`} className="block px-5 py-3 hover:bg-surface-2">{c.full_name || 'Ismsiz'} <span className="text-sm text-ink-3">· {formatUzPhone(c.phone)} · {c.email}</span></Link></li>
               ))}
             </ul>
           </Panel>

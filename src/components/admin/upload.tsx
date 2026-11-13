@@ -37,17 +37,17 @@ export function SingleImageField({ value, onChange, folder, label, aspect = 'asp
   const input = useRef<HTMLInputElement>(null);
   return (
     <div>
-      <p className="mb-1.5 text-sm font-medium text-slate-700">{label}</p>
-      <div className={cn('relative w-full max-w-xs overflow-hidden rounded-xl border-2 border-dashed border-line bg-slate-50', aspect)}>
+      <p className="mb-1.5 text-sm font-medium text-ink-2">{label}</p>
+      <div className={cn('relative w-full max-w-xs overflow-hidden rounded-xl border-2 border-dashed border-line bg-surface-2', aspect)}>
         {value ? <Preview src={value} alt={label} /> : (
-          <button type="button" onClick={() => input.current?.click()} className="flex h-full w-full flex-col items-center justify-center gap-1 text-sm text-muted hover:text-brand">
+          <button type="button" onClick={() => input.current?.click()} className="flex h-full w-full flex-col items-center justify-center gap-1 text-sm text-ink-3 hover:text-primary">
             {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-6 w-6" />} Rasm yuklash
           </button>
         )}
         {value && (
           <div className="absolute right-2 top-2 flex gap-1">
-            <button type="button" onClick={() => input.current?.click()} className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium shadow">Almashtirish</button>
-            <button type="button" onClick={() => onChange(null)} className="rounded-lg bg-white/90 p-1 text-red-600 shadow" aria-label="Olib tashlash"><Trash2 className="h-4 w-4" /></button>
+            <button type="button" onClick={() => input.current?.click()} className="rounded-lg bg-surface px-2 py-1 text-xs font-medium shadow-soft">Almashtirish</button>
+            <button type="button" onClick={() => onChange(null)} className="rounded-lg bg-surface p-1 text-danger shadow-soft" aria-label="Olib tashlash"><Trash2 className="h-4 w-4" /></button>
           </div>
         )}
       </div>
@@ -64,7 +64,7 @@ export function SingleImageField({ value, onChange, folder, label, aspect = 'asp
           setBusy(false);
         }
       }} />
-      <p className="mt-1 text-xs text-muted">JPG/PNG/WEBP, 5 MB gacha. Yoki URL: </p>
+      <p className="mt-1 text-xs text-ink-3">JPG/PNG/WEBP, 5 MB gacha. Yoki URL: </p>
       <input value={value ?? ''} onChange={(e) => onChange(e.target.value || null)} placeholder="https://… yoki /demo/…" className="mt-1 h-9 w-full max-w-xs rounded-lg border border-line px-2 text-xs" />
     </div>
   );
@@ -88,24 +88,24 @@ export function GalleryField({ images, onChange }: { images: GalleryImage[]; onC
     <div>
       <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         {images.map((img, i) => (
-          <li key={img.id ?? img.url} className={cn('group relative aspect-square overflow-hidden rounded-xl border-2', img.is_primary ? 'border-brand' : 'border-line')}>
+          <li key={img.id ?? img.url} className={cn('group relative aspect-square overflow-hidden rounded-xl border-2', img.is_primary ? 'border-primary' : 'border-line')}>
             <Preview src={img.url} alt={img.alt ?? ''} />
-            {img.is_primary && <span className="absolute left-1.5 top-1.5 rounded-md bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">Asosiy</span>}
+            {img.is_primary && <span className="absolute left-1.5 top-1.5 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-fg">Asosiy</span>}
             <div className="absolute inset-x-0 bottom-0 flex justify-between bg-gradient-to-t from-black/60 p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
               <div className="flex gap-1">
-                <button type="button" onClick={() => move(i, -1)} className="rounded bg-white/90 p-1" aria-label="Chapga"><ArrowLeft className="h-3.5 w-3.5" /></button>
-                <button type="button" onClick={() => move(i, 1)} className="rounded bg-white/90 p-1" aria-label="O‘ngga"><ArrowRight className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => move(i, -1)} className="rounded bg-surface p-1" aria-label="Chapga"><ArrowLeft className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => move(i, 1)} className="rounded bg-surface p-1" aria-label="O‘ngga"><ArrowRight className="h-3.5 w-3.5" /></button>
               </div>
               <div className="flex gap-1">
-                <button type="button" onClick={() => onChange(images.map((x, k) => ({ ...x, is_primary: k === i })))} className="rounded bg-white/90 p-1" aria-label="Asosiy qilish"><Star className="h-3.5 w-3.5" /></button>
-                <button type="button" onClick={() => { const next = images.filter((_, k) => k !== i); if (img.is_primary && next[0]) next[0] = { ...next[0], is_primary: true }; onChange(next); }} className="rounded bg-white/90 p-1 text-red-600" aria-label="O‘chirish"><Trash2 className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => onChange(images.map((x, k) => ({ ...x, is_primary: k === i })))} className="rounded bg-surface p-1" aria-label="Asosiy qilish"><Star className="h-3.5 w-3.5" /></button>
+                <button type="button" onClick={() => { const next = images.filter((_, k) => k !== i); if (img.is_primary && next[0]) next[0] = { ...next[0], is_primary: true }; onChange(next); }} className="rounded bg-surface p-1 text-danger" aria-label="O‘chirish"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
             </div>
           </li>
         ))}
         {images.length < 15 && (
           <li>
-            <button type="button" onClick={() => input.current?.click()} className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line text-sm text-muted hover:border-brand hover:text-brand">
+            <button type="button" onClick={() => input.current?.click()} className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line text-sm text-ink-3 hover:border-primary hover:text-primary">
               {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <ImagePlus className="h-6 w-6" />}
               {busy ? `${busy} ta yuklanmoqda` : 'Rasm qo‘shish'}
             </button>
@@ -131,7 +131,7 @@ export function GalleryField({ images, onChange }: { images: GalleryImage[]; onC
         if (next.length && !next.some((x) => x.is_primary)) next[0] = { ...next[0], is_primary: true };
         onChange(next);
       }} />
-      <p className="mt-2 text-xs text-muted">Birinchi yoki yulduzcha bilan belgilangan rasm — asosiy. 15 tagacha, har biri 5 MB gacha.</p>
+      <p className="mt-2 text-xs text-ink-3">Birinchi yoki yulduzcha bilan belgilangan rasm — asosiy. 15 tagacha, har biri 5 MB gacha.</p>
     </div>
   );
 }

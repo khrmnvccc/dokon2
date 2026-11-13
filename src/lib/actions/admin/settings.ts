@@ -12,6 +12,8 @@ import type { ActionResult } from '@/lib/types';
 export async function saveSetting(key: SettingsKey, value: unknown): Promise<ActionResult> {
   return withPermission('settings.write', async (ctx) => {
     if (!(key in settingsSchemas)) return { ok: false, error: 'Noma’lum sozlama' };
+    // Brend va dizaynni faqat Ega (super admin) o'zgartiradi.
+    if (key === 'brand' && !ctx.roles.includes('super_admin')) return { ok: false, error: 'Brend va dizaynni faqat Ega oʻzgartira oladi' };
     const parsed = settingsSchemas[key].safeParse(value);
     if (!parsed.success) return { ok: false, error: 'Qiymatlarda xato bor', fieldErrors: fieldErrors(parsed.error) };
     const supabase = await getServerSupabase();

@@ -31,16 +31,16 @@ export default async function HomePage() {
     promo: promo.length > 0 && (
       <div className="grid gap-3 sm:grid-cols-2">
         {promo.slice(0, 2).map((b) => (
-          <div key={b.id} className="aspect-[16/7] overflow-hidden rounded-2xl"><BannerSlide banner={b} /></div>
+          <div key={b.id} className="aspect-[16/7] overflow-hidden rounded-xl border border-line shadow-soft"><BannerSlide banner={b} /></div>
         ))}
       </div>
     ),
-    middle_banner: middle[0] && <div className="aspect-[16/7] overflow-hidden rounded-2xl sm:aspect-[16/5] sm:rounded-3xl"><BannerSlide banner={middle[0]} /></div>,
+    middle_banner: middle[0] && <div className="aspect-[16/7] overflow-hidden rounded-2xl border border-line shadow-soft sm:aspect-[16/5]"><BannerSlide banner={middle[0]} /></div>,
     advantages: <Advantages items={settings.advantages} title={title('advantages', 'Afzalliklar')} />,
   };
 
   return (
-    <div className="space-y-8 sm:space-y-12">
+    <div className="space-y-8 sm:space-y-10">
       <h1 className="sr-only">{settings.seo.title}</h1>
       <script
         type="application/ld+json"
@@ -49,14 +49,14 @@ export default async function HomePage() {
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: settings.store.name,
+              name: settings.brand.name,
               url: SITE_URL,
               potentialAction: { '@type': 'SearchAction', target: `${SITE_URL}/search?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
             },
             {
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: settings.store.name,
+              name: settings.brand.name,
               url: SITE_URL,
               logo: settings.store.logo_url ?? undefined,
               sameAs: Object.values(settings.social).filter(Boolean),

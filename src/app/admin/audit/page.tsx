@@ -45,18 +45,18 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         </FilterField>
         <FilterField label="Xodim emaili"><input name="actor" defaultValue={sp.actor} className={inputSm} /></FilterField>
       </FilterBar>
-      <div className="overflow-hidden rounded-xl border border-line bg-white">
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <Table>
           <thead><tr><th>Vaqt</th><th>Xodim</th><th>Amal</th><th>Bo‘lim</th><th>O‘zgarishlar</th></tr></thead>
           <tbody>
             {(data ?? []).length === 0 && <EmptyRow cols={5} />}
             {(data ?? []).map((l) => (
               <tr key={l.id} className="align-top">
-                <td className="whitespace-nowrap text-muted">{formatDateTime(l.created_at)}</td>
+                <td className="whitespace-nowrap text-ink-3">{formatDateTime(l.created_at)}</td>
                 <td>{l.actor_email ?? '—'}</td>
                 <td><Badge tone={ACTION_TONE[l.action] ?? 'gray'}>{ACTION_LABEL[l.action] ?? l.action}</Badge></td>
-                <td>{ENTITY_LABELS[l.entity] ?? l.entity}<div className="font-mono text-[11px] text-muted">{String(l.entity_id ?? '').slice(0, 8)}</div></td>
-                <td className="max-w-md break-words text-xs text-slate-600">{summarize(l.old_data, l.new_data)}</td>
+                <td>{ENTITY_LABELS[l.entity] ?? l.entity}<div className="font-mono text-[11px] text-ink-3">{String(l.entity_id ?? '').slice(0, 8)}</div></td>
+                <td className="max-w-md break-words text-xs text-ink-2">{summarize(l.old_data, l.new_data)}</td>
               </tr>
             ))}
           </tbody>

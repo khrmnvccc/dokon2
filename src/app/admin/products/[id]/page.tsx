@@ -37,11 +37,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
             <tbody>
               {(movements ?? []).map((m) => (
                 <tr key={m.id}>
-                  <td className="text-muted">{formatDateTime(m.created_at)}</td>
+                  <td className="text-ink-3">{formatDateTime(m.created_at)}</td>
                   <td>{reasonLabel[m.reason] ?? m.reason}</td>
-                  <td className={`text-right tabular-nums font-semibold ${m.delta < 0 ? 'text-red-600' : 'text-emerald-700'}`}>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
+                  <td className={`text-right tabular-nums font-semibold ${m.delta < 0 ? 'text-danger' : 'text-success'}`}>{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
                   <td className="text-right tabular-nums">{m.stock_after ?? '—'}</td>
-                  <td className="text-muted">{m.note ?? ''}</td>
+                  <td className="text-ink-3">{m.note ?? ''}</td>
                 </tr>
               ))}
             </tbody>

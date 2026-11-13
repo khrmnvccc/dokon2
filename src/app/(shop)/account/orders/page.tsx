@@ -27,10 +27,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <h1 className="mb-3 text-xl font-bold">Buyurtmalarim</h1>
+      <h1 className="mb-3 text-xl font-semibold">Buyurtmalarim</h1>
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
         {tabs.map((s) => (
-          <Link key={s ?? 'all'} href={s ? `?status=${s}` : '?'} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium', status === s ? 'bg-brand text-white' : 'bg-white text-slate-600 shadow-card')}>
+          <Link key={s ?? 'all'} href={s ? `?status=${s}` : '?'} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium', status === s ? 'bg-primary text-primary-fg' : 'bg-surface text-ink-2 shadow-soft')}>
             {s ? orderStatusLabel[s] : 'Barchasi'}
           </Link>
         ))}
@@ -42,17 +42,17 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <ul className="space-y-3">
           {result.items.map((o) => (
             <li key={o.id}>
-              <Link href={`/account/orders/${o.id}`} className="flex flex-wrap items-center gap-4 rounded-2xl bg-white p-4 shadow-card transition hover:shadow-pop">
+              <Link href={`/account/orders/${o.id}`} className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-surface p-4 shadow-soft transition hover:shadow-pop">
                 <div className="min-w-40 flex-1">
                   <p className="font-semibold">#{o.number} <Badge tone={orderStatusTone[o.status]} className="ml-1">{orderStatusLabel[o.status]}</Badge></p>
-                  <p className="mt-0.5 text-xs text-muted">{formatDateTime(o.created_at)} · {o.items_count} dona · {o.payment_method_name}</p>
+                  <p className="mt-0.5 text-xs text-ink-3">{formatDateTime(o.created_at)} · {o.items_count} dona · {o.payment_method_name}</p>
                 </div>
                 <div className="flex -space-x-2">
                   {o.images.map((img, i) => (
                     <div key={i} className="relative h-11 w-11 overflow-hidden rounded-lg border-2 border-white"><ProductImage src={img} alt="" sizes="44px" /></div>
                   ))}
                 </div>
-                <p className="font-bold">{formatPrice(o.total, settings.localization.currency_symbol)}</p>
+                <p className="font-semibold">{formatPrice(o.total, settings.localization.currency_symbol)}</p>
               </Link>
             </li>
           ))}

@@ -57,7 +57,7 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
   return (
     <div className="space-y-6">
       <fieldset>
-        <legend className="mb-2 text-sm font-bold">{t('filters.price')}</legend>
+        <legend className="mb-2 text-sm font-semibold">{t('filters.price')}</legend>
         <form
           className="flex items-center gap-2"
           onSubmit={(e) => {
@@ -67,7 +67,7 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
           }}
         >
           <Input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value)} placeholder={facets.min_price ? String(facets.min_price) : t('filters.from')} aria-label="Minimal narx" className="h-10" />
-          <span className="text-muted">—</span>
+          <span className="text-ink-3">—</span>
           <Input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} placeholder={facets.max_price ? String(facets.max_price) : t('filters.to')} aria-label="Maksimal narx" className="h-10" />
           <Button type="submit" size="sm" variant="secondary" className="h-10">OK</Button>
         </form>
@@ -79,11 +79,11 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
       </div>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-bold">{t('filters.rating')}</legend>
+        <legend className="mb-2 text-sm font-semibold">{t('filters.rating')}</legend>
         <div className="flex flex-wrap gap-2">
           {['4', '3'].map((r) => (
             <button key={r} type="button" onClick={() => update({ rating: params.get('rating') === r ? null : r })}
-              className={cn('rounded-lg border px-3 py-1.5 text-sm', params.get('rating') === r ? 'border-brand bg-brand-50 font-semibold text-brand-700' : 'border-line')}>
+              className={cn('rounded-lg border px-3 py-1.5 text-sm', params.get('rating') === r ? 'border-primary bg-primary-soft font-semibold text-primary' : 'border-line')}>
               ★ {r}+
             </button>
           ))}
@@ -92,12 +92,12 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
 
       {facets.colors.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-bold">{t('filters.color')}</legend>
+          <legend className="mb-2 text-sm font-semibold">{t('filters.color')}</legend>
           <div className="flex flex-wrap gap-2">
             {facets.colors.map((c) => (
               <button key={c.name} type="button" onClick={() => toggleList('color', colors, c.name)} aria-pressed={colors.includes(c.name)}
-                className={cn('flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm', colors.includes(c.name) ? 'border-brand bg-brand-50 font-semibold' : 'border-line')}>
-                <span className="h-4 w-4 rounded-full border border-slate-300" style={{ background: c.hex ?? '#ccc' }} />{c.name}
+                className={cn('flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm', colors.includes(c.name) ? 'border-primary bg-primary-soft font-semibold' : 'border-line')}>
+                <span className="h-4 w-4 rounded-full border border-line-strong" style={{ background: c.hex ?? '#ccc' }} />{c.name}
               </button>
             ))}
           </div>
@@ -106,11 +106,11 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
 
       {facets.sizes.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-bold">{t('filters.size')}</legend>
+          <legend className="mb-2 text-sm font-semibold">{t('filters.size')}</legend>
           <div className="flex flex-wrap gap-2">
             {facets.sizes.map((s) => (
               <button key={s} type="button" onClick={() => toggleList('size', sizes, s)} aria-pressed={sizes.includes(s)}
-                className={cn('min-w-11 rounded-lg border px-2.5 py-1.5 text-sm', sizes.includes(s) ? 'border-brand bg-brand-50 font-semibold' : 'border-line')}>
+                className={cn('min-w-11 rounded-lg border px-2.5 py-1.5 text-sm', sizes.includes(s) ? 'border-primary bg-primary-soft font-semibold' : 'border-line')}>
                 {s}
               </button>
             ))}
@@ -131,8 +131,8 @@ export function CatalogFilters({ facets, mode }: { facets: Facets; mode: 'sideba
   if (mode === 'sidebar') {
     return (
       <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="sticky top-40 rounded-2xl bg-white p-5 shadow-card">
-          <h2 className="mb-4 text-base font-bold">{t('filters.title')}</h2>
+        <div className="sticky top-40 rounded-xl border border-line bg-surface p-5 shadow-soft">
+          <h2 className="mb-4 text-base font-semibold">{t('filters.title')}</h2>
           <FilterBody facets={facets} />
         </div>
       </aside>
@@ -145,11 +145,11 @@ export function CatalogFilters({ facets, mode }: { facets: Facets; mode: 'sideba
       </Button>
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t('filters.title')}>
-          <div className="absolute inset-0 bg-slate-900/50 animate-fade-in" onClick={() => setOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 animate-slide-up">
+          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm anim-fade" onClick={() => setOpen(false)} />
+          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-surface p-5 pb-8 anim-pop">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">{t('filters.title')}</h2>
-              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-slate-100" aria-label="Yopish"><X className="h-5 w-5" /></button>
+              <h2 className="text-[15px] font-semibold tracking-tight">{t('filters.title')}</h2>
+              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-surface-2" aria-label="Yopish"><X className="h-5 w-5" /></button>
             </div>
             <FilterBody facets={facets} onDone={() => setOpen(false)} />
             <Button className="mt-3 w-full" onClick={() => setOpen(false)}>{t('filters.apply')}</Button>

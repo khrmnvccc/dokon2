@@ -43,7 +43,7 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
         const list = banners.filter((b) => b.placement === pl);
         return (
           <Panel key={pl} title={PLACEMENTS[pl]} padded={false} actions={<Button size="sm" variant="secondary" onClick={() => setEditing(pl)}><Plus className="h-4 w-4" /> Qo‘shish</Button>}>
-            {list.length === 0 ? <p className="px-5 py-6 text-sm text-muted">Banner yo‘q</p> : (
+            {list.length === 0 ? <p className="px-5 py-6 text-sm text-ink-3">Banner yo‘q</p> : (
               <ul>
                 {list.map((b, i) => {
                   const st = scheduleState(b);
@@ -54,7 +54,7 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
                       <img src={b.image_url} alt="" className="h-14 w-28 shrink-0 rounded-lg object-cover" style={{ background: b.bg_color ?? undefined }} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{b.title || 'Sarlavhasiz'}</p>
-                        <p className="truncate text-xs text-muted">{b.link_url ?? 'havola yo‘q'}</p>
+                        <p className="truncate text-xs text-ink-3">{b.link_url ?? 'havola yo‘q'}</p>
                         {st && <Badge tone={st.tone} className="mt-1">{st.text}</Badge>}
                       </div>
                       <Toggle checked={b.is_active} label="Faol" onChange={(v) => crud.toggle(b.id, v)} disabled={crud.pending} />
@@ -91,7 +91,7 @@ function BannerForm({ banner, placement, count, onDone, save }: { banner: Banner
         <Controller control={control} name="image_url" render={({ field }) => (
           <div>
             <SingleImageField label="Rasm (kompyuter)" folder="banners" aspect="aspect-[16/7]" value={(field.value as string) || null} onChange={(v) => field.onChange(v ?? '')} />
-            {errors.image_url && <p className="mt-1 text-xs text-red-600">{errors.image_url.message}</p>}
+            {errors.image_url && <p className="mt-1 text-xs text-danger">{errors.image_url.message}</p>}
           </div>
         )} />
         <Controller control={control} name="mobile_image_url" render={({ field }) => (
