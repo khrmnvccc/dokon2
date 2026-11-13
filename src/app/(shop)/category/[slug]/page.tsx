@@ -53,12 +53,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <>
       <Breadcrumbs items={[{ name: 'Katalog', href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` }))]} />
-      <h1 className="mb-2 text-2xl font-extrabold tracking-tight sm:text-3xl">{category.name}</h1>
-      {category.description && <p className="mb-4 max-w-3xl text-sm text-muted">{category.description}</p>}
+      <h1 className="mb-2 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">{category.name}</h1>
+      {category.description && <p className="mb-4 max-w-3xl text-sm text-ink-3">{category.description}</p>}
       {children.length > 0 && (
         <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4">
           {children.map((c) => (
-            <Link key={c.id} href={`/category/${c.slug}`} className="shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-medium shadow-card hover:text-brand">{c.name}</Link>
+            <Link key={c.id} href={`/category/${c.slug}`} className="shrink-0 rounded-xl bg-surface px-4 py-2 text-sm font-medium shadow-soft hover:text-primary">{c.name}</Link>
           ))}
         </div>
       )}

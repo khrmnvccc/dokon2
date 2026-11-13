@@ -36,7 +36,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </>} />
       <div className="mb-3 flex flex-wrap gap-2">
         {[['today', 'Bugun'], ['7', '7 kun'], ['30', '30 kun'], ['month', 'Shu oy'], ['year', 'Shu yil']].map(([k, l]) => (
-          <Link key={k} href={buildHref('/admin/reports', { g }, { preset: k })} className={cn('rounded-full px-3 py-1.5 text-sm font-medium', sp.preset === k ? 'bg-slate-900 text-white' : 'bg-white ring-1 ring-line')}>{l}</Link>
+          <Link key={k} href={buildHref('/admin/reports', { g }, { preset: k })} className={cn('rounded-full px-3 py-1.5 text-sm font-medium', sp.preset === k ? 'bg-primary text-primary-fg shadow-soft' : 'bg-surface ring-1 ring-line')}>{l}</Link>
         ))}
       </div>
       <FilterBar resetHref="/admin/reports">
@@ -46,7 +46,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           <select name="g" defaultValue={g} className={inputSm}><option value="day">Kunlik</option><option value="week">Haftalik</option><option value="month">Oylik</option></select>
         </FilterField>
       </FilterBar>
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">Hisobotni yuklab bo‘lmadi.</p>}
+      {error && <p className="mb-4 rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">Hisobotni yuklab bo‘lmadi.</p>}
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard label="Tushum" value={p(revenue)} hint="Bekor/qaytarilganlarsiz" />
         <StatCard label="Buyurtmalar" value={formatNumber(orders)} hint={`O‘rtacha chek: ${p(orders ? Math.round(revenue / orders) : 0)}`} />
@@ -56,7 +56,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </div>
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
         <Panel title="Tushum dinamikasi (so‘m)" className="xl:col-span-2">
-          {sales.length ? <BarChart valueLabel="Tushum" data={sales.map((r) => ({ label: periodLabel(r.period), value: Number(r.revenue), sub: `${r.orders_count} ta buyurtma` }))} formatValue={p} /> : <p className="py-10 text-center text-sm text-muted">Bu davrda savdo yo‘q</p>}
+          {sales.length ? <BarChart valueLabel="Tushum" data={sales.map((r) => ({ label: periodLabel(r.period), value: Number(r.revenue), sub: `${r.orders_count} ta buyurtma` }))} formatValue="money" /> : <p className="py-10 text-center text-sm text-ink-3">Bu davrda savdo yo‘q</p>}
         </Panel>
         <Panel title="Holatlar bo‘yicha">
           <HBarList items={statuses.map((s) => ({ label: orderStatusLabel[s.status as OrderStatus] ?? s.status, value: Number(s.orders_count), extra: p(Number(s.amount)) }))} />
@@ -72,7 +72,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                 <td>{periodLabel(r.period)}</td>
                 <td className="text-right">{r.orders_count}</td><td className="text-right">{r.items_sold}</td>
                 <td className="text-right">{p(r.goods_revenue)}</td><td className="text-right">{p(r.shipping)}</td><td className="text-right">{p(r.discounts)}</td>
-                <td className="text-right font-semibold">{p(r.revenue)}</td><td className="text-right">{p(r.cost_known)}</td><td className="text-right font-semibold text-emerald-700">{p(r.gross_profit)}</td>
+                <td className="text-right font-semibold">{p(r.revenue)}</td><td className="text-right">{p(r.cost_known)}</td><td className="text-right font-semibold text-success">{p(r.gross_profit)}</td>
               </tr>
             ))}
           </tbody>
@@ -85,8 +85,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             {products.length === 0 && <EmptyRow cols={6} />}
             {products.slice(0, 100).map((r, i) => (
               <tr key={r.product_id ?? i} className="tabular-nums">
-                <td>{r.product_id ? <Link href={`/admin/products/${r.product_id}`} className="hover:text-brand">{r.product_name}</Link> : r.product_name}</td>
-                <td className="text-muted">{r.sku ?? '—'}</td>
+                <td>{r.product_id ? <Link href={`/admin/products/${r.product_id}`} className="hover:text-primary">{r.product_name}</Link> : r.product_name}</td>
+                <td className="text-ink-3">{r.sku ?? '—'}</td>
                 <td className="text-right">{r.quantity}</td><td className="text-right">{p(r.revenue)}</td>
                 <td className="text-right">{r.cost !== null ? p(r.cost) : '—'}</td><td className="text-right">{r.gross_profit !== null ? p(r.gross_profit) : '—'}</td>
               </tr>
@@ -94,7 +94,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           </tbody>
         </Table>
       </Panel>
-      <p className="mt-3 text-xs text-muted">Yalpi foyda = mahsulot tushumi (chegirmadan keyin) − tannarx. Tannarxi kiritilmagan mahsulotlar foydaga qo‘shilmaydi. Tannarx buyurtma paytidagi qiymat bo‘yicha olinadi.</p>
+      <p className="mt-3 text-xs text-ink-3">Yalpi foyda = mahsulot tushumi (chegirmadan keyin) − tannarx. Tannarxi kiritilmagan mahsulotlar foydaga qo‘shilmaydi. Tannarx buyurtma paytidagi qiymat bo‘yicha olinadi.</p>
     </div>
   );
 }

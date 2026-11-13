@@ -17,7 +17,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   if (!order) notFound();
   return (
     <div>
-      <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-muted hover:text-ink"><ChevronLeft className="h-4 w-4" /> Buyurtmalarim</Link>
+      <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> Buyurtmalarim</Link>
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} />
       {order.status === 'new' && <div className="mt-4"><CancelOrderButton orderId={order.id} /></div>}
     </div>

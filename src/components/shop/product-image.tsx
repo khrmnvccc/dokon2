@@ -10,7 +10,7 @@ export function isUnoptimizable(src: string) {
 export function ProductImage({ src, alt, sizes, priority, className }: { src: string | null; alt: string; sizes: string; priority?: boolean; className?: string }) {
   if (!src) {
     return (
-      <div className={cn('flex h-full w-full items-center justify-center bg-slate-100 text-slate-300', className)}>
+      <div className={cn('flex h-full w-full items-center justify-center bg-surface-2 text-ink-3', className)}>
         <ImageOff className="h-10 w-10" aria-hidden />
       </div>
     );
@@ -23,7 +23,7 @@ export function ProductImage({ src, alt, sizes, priority, className }: { src: st
       sizes={sizes}
       priority={priority}
       unoptimized={isUnoptimizable(src)}
-      className={cn('object-cover bg-slate-100', className)}
+      className={cn('object-cover bg-surface-2', className)}
     />
   );
 }

@@ -21,16 +21,16 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
 
   if (!user) {
     return (
-      <p className="rounded-2xl bg-slate-50 p-4 text-sm text-muted">
-        Sharh qoldirish uchun <Link href={`/login?next=/product/${slug}`} className="font-semibold text-brand">tizimga kiring</Link>.
+      <p className="rounded-2xl bg-surface-2 p-4 text-sm text-ink-3">
+        Sharh qoldirish uchun <Link href={`/login?next=/product/${slug}`} className="font-semibold text-primary">tizimga kiring</Link>.
       </p>
     );
   }
-  if (done) return <p className="rounded-2xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700">Rahmat! Sharhingiz qabul qilindi.</p>;
+  if (done) return <p className="rounded-2xl bg-success-soft p-4 text-sm font-medium text-success">Rahmat! Sharhingiz qabul qilindi.</p>;
 
   return (
     <form
-      className="space-y-3 rounded-2xl bg-slate-50 p-4"
+      className="space-y-3 rounded-2xl bg-surface-2 p-4"
       onSubmit={(e) => {
         e.preventDefault();
         if (!rating) {
@@ -51,7 +51,7 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
         {[1, 2, 3, 4, 5].map((i) => (
           <button key={i} type="button" role="radio" aria-checked={rating === i} aria-label={`${i} yulduz`}
             onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(0)} onClick={() => setRating(i)} className="p-0.5">
-            <Star className={cn('h-7 w-7 transition', i <= (hover || rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} />
+            <Star className={cn('h-7 w-7 transition', i <= (hover || rating) ? 'fill-yandex text-yandex' : 'text-ink-3')} />
           </button>
         ))}
       </div>

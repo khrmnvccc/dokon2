@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getCurrentUser()) redirect(safeNext(next));
   return (
     <AuthCard title="Kirish" subtitle="Buyurtmalar va sevimlilaringiz uchun hisobingizga kiring"
-      footer={<>Hisobingiz yo‘qmi? <Link href={`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-brand hover:underline">Ro‘yxatdan o‘ting</Link></>}>
+      footer={<>Hisobingiz yo‘qmi? <Link href={`/register${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-primary hover:underline">Ro‘yxatdan o‘ting</Link></>}>
       <LoginForm next={next} linkError={error === 'link'} />
     </AuthCard>
   );

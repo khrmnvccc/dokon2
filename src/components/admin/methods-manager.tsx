@@ -32,7 +32,7 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
               <MoveButtons list={shipping} index={i} onReorder={ship.reorder} />
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{m.name} <Badge className="ml-1">{kindLabel[m.kind]}</Badge></p>
-                <p className="text-xs text-muted">{m.kind === 'pickup' || m.price === 0 ? 'Bepul' : formatPrice(m.price)}{m.free_from ? ` · ${formatPrice(m.free_from)} dan bepul` : ''}{m.eta ? ` · ${m.eta}` : ''}</p>
+                <p className="text-xs text-ink-3">{m.kind === 'pickup' || m.price === 0 ? 'Bepul' : formatPrice(m.price)}{m.free_from ? ` · ${formatPrice(m.free_from)} dan bepul` : ''}{m.eta ? ` · ${m.eta}` : ''}</p>
               </div>
               <Toggle checked={m.is_active} label="Faol" onChange={(v) => ship.toggle(m.id, v)} />
               <RowActions onEdit={() => setEditShip(m)} onDelete={() => ship.remove(m.id)} />
@@ -50,8 +50,8 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{m.name} <Badge className="ml-1">{payKindLabel[m.kind]}</Badge></p>
                   {notConnected ? (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (README: to‘lov integratsiyasi)</p>
-                  ) : m.description && <p className="text-xs text-muted">{m.description}</p>}
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (README: to‘lov integratsiyasi)</p>
+                  ) : m.description && <p className="text-xs text-ink-3">{m.description}</p>}
                 </div>
                 <Toggle checked={m.is_active} label="Faol" onChange={(v) => pay.toggle(m.id, v)} />
                 <RowActions onEdit={() => setEditPay(m)} onDelete={() => pay.remove(m.id)} />

@@ -96,7 +96,7 @@ export default async function AdminProducts({ searchParams }: { searchParams: Pr
           </select>
         </FilterField>
       </FilterBar>
-      {error && <p className="mb-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">Yuklab bo‘lmadi: {error.message}</p>}
+      {error && <p className="mb-3 rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">Yuklab bo‘lmadi: {error.message}</p>}
       <ProductsTable
         rows={rows}
         categories={(categories ?? []).map((c) => ({ id: c.id, name: c.name }))}

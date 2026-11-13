@@ -46,8 +46,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
               {list.length === 0 && <EmptyRow cols={4} text="Buyurtma yo‘q" />}
               {list.map((o) => (
                 <tr key={o.id}>
-                  <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-brand">#{o.number}</Link></td>
-                  <td className="text-muted">{formatDateTime(o.created_at)}</td>
+                  <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary">#{o.number}</Link></td>
+                  <td className="text-ink-3">{formatDateTime(o.created_at)}</td>
                   <td className="text-right tabular-nums">{formatPrice(o.total)}</td>
                   <td><Badge tone={orderStatusTone[o.status]}>{orderStatusLabel[o.status]}</Badge></td>
                 </tr>

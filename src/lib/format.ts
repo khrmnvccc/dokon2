@@ -1,7 +1,7 @@
 const numberFormatter = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
 
-/** 1290000 -> "1 290 000 so'm" */
-export function formatPrice(value: number | null | undefined, symbol = "so'm"): string {
+/** 1290000 -> "1 290 000 soʻm" */
+export function formatPrice(value: number | null | undefined, symbol = "soʻm"): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
   return `${numberFormatter.format(Math.round(value)).replace(/ /g, ' ')} ${symbol}`;
 }

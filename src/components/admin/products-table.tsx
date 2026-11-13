@@ -49,9 +49,9 @@ export function ProductsTable({ rows, categories, canWrite, canDelete }: { rows:
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-white">
+    <div className="overflow-hidden rounded-xl border border-line bg-surface">
       {canWrite && selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-brand-50 px-4 py-2.5 text-sm">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-primary-soft px-4 py-2.5 text-sm">
           <b>{selected.size} ta tanlandi</b>
           <select value={action} onChange={(e) => { setAction(e.target.value); setParam(''); }} className={`${inputSm} h-9`} aria-label="Ommaviy amal">
             <option value="">Amalni tanlang…</option>
@@ -76,7 +76,7 @@ export function ProductsTable({ rows, categories, canWrite, canDelete }: { rows:
             </select>
           )}
           <Button size="sm" onClick={run} loading={pending} disabled={!action || ((action === 'price_percent' || action.startsWith('flag:')) && !param)}>Qo‘llash</Button>
-          <button className="ml-auto text-muted hover:text-ink" onClick={() => setSelected(new Set())}>Bekor qilish</button>
+          <button className="ml-auto text-ink-3 hover:text-ink" onClick={() => setSelected(new Set())}>Bekor qilish</button>
         </div>
       )}
       <Table>
@@ -97,17 +97,17 @@ export function ProductsTable({ rows, categories, canWrite, canDelete }: { rows:
                   <div className="flex items-center gap-3">
                     <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg"><ProductImage src={p.image_url} alt="" sizes="44px" /></div>
                     <div className="min-w-0">
-                      <Link href={`/admin/products/${p.id}`} className="line-clamp-1 font-medium hover:text-brand">{p.name}</Link>
-                      <p className="text-xs text-muted">{p.sku ?? 'SKU yo‘q'}{p.has_variants ? ' · variantli' : ''}</p>
+                      <Link href={`/admin/products/${p.id}`} className="line-clamp-1 font-medium hover:text-primary">{p.name}</Link>
+                      <p className="text-xs text-ink-3">{p.sku ?? 'SKU yo‘q'}{p.has_variants ? ' · variantli' : ''}</p>
                     </div>
                   </div>
                 </td>
-                <td className="text-muted">{p.category_name ?? '—'}</td>
+                <td className="text-ink-3">{p.category_name ?? '—'}</td>
                 <td className="text-right tabular-nums">
                   {formatPrice(p.price)}
-                  {p.compare_at_price ? <div className="text-xs text-muted line-through">{formatPrice(p.compare_at_price)}</div> : null}
+                  {p.compare_at_price ? <div className="text-xs text-ink-3 line-through">{formatPrice(p.compare_at_price)}</div> : null}
                 </td>
-                <td className={`text-right tabular-nums ${p.track_stock && p.stock <= 0 ? 'font-semibold text-red-600' : low ? 'font-semibold text-amber-600' : ''}`}>{p.track_stock ? p.stock : '∞'}</td>
+                <td className={`text-right tabular-nums ${p.track_stock && p.stock <= 0 ? 'font-semibold text-danger' : low ? 'font-semibold text-warn' : ''}`}>{p.track_stock ? p.stock : '∞'}</td>
                 <td className="text-right tabular-nums">{p.sold_count}</td>
                 <td>
                   <div className="flex flex-wrap gap-1">

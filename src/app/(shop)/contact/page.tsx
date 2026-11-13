@@ -32,15 +32,15 @@ export default async function ContactPage() {
       <CmsPageView
         slug="contact"
         aside={
-          <aside className="rounded-2xl bg-white p-5 shadow-card sm:p-6">
-            <h2 className="mb-4 font-bold">Bog‘lanish</h2>
+          <aside className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
+            <h2 className="mb-4 font-semibold">Bog‘lanish</h2>
             <ul className="space-y-4">
               {rows.map(({ icon: Icon, label, value, href }) => (
                 <li key={label} className="flex gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand"><Icon className="h-5 w-5" /></span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary"><Icon className="h-5 w-5" /></span>
                   <span className="min-w-0">
-                    <span className="block text-xs text-muted">{label}</span>
-                    {href ? <a href={href} className="break-words font-medium hover:text-brand" target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">{value}</a> : <span className="font-medium">{value}</span>}
+                    <span className="block text-xs text-ink-3">{label}</span>
+                    {href ? <a href={href} className="break-words font-medium hover:text-primary" target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">{value}</a> : <span className="font-medium">{value}</span>}
                   </span>
                 </li>
               ))}

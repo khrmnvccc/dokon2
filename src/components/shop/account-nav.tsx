@@ -17,12 +17,12 @@ const links = [
 export function AccountNav({ name, email, isStaff }: { name: string; email: string | null; isStaff: boolean }) {
   const pathname = usePathname();
   return (
-    <aside className="rounded-2xl bg-white p-3 shadow-card">
+    <aside className="rounded-xl border border-line bg-surface p-3 shadow-soft">
       <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-lg font-bold text-brand">{name.charAt(0).toUpperCase()}</span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[15px] font-semibold tracking-tight text-primary">{name.charAt(0).toUpperCase()}</span>
         <div className="min-w-0">
           <p className="truncate font-semibold">{name}</p>
-          {email && <p className="truncate text-xs text-muted">{email}</p>}
+          {email && <p className="truncate text-xs text-ink-3">{email}</p>}
         </div>
       </div>
       <nav className="no-scrollbar -mx-1 mt-2 flex gap-1 overflow-x-auto md:flex-col" aria-label="Kabinet">
@@ -30,18 +30,18 @@ export function AccountNav({ name, email, isStaff }: { name: string; email: stri
           const active = href === '/account' ? pathname === href : pathname.startsWith(href);
           return (
             <Link key={href} href={href} aria-current={active ? 'page' : undefined}
-              className={cn('flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium', active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50')}>
+              className={cn('flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium', active ? 'bg-primary-soft text-primary' : 'text-ink-2 hover:bg-surface-2')}>
               <Icon className="h-[18px] w-[18px]" /> {label}
             </Link>
           );
         })}
         {isStaff && (
-          <Link href="/admin" className="flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          <Link href="/admin" className="flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2">
             <LayoutDashboard className="h-[18px] w-[18px]" /> Admin panel
           </Link>
         )}
         <form action={logout}>
-          <button className="flex w-full shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50">
+          <button className="flex w-full shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-danger hover:bg-danger-soft">
             <LogOut className="h-[18px] w-[18px]" /> Chiqish
           </button>
         </form>

@@ -1,0 +1,108 @@
+// Do'kon qanday ko'rinishi va nomi: Ega uni Sozlamalar → Brend va dizayn bo'limida o'rnatadi.
+// Server (saqlash uchun) ham, brauzer (chizish uchun) ham shu faylni ishlatadi — kassa saytidan aynan ko'chirilgan.
+
+export interface BrandSettings {
+  /** Shown next to the logo, in the browser tab and on the sign-in page. */
+  name: string;
+  /** The small line under the name. */
+  tagline: string;
+  /** Main colour of buttons, links and the active menu item (#rrggbb). */
+  color: string;
+  /** Own logo as a small PNG/JPEG/WebP data URL; null keeps the default mark. */
+  logo: string | null;
+  /** Big line on the sign-in page. */
+  headline: string;
+  /** Corners: soft (default), sharp or round. */
+  corners: 'soft' | 'sharp' | 'round';
+  /** Menu section names, when renamed. */
+  groups: Partial<Record<MenuGroup, string>>;
+  /** Moving background: stars, snow and so on; 'none' keeps it still. */
+  effect: EffectName;
+  /** How many of them: few, normal or many. */
+  effectAmount: 'low' | 'mid' | 'high';
+  /** Every page, or only the sign-in page. */
+  effectWhere: 'all' | 'login';
+  /** Over the page (like the sample video) or only behind the cards. */
+  effectLayer: 'front' | 'back';
+}
+
+export const EFFECTS = [
+  { value: 'none', label: 'Oddiy (harakatsiz)' },
+  { value: 'stars', label: 'Yulduzlar' },
+  { value: 'snow', label: 'Qor' },
+  { value: 'sparks', label: 'Uchqunlar' },
+  { value: 'bubbles', label: 'Pufakchalar' },
+  { value: 'confetti', label: 'Konfetti' },
+  { value: 'petals', label: 'Gul barglari' },
+  { value: 'glow', label: 'Nur' },
+] as const;
+export type EffectName = (typeof EFFECTS)[number]['value'];
+
+export const MENU_GROUPS = ['Asosiy', 'Hisobotlar', 'Boshqaruv'] as const;
+export type MenuGroup = (typeof MENU_GROUPS)[number];
+
+export const DEFAULT_BRAND: BrandSettings = {
+  name: 'Mening doʻkonim',
+  tagline: 'Onlayn doʻkon',
+  color: '#007aff',
+  logo: null,
+  headline: 'Sevimli mahsulotlaringiz — bir necha bosishda eshigingizgacha.',
+  corners: 'soft',
+  groups: {},
+  effect: 'none',
+  effectAmount: 'mid',
+  effectWhere: 'all',
+  effectLayer: 'front',
+};
+
+export const COLOR_PRESETS: Array<{ value: string; label: string }> = [
+  { value: '#007aff', label: 'Koʻk' },
+  { value: '#5856d6', label: 'Binafsha' },
+  { value: '#00204f', label: 'Toʻq koʻk' },
+  { value: '#248a3d', label: 'Yashil' },
+  { value: '#0f8b8d', label: 'Feruza' },
+  { value: '#ea7612', label: 'Toʻq sariq' },
+  { value: '#d70015', label: 'Qizil' },
+  { value: '#1c1c1e', label: 'Qora' },
+];
+
+export const BRAND_LIMITS = { name: 30, tagline: 40, headline: 140, group: 20, logo: 200_000 };
+
+const LOGO_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
+const clip = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
+
+/** Keeps only sensible values; anything missing or wrong falls back to the default. */
+export function cleanBrand(raw: unknown): BrandSettings {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const color = typeof r.color === 'string' && /^#[0-9a-f]{6}$/i.test(r.color) ? r.color.toLowerCase() : DEFAULT_BRAND.color;
+  const logo = typeof r.logo === 'string' && r.logo.length <= BRAND_LIMITS.logo && LOGO_RE.test(r.logo) ? r.logo : null;
+  const groups: BrandSettings['groups'] = {};
+  for (const g of MENU_GROUPS) {
+    const v = clip(r.groups?.[g], BRAND_LIMITS.group);
+    if (v && v !== g) groups[g] = v;
+  }
+  return {
+    name: clip(r.name, BRAND_LIMITS.name) || DEFAULT_BRAND.name,
+    tagline: typeof r.tagline === 'string' ? clip(r.tagline, BRAND_LIMITS.tagline) : DEFAULT_BRAND.tagline,
+    color,
+    logo,
+    headline: clip(r.headline, BRAND_LIMITS.headline) || DEFAULT_BRAND.headline,
+    corners: r.corners === 'sharp' || r.corners === 'round' ? r.corners : 'soft',
+    groups,
+    effect: EFFECTS.some((e) => e.value === r.effect) ? r.effect : 'none',
+    effectAmount: r.effectAmount === 'low' || r.effectAmount === 'high' ? r.effectAmount : 'mid',
+    effectWhere: r.effectWhere === 'login' ? 'login' : 'all',
+    effectLayer: r.effectLayer === 'back' ? 'back' : 'front',
+  };
+}
+
+/** Text on the main colour: white, or near-black on a light colour so it stays readable. */
+export function textOn(color: string): string {
+  const n = parseInt(color.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return lum > 0.4 ? '#1c1c1e' : '#ffffff';
+}

@@ -39,17 +39,17 @@ export function DiscountsManager({ kind, items, categories, products }: { kind: 
   return (
     <div>
       <div className="mb-3 flex justify-end"><Button size="sm" onClick={() => setEditing('new')}><Plus className="h-4 w-4" /> {isCoupon ? 'Promo-kod' : 'Aksiya'} qo‘shish</Button></div>
-      <div className="overflow-hidden rounded-xl border border-line bg-white">
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <Table>
           <thead><tr><th>{isCoupon ? 'Kod' : 'Nomi'}</th><th>Chegirma</th><th>Qamrov</th><th>Muddat</th>{isCoupon && <th>Ishlatilgan</th>}<th>Holat</th><th>Faol</th><th /></tr></thead>
           <tbody>
             {items.length === 0 && <EmptyRow cols={8} />}
             {items.map((x) => (
               <tr key={x.id}>
-                <td className="font-semibold">{'code' in x ? <code className="rounded bg-slate-100 px-1.5 py-0.5">{x.code}</code> : x.title}</td>
-                <td>{valueText(x)}{'max_discount' in x && x.max_discount ? <span className="text-xs text-muted"> (≤ {formatPrice(x.max_discount)})</span> : null}</td>
-                <td className="text-muted">{scopeText[x.scope]}{'min_order_amount' in x && x.min_order_amount > 0 && <div className="text-xs">min {formatPrice(x.min_order_amount)}</div>}</td>
-                <td className="text-xs text-muted">{period(x.starts_at, x.ends_at)}</td>
+                <td className="font-semibold">{'code' in x ? <code className="rounded bg-surface-2 px-1.5 py-0.5">{x.code}</code> : x.title}</td>
+                <td>{valueText(x)}{'max_discount' in x && x.max_discount ? <span className="text-xs text-ink-3"> (≤ {formatPrice(x.max_discount)})</span> : null}</td>
+                <td className="text-ink-3">{scopeText[x.scope]}{'min_order_amount' in x && x.min_order_amount > 0 && <div className="text-xs">min {formatPrice(x.min_order_amount)}</div>}</td>
+                <td className="text-xs text-ink-3">{period(x.starts_at, x.ends_at)}</td>
                 {isCoupon && 'used_count' in x && <td className="tabular-nums">{x.used_count}{x.usage_limit ? ` / ${x.usage_limit}` : ''}</td>}
                 <td>{statusOf(x)}</td>
                 <td><Toggle checked={x.is_active} label="Faol" onChange={(v) => crud.toggle(x.id, v)} disabled={crud.pending} /></td>
@@ -77,7 +77,7 @@ function MultiPicker({ control, name, options, label, error }: { control: Contro
         <Field label={label} error={error} className="sm:col-span-2">
           <div className="mb-2 flex flex-wrap gap-1.5">
             {selected.map((o) => (
-              <span key={o.id} className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+              <span key={o.id} className="flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary">
                 {o.name}<button type="button" onClick={() => field.onChange(value.filter((v) => v !== o.id))} aria-label="Olib tashlash"><X className="h-3 w-3" /></button>
               </span>
             ))}
@@ -85,7 +85,7 @@ function MultiPicker({ control, name, options, label, error }: { control: Contro
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Qidirib qo‘shing…" />
           {found.length > 0 && (
             <ul className="mt-1 max-h-48 overflow-auto rounded-lg border border-line">
-              {found.map((o) => <li key={o.id}><button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { field.onChange([...value, o.id]); setQ(''); }}>{o.name}</button></li>)}
+              {found.map((o) => <li key={o.id}><button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-surface-2" onClick={() => { field.onChange([...value, o.id]); setQ(''); }}>{o.name}</button></li>)}
             </ul>
           )}
         </Field>

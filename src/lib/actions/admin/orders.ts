@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { after } from 'next/server';
+import { onOrderUpdate } from '@/lib/telegram/events';
 import { z } from 'zod';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/auth';
@@ -38,5 +40,10 @@ export async function updateOrder(input: z.input<typeof schema>): Promise<Action
   revalidatePath(`/admin/orders/${d.orderId}`);
   revalidatePath('/admin/orders');
   if (d.status === 'cancelled' || d.status === 'returned') revalidateTag(TAGS.products);
+  if (d.status || d.payment_status) {
+    const { data: me } = await supabase.from('profiles').select('full_name').eq('id', ctx.userId).maybeSingle();
+    const by = me?.full_name || ctx.email || 'Xodim';
+    after(() => onOrderUpdate(d.orderId, { status: d.status, payment: ctx.permissions.has('orders.write') ? d.payment_status : null, note: d.note, by }));
+  }
   return { ok: true, message: 'Buyurtma yangilandi' };
 }

@@ -5,7 +5,7 @@ import { ORDER_STATUSES } from '@/lib/order-status';
 import { normalizeUzPhone } from '@/lib/phone';
 import type { OrderStatus } from '@/lib/types';
 
-export type OrderFilters = { q?: string; status?: string; from?: string; to?: string; payment?: string; shipping?: string };
+export type OrderFilters = { q?: string; status?: string; from?: string; to?: string; payment?: string; shipping?: string; branch?: number };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -38,6 +38,7 @@ export function applyOrderFilters<Q>(query: Q, f: OrderFilters): Q {
   }
   if (f.payment) q = q.eq('payment_method_name', f.payment);
   if (f.shipping) q = q.eq('shipping_method_name', f.shipping);
+  if (f.branch && Number.isInteger(f.branch) && f.branch > 0) q = q.eq('branch_id', f.branch);
   return q as unknown as Q;
 }
 

@@ -17,6 +17,8 @@ export function dbErrorText(error: { code?: string; message?: string } | null | 
   if (error.code === '42501' || msg.includes('FORBIDDEN')) return 'Bu amal uchun ruxsat yo‘q';
   if (msg.includes('INVALID_TRANSITION')) return 'Bu holatga o‘tkazib bo‘lmaydi';
   if (msg.includes('LAST_SUPER_ADMIN')) return 'Oxirgi super adminni o‘chirib bo‘lmaydi';
+  if (msg.includes('OWNER_LOCKED')) return 'Ega ruxsatlarini oʻzgartirib boʻlmaydi';
+  if (msg.includes('PERM_NOT_YOURS')) return 'Oʻzingizda yoʻq ruxsatni bera olmaysiz';
   if (msg.includes('USER_NOT_FOUND')) return 'Bu email bilan foydalanuvchi topilmadi. Avval saytda ro‘yxatdan o‘tsin';
   console.error('db', error.code, msg);
   return fallback;

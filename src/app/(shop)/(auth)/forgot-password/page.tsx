@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Parolni tiklash', robots: { index: f
 export default function ForgotPage() {
   return (
     <AuthCard title="Parolni tiklash" subtitle="Emailingizni kiriting, tiklash havolasini yuboramiz"
-      footer={<Link href="/login" className="font-semibold text-brand hover:underline">Kirish sahifasiga qaytish</Link>}>
+      footer={<Link href="/login" className="font-semibold text-primary hover:underline">Kirish sahifasiga qaytish</Link>}>
       <ForgotForm />
     </AuthCard>
   );

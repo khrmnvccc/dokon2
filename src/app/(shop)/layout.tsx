@@ -14,25 +14,25 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   if (settings.maintenance.enabled && !(await getStaffContext())) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand"><Wrench className="h-8 w-8" /></div>
-        <h1 className="text-2xl font-bold">{settings.store.name}</h1>
-        <p className="mt-2 max-w-md text-muted">{settings.maintenance.message || 'Saytda texnik ishlar olib borilmoqda.'}</p>
-        {settings.contact.phone && <p className="mt-4 text-sm">Aloqa: <a className="font-semibold text-brand" href={`tel:${settings.contact.phone}`}>{settings.contact.phone}</a></p>}
-        <Link href="/login" className="mt-8 text-xs text-muted underline">Xodimlar uchun kirish</Link>
+        <div className="mb-5 flex size-14 items-center justify-center rounded-2xl border border-line bg-surface text-ink-3 shadow-soft"><Wrench className="size-7" /></div>
+        <h1 className="text-2xl font-semibold tracking-tight">{settings.brand.name}</h1>
+        <p className="mt-2 max-w-md text-ink-3">{settings.maintenance.message || 'Saytda texnik ishlar olib borilmoqda.'}</p>
+        {settings.contact.phone && <p className="mt-4 text-sm">Aloqa: <a className="font-semibold text-primary" href={`tel:${settings.contact.phone}`}>{settings.contact.phone}</a></p>}
+        <Link href="/login" className="mt-8 text-xs text-ink-3 underline">Xodimlar uchun kirish</Link>
       </main>
     );
   }
 
   return (
     <>
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-pop">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-surface focus:px-4 focus:text-ink focus:py-2 focus:shadow-pop">
         Asosiy kontentga o‘tish
       </a>
       {settings.maintenance.enabled && (
-        <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-semibold text-white">Texnik xizmat rejimi yoqilgan — sayt faqat xodimlarga ko‘rinmoqda</div>
+        <div className="bg-warn-soft px-4 py-1.5 text-center text-xs font-medium text-warn">Texnik xizmat rejimi yoqilgan — sayt faqat xodimlarga ko‘rinmoqda</div>
       )}
       <Header settings={settings} tree={tree} />
-      <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-4 sm:py-6">{children}</main>
+      <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <Footer settings={settings} t={t} />
       <MobileBottomNav />
     </>

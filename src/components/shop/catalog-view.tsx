@@ -37,7 +37,7 @@ export async function CatalogView({ params, page, basePath, searchParams, catego
       <div className="min-w-0 flex-1">
         {header}
         <div className="mb-4 flex items-center justify-between gap-3">
-          <p className="text-sm text-muted">{t('catalog.found', { n: total })}</p>
+          <p className="text-sm text-ink-3">{t('catalog.found', { n: total })}</p>
           <div className="flex items-center gap-2">
             <Suspense><CatalogFilters facets={facets} mode="mobile" /></Suspense>
             <Suspense><SortSelect /></Suspense>

@@ -1,5 +1,5 @@
 // Interfeys matnlari. Mahsulot va sahifa kontenti admin panelda kiritilgan tilda ko'rsatiladi.
-export const LANGS = ['uz', 'ru'] as const;
+export const LANGS = ['uz', 'ru', 'zh'] as const;
 export type Lang = (typeof LANGS)[number];
 
 const uz = {
@@ -140,8 +140,76 @@ const ru: Dict = {
   'catalog.emptyText': 'Измените фильтры или попробуйте другой запрос.',
 };
 
+const zh: Dict = {
+  'nav.home': '首页',
+  'nav.catalog': '商品目录',
+  'nav.cart': '购物车',
+  'nav.wishlist': '收藏',
+  'nav.profile': '我的',
+  'nav.login': '登录',
+  'nav.orders': '订单',
+  'nav.categories': '分类',
+  'search.placeholder': '搜索商品、品牌或编号',
+  'search.button': '搜索',
+  'product.addToCart': '加入购物车',
+  'product.inCart': '已在购物车',
+  'product.choose': '选择',
+  'product.outOfStock': '缺货',
+  'product.inStock': '有货',
+  'product.lowStock': '仅剩 {n} 件',
+  'product.new': '新品',
+  'product.hit': '热卖',
+  'product.reviews': '条评价',
+  'product.buyNow': '立即购买',
+  'product.description': '商品描述',
+  'product.specs': '规格参数',
+  'product.related': '相似商品',
+  'cart.title': '购物车',
+  'cart.empty': '购物车是空的',
+  'cart.emptyText': '去商品目录挑选商品吧，它们会出现在这里。',
+  'cart.subtotal': '商品',
+  'cart.discount': '优惠',
+  'cart.shipping': '配送',
+  'cart.total': '合计',
+  'cart.checkout': '去结算',
+  'cart.continue': '继续购物',
+  'cart.free': '免费',
+  'cart.toFree': '再买 {amount} 即可免运费',
+  'cart.minOrder': '最低订单金额：{amount}',
+  'checkout.title': '确认订单',
+  'checkout.place': '提交订单',
+  'common.seeAll': '全部',
+  'common.back': '返回',
+  'common.loading': '加载中…',
+  'common.save': '保存',
+  'common.cancel': '取消',
+  'filters.title': '筛选',
+  'filters.price': '价格',
+  'filters.from': '从',
+  'filters.to': '到',
+  'filters.discount': '仅看优惠',
+  'filters.inStock': '仅看有货',
+  'filters.rating': '评分',
+  'filters.color': '颜色',
+  'filters.size': '尺码',
+  'filters.apply': '查看结果',
+  'filters.reset': '重置',
+  'sort.popular': '热门',
+  'sort.price_asc': '价格从低到高',
+  'sort.price_desc': '价格从高到低',
+  'sort.new': '最新',
+  'sort.rating': '按评分',
+  'sort.discount': '按折扣',
+  'footer.contacts': '联系方式',
+  'footer.social': '社交媒体',
+  'footer.hours': '营业时间',
+  'catalog.found': '共 {n} 件商品',
+  'catalog.empty': '未找到商品',
+  'catalog.emptyText': '请调整筛选条件或换个关键词。',
+};
+
 export type TKey = keyof typeof uz;
-export const dictionaries: Record<Lang, Dict> = { uz, ru };
+export const dictionaries: Record<Lang, Dict> = { uz, ru, zh };
 
 export function translate(lang: Lang, key: TKey, vars?: Record<string, string | number>): string {
   let text = dictionaries[lang]?.[key] ?? uz[key] ?? key;

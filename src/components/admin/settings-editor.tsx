@@ -12,9 +12,14 @@ import { cn } from '@/components/ui/cn';
 import { ICONS } from '@/components/shop/dynamic-icon';
 import { SingleImageField } from './upload';
 import { Panel } from './ui';
+import { BrandCard } from './brand-card';
+import { BranchesTab, PagesTab, type BranchRow } from './owner-tabs';
 
 const TABS = [
-  { id: 'store', label: 'Do‘kon va dizayn' },
+  { id: 'brand', label: 'Brend va dizayn' },
+  { id: 'pages', label: 'Oynalar' },
+  { id: 'branches', label: 'Filiallar' },
+  { id: 'store', label: 'Doʻkon' },
   { id: 'contact', label: 'Aloqa va ijtimoiy tarmoqlar' },
   { id: 'home', label: 'Bosh sahifa' },
   { id: 'menu', label: 'Menyu va footer' },
@@ -23,6 +28,8 @@ const TABS = [
   { id: 'seo', label: 'SEO' },
   { id: 'maintenance', label: 'Texnik rejim' },
 ] as const;
+
+const OWNER_TABS: string[] = ['brand', 'pages', 'branches'];
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Asosiy slayder', categories: 'Kategoriyalar', bestsellers: 'Xit mahsulotlar', promo: 'Aksiya bannerlari', new: 'Yangi mahsulotlar',
@@ -54,19 +61,24 @@ function SaveBar({ pending, onSave }: { pending: boolean; onSave: () => void }) 
   return <div className="mt-5 flex justify-end border-t border-line pt-4"><Button loading={pending} onClick={onSave}>Saqlash</Button></div>;
 }
 
-export function SettingsEditor({ initial }: { initial: SiteSettings }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>('store');
+export function SettingsEditor({ initial, isOwner, branches }: { initial: SiteSettings; isOwner: boolean; branches: BranchRow[] }) {
+  // Brend va dizaynni faqat Ega ko'radi va o'zgartiradi.
+  const tabs = TABS.filter((t) => isOwner || !OWNER_TABS.includes(t.id));
+  const [tab, setTab] = useState<(typeof TABS)[number]['id']>(isOwner ? 'brand' : 'store');
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_1fr] lg:items-start">
-      <nav className="no-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-line bg-white p-2 lg:flex-col" aria-label="Sozlamalar bo‘limlari">
-        {TABS.map((t) => (
+      <nav className="no-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-line bg-surface p-2 lg:flex-col" aria-label="Sozlamalar bo‘limlari">
+        {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id ? 'page' : undefined}
-            className={cn('shrink-0 rounded-lg px-3 py-2 text-left text-sm font-medium', tab === t.id ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50')}>
+            className={cn('h-9 shrink-0 rounded-lg px-3 text-left text-sm font-medium transition-colors', tab === t.id ? 'bg-surface-3 text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink')}>
             {t.label}
           </button>
         ))}
       </nav>
       <div>
+        {tab === 'brand' && isOwner && <BrandCard />}
+        {tab === 'pages' && isOwner && <PagesTab initial={initial.pages} />}
+        {tab === 'branches' && isOwner && <BranchesTab key={branches.map((b) => b.id).join()} initial={branches} />}
         {tab === 'store' && <StoreTab initial={initial.store} />}
         {tab === 'contact' && <ContactTab contact={initial.contact} social={initial.social} />}
         {tab === 'home' && <HomeTab sections={initial.home_sections} advantages={initial.advantages} announcement={initial.announcement} />}
@@ -85,25 +97,13 @@ function StoreTab({ initial }: { initial: SiteSettings['store'] }) {
   const v = s.value;
   const set = (patch: Partial<typeof v>) => s.setValue({ ...v, ...patch });
   return (
-    <Panel title="Do‘kon va dizayn">
+    <Panel title="Doʻkon" subtitle="Yuridik nom va rasmiy rasmlar (SEO, chek, Open Graph)">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Do‘kon nomi" error={s.errors.name}><Input value={v.name} onChange={(e) => set({ name: e.target.value })} /></Field>
         <Field label="Shior"><Input value={v.tagline} onChange={(e) => set({ tagline: e.target.value })} /></Field>
         <SingleImageField label="Logotip" folder="branding" aspect="aspect-[3/1]" value={v.logo_url} onChange={(url) => set({ logo_url: url })} />
         <SingleImageField label="Favicon (kvadrat, PNG)" folder="branding" value={v.favicon_url} onChange={(url) => set({ favicon_url: url })} />
-        {(['primary_color', 'accent_color'] as const).map((k) => (
-          <Field key={k} label={k === 'primary_color' ? 'Asosiy rang' : 'Urg‘u rangi (chegirma, tugmalar)'} error={s.errors[k]}>
-            <div className="flex gap-2">
-              <input type="color" value={v[k]} onChange={(e) => set({ [k]: e.target.value })} className="h-11 w-14 cursor-pointer rounded-lg border border-line" aria-label="Rang tanlash" />
-              <Input value={v[k]} onChange={(e) => set({ [k]: e.target.value })} />
-            </div>
-          </Field>
-        ))}
-        <div className="sm:col-span-2 flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 p-4 text-sm">
-          Oldindan ko‘rish:
-          <span className="rounded-lg px-4 py-2 font-semibold text-white" style={{ background: v.primary_color }}>Savatchaga</span>
-          <span className="rounded-lg px-3 py-1 font-bold text-white" style={{ background: v.accent_color }}>−20%</span>
-        </div>
+        <p className="text-[13px] text-ink-3 sm:col-span-2">Rang, logotip, burchaklar va fon effekti “Brend va dizayn” boʻlimida.</p>
       </div>
       <SaveBar pending={s.pending} onSave={() => s.save()} />
     </Panel>
@@ -186,7 +186,7 @@ function HomeTab({ sections, advantages, announcement }: { sections: SiteSetting
               </Select>
               <Input className="h-9" value={a.title} placeholder="Sarlavha" onChange={(e) => adv.setValue(adv.value.map((x, k) => (k === i ? { ...x, title: e.target.value } : x)))} />
               <Input className="h-9" value={a.text} placeholder="Matn" onChange={(e) => adv.setValue(adv.value.map((x, k) => (k === i ? { ...x, text: e.target.value } : x)))} />
-              <Button size="icon" variant="ghost" onClick={() => adv.setValue(adv.value.filter((_, k) => k !== i))} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-red-600" /></Button>
+              <Button size="icon" variant="ghost" onClick={() => adv.setValue(adv.value.filter((_, k) => k !== i))} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-danger" /></Button>
             </div>
           ))}
         </div>
@@ -207,7 +207,7 @@ function LinksEditor({ links, onChange, max = 12 }: { links: { label: string; hr
           </div>
           <Input className="h-9" value={l.label} placeholder="Nomi" onChange={(e) => onChange(links.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} />
           <Input className="h-9" value={l.href} placeholder="/sale yoki https://" onChange={(e) => onChange(links.map((x, k) => (k === i ? { ...x, href: e.target.value } : x)))} />
-          <Button size="icon" variant="ghost" onClick={() => onChange(links.filter((_, k) => k !== i))} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-red-600" /></Button>
+          <Button size="icon" variant="ghost" onClick={() => onChange(links.filter((_, k) => k !== i))} aria-label="O‘chirish"><Trash2 className="h-4 w-4 text-danger" /></Button>
         </div>
       ))}
       {links.length < max && <Button size="sm" variant="secondary" onClick={() => onChange([...links, { label: '', href: '/' }])}><Plus className="h-4 w-4" /> Havola</Button>}
@@ -233,14 +233,14 @@ function MenuTab({ menu, footer }: { menu: SiteSettings['header_menu']; footer: 
             <div key={i} className="rounded-lg border border-line p-3">
               <div className="mb-2 flex gap-2">
                 <Input className="h-9 font-semibold" value={col.title} placeholder="Ustun sarlavhasi" onChange={(e) => f.setValue({ ...fv, columns: fv.columns.map((c, k) => (k === i ? { ...c, title: e.target.value } : c)) })} />
-                <Button size="sm" variant="ghost" className="text-red-600" onClick={() => f.setValue({ ...fv, columns: fv.columns.filter((_, k) => k !== i) })}>Ustunni o‘chirish</Button>
+                <Button size="sm" variant="ghost" className="text-danger" onClick={() => f.setValue({ ...fv, columns: fv.columns.filter((_, k) => k !== i) })}>Ustunni o‘chirish</Button>
               </div>
               <LinksEditor max={10} links={col.links} onChange={(links) => f.setValue({ ...fv, columns: fv.columns.map((c, k) => (k === i ? { ...c, links } : c)) })} />
             </div>
           ))}
           {fv.columns.length < 5 && <Button variant="outline" size="sm" onClick={() => f.setValue({ ...fv, columns: [...fv.columns, { title: 'Yangi ustun', links: [] }] })}><Plus className="h-4 w-4" /> Ustun qo‘shish</Button>}
         </div>
-        {Object.keys(f.errors).length > 0 && <p className="mt-3 text-xs text-red-600">Bo‘sh nom yoki havolalarni to‘ldiring.</p>}
+        {Object.keys(f.errors).length > 0 && <p className="mt-3 text-xs text-danger">Bo‘sh nom yoki havolalarni to‘ldiring.</p>}
         <SaveBar pending={f.pending} onSave={() => f.save()} />
       </Panel>
     </div>
@@ -259,7 +259,7 @@ function CheckoutTab({ initial }: { initial: SiteSettings['checkout'] }) {
         <Field label="Checkout’dagi eslatma" className="sm:col-span-2"><Input value={v.order_note} onChange={(e) => s.setValue({ ...v, order_note: e.target.value })} placeholder="Operator 15 daqiqa ichida qo‘ng‘iroq qiladi" /></Field>
         <Checkbox label="Ro‘yxatdan o‘tmasdan buyurtma berishga ruxsat" checked={v.allow_guest_checkout} onChange={(e) => s.setValue({ ...v, allow_guest_checkout: e.target.checked })} />
       </div>
-      <p className="mt-4 text-xs text-muted">Yetkazib berish narxlari va to‘lov usullari “Yetkazish va to‘lov” bo‘limida.</p>
+      <p className="mt-4 text-xs text-ink-3">Yetkazib berish narxlari va to‘lov usullari “Yetkazish va to‘lov” bo‘limida.</p>
       <SaveBar pending={s.pending} onSave={() => s.save()} />
     </Panel>
   );
@@ -268,7 +268,7 @@ function CheckoutTab({ initial }: { initial: SiteSettings['checkout'] }) {
 function LocalizationTab({ initial }: { initial: SiteSettings['localization'] }) {
   const s = useSection('localization', initial);
   const v = s.value;
-  const toggleLang = (l: 'uz' | 'ru', on: boolean) => {
+  const toggleLang = (l: 'uz' | 'ru' | 'zh', on: boolean) => {
     const languages = on ? [...new Set([...v.languages, l])] : v.languages.filter((x) => x !== l);
     s.setValue({ ...v, languages, default_language: languages.includes(v.default_language) ? v.default_language : languages[0] ?? 'uz' });
   };
@@ -279,12 +279,13 @@ function LocalizationTab({ initial }: { initial: SiteSettings['localization'] })
           <p className="text-sm font-medium">Sayt tillari</p>
           <Checkbox label="O‘zbekcha" checked={v.languages.includes('uz')} onChange={(e) => toggleLang('uz', e.target.checked)} />
           <Checkbox label="Русский" checked={v.languages.includes('ru')} onChange={(e) => toggleLang('ru', e.target.checked)} />
-          {s.errors.languages && <p className="text-xs text-red-600">Kamida bitta til tanlang</p>}
-          <p className="text-xs text-muted">Interfeys matnlari tarjima qilinadi. Mahsulot va sahifa matnlari kiritilgan tilda ko‘rinadi.</p>
+          <Checkbox label="中文" checked={v.languages.includes('zh')} onChange={(e) => toggleLang('zh', e.target.checked)} />
+          {s.errors.languages && <p className="text-xs text-danger">Kamida bitta til tanlang</p>}
+          <p className="text-xs text-ink-3">Interfeys matnlari tarjima qilinadi. Mahsulot va sahifa matnlari kiritilgan tilda ko‘rinadi.</p>
         </div>
         <Field label="Asosiy til">
-          <Select value={v.default_language} onChange={(e) => s.setValue({ ...v, default_language: e.target.value as 'uz' | 'ru' })}>
-            {v.languages.map((l) => <option key={l} value={l}>{l === 'uz' ? 'O‘zbekcha' : 'Русский'}</option>)}
+          <Select value={v.default_language} onChange={(e) => s.setValue({ ...v, default_language: e.target.value as 'uz' | 'ru' | 'zh' })}>
+            {v.languages.map((l) => <option key={l} value={l}>{l === 'uz' ? 'O‘zbekcha' : l === 'ru' ? 'Русский' : '中文'}</option>)}
           </Select>
         </Field>
         <Field label="Valyuta kodi" error={s.errors.currency}><Input value={v.currency} maxLength={3} onChange={(e) => s.setValue({ ...v, currency: e.target.value.toUpperCase() })} /></Field>

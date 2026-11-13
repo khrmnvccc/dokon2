@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Bildirishnomalar</h1>
+        <h1 className="text-xl font-semibold">Bildirishnomalar</h1>
         {unread && (
           <form action={async () => { 'use server'; await markMyNotificationsRead(); }}>
             <Button size="sm" variant="outline">Hammasini o‘qilgan deb belgilash</Button>
@@ -31,10 +31,10 @@ export default async function NotificationsPage() {
         <ul className="space-y-2">
           {items.map((n) => {
             const body = (
-              <div className={cn('rounded-2xl bg-white p-4 shadow-card', !n.is_read && 'border-l-4 border-brand')}>
+              <div className={cn('rounded-xl border border-line bg-surface p-4 shadow-soft', !n.is_read && 'border-l-4 border-primary')}>
                 <p className="font-semibold">{n.title}</p>
-                {n.body && <p className="text-sm text-slate-600">{n.body}</p>}
-                <p className="mt-1 text-xs text-muted">{formatDateTime(n.created_at)}</p>
+                {n.body && <p className="text-sm text-ink-2">{n.body}</p>}
+                <p className="mt-1 text-xs text-ink-3">{formatDateTime(n.created_at)}</p>
               </div>
             );
             return <li key={n.id}>{n.link?.startsWith('/') ? <Link href={n.link}>{body}</Link> : body}</li>;

@@ -29,15 +29,15 @@ export function PagesManager({ pages }: { pages: CmsPage[] }) {
   return (
     <div>
       <div className="mb-3 flex justify-end"><Button size="sm" onClick={() => setEditing('new')}><Plus className="h-4 w-4" /> Sahifa</Button></div>
-      <div className="overflow-hidden rounded-xl border border-line bg-white">
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <Table>
           <thead><tr><th>Sarlavha</th><th>Manzil</th><th>Yangilangan</th><th>Chop etilgan</th><th /></tr></thead>
           <tbody>
             {pages.map((p) => (
               <tr key={p.id}>
                 <td className="font-medium">{p.title}</td>
-                <td>{BUILTIN.includes(p.slug) ? <Link href={`/${p.slug}`} target="_blank" className="inline-flex items-center gap-1 text-brand">/{p.slug} <ExternalLink className="h-3 w-3" /></Link> : <span className="text-muted">/{p.slug} (menyuga havola qo‘shing)</span>}</td>
-                <td className="text-muted">{formatDateTime(p.updated_at)}</td>
+                <td>{BUILTIN.includes(p.slug) ? <Link href={`/${p.slug}`} target="_blank" className="inline-flex items-center gap-1 text-primary">/{p.slug} <ExternalLink className="h-3 w-3" /></Link> : <span className="text-ink-3">/{p.slug} (menyuga havola qo‘shing)</span>}</td>
+                <td className="text-ink-3">{formatDateTime(p.updated_at)}</td>
                 <td><Toggle checked={p.is_published} label="Chop etilgan" onChange={(v) => crud.toggle(p.id, v, 'is_published')} /></td>
                 <td><RowActions onEdit={() => setEditing(p)} onDelete={BUILTIN.includes(p.slug) ? undefined : () => crud.remove(p.id)} /></td>
               </tr>
@@ -66,7 +66,7 @@ function PageForm({ page, onDone, save }: { page: CmsPage | null; onDone: () => 
       <div className="sm:col-span-2">
         <div className="mb-2 flex gap-1">
           {(['edit', 'preview'] as const).map((t) => (
-            <button key={t} type="button" onClick={() => setTab(t)} className={cn('rounded-lg px-3 py-1.5 text-sm font-medium', tab === t ? 'bg-slate-900 text-white' : 'text-muted hover:bg-slate-100')}>
+            <button key={t} type="button" onClick={() => setTab(t)} className={cn('rounded-lg px-3 py-1.5 text-sm font-medium', tab === t ? 'bg-primary text-primary-fg shadow-soft' : 'text-ink-3 hover:bg-surface-2')}>
               {t === 'edit' ? 'Matn (Markdown)' : 'Ko‘rinish'}
             </button>
           ))}
@@ -76,7 +76,7 @@ function PageForm({ page, onDone, save }: { page: CmsPage | null; onDone: () => 
         ) : (
           <div className="prose-dk max-h-[420px] overflow-auto rounded-xl border border-line p-4" dangerouslySetInnerHTML={{ __html: markdownToHtml(watch('content') ?? '') }} />
         )}
-        <p className="mt-1 text-xs text-muted">## Sarlavha, ### Kichik sarlavha (FAQ’da savol), - ro‘yxat, **qalin**, [havola](/catalog)</p>
+        <p className="mt-1 text-xs text-ink-3">## Sarlavha, ### Kichik sarlavha (FAQ’da savol), - ro‘yxat, **qalin**, [havola](/catalog)</p>
       </div>
       <Field label="SEO sarlavha" htmlFor="p-seo"><Input id="p-seo" {...register('seo_title')} /></Field>
       <Field label="SEO tavsif" htmlFor="p-seod"><Input id="p-seod" {...register('seo_description')} /></Field>

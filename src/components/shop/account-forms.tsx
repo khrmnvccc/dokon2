@@ -93,7 +93,7 @@ export function AddressBook({ addresses }: { addresses: Address[] }) {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Manzillar</h1>
+        <h1 className="text-xl font-semibold">Manzillar</h1>
         <Button size="sm" onClick={() => setEditing('new')} disabled={addresses.length >= 10}><Plus className="h-4 w-4" /> Qo‘shish</Button>
       </div>
       {addresses.length === 0 ? (
@@ -101,12 +101,12 @@ export function AddressBook({ addresses }: { addresses: Address[] }) {
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {addresses.map((a) => (
-            <li key={a.id} className="rounded-2xl bg-white p-4 text-sm shadow-card">
+            <li key={a.id} className="rounded-xl border border-line bg-surface p-4 text-sm shadow-soft">
               <div className="flex items-start justify-between gap-2">
                 <p className="font-semibold">{a.label || 'Manzil'} {a.is_default && <Badge tone="brand">Asosiy</Badge>}</p>
                 <div className="flex gap-1">
-                  <button className="rounded-lg p-1.5 text-muted hover:bg-slate-100" onClick={() => setEditing(a)} aria-label="Tahrirlash"><Pencil className="h-4 w-4" /></button>
-                  <button className="rounded-lg p-1.5 text-muted hover:bg-red-50 hover:text-red-600" aria-label="O‘chirish" onClick={async () => {
+                  <button className="rounded-lg p-1.5 text-ink-3 hover:bg-surface-2" onClick={() => setEditing(a)} aria-label="Tahrirlash"><Pencil className="h-4 w-4" /></button>
+                  <button className="rounded-lg p-1.5 text-ink-3 hover:bg-danger-soft hover:text-danger" aria-label="O‘chirish" onClick={async () => {
                     if (!(await confirm({ title: 'Manzilni o‘chirish?', danger: true, confirmText: 'O‘chirish' }))) return;
                     const res = await deleteAddress(a.id);
                     toast(res.ok ? res.message ?? 'O‘chirildi' : res.error, res.ok ? 'success' : 'error');
@@ -114,9 +114,9 @@ export function AddressBook({ addresses }: { addresses: Address[] }) {
                   }}><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
-              <p className="mt-1 text-slate-600">{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</p>
-              {a.landmark && <p className="text-xs text-muted">Mo‘ljal: {a.landmark}</p>}
-              <p className="mt-1 text-xs text-muted">{a.full_name} · {formatUzPhone(a.phone)}</p>
+              <p className="mt-1 text-ink-2">{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</p>
+              {a.landmark && <p className="text-xs text-ink-3">Mo‘ljal: {a.landmark}</p>}
+              <p className="mt-1 text-xs text-ink-3">{a.full_name} · {formatUzPhone(a.phone)}</p>
             </li>
           ))}
         </ul>
@@ -134,7 +134,7 @@ export function CancelOrderButton({ orderId }: { orderId: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <Button variant="outline" className="text-red-600" loading={pending} onClick={async () => {
+    <Button variant="outline" className="text-danger" loading={pending} onClick={async () => {
       if (!(await confirm({ title: 'Buyurtmani bekor qilasizmi?', text: 'Bu amalni qaytarib bo‘lmaydi.', confirmText: 'Bekor qilish', danger: true }))) return;
       start(async () => {
         const res = await cancelMyOrder(orderId);

@@ -5,6 +5,7 @@ import { fileResponse, toCsv, toXlsx } from '@/lib/admin/spreadsheet';
 import { orderStatusLabel, paymentStatusLabel } from '@/lib/order-status';
 import { formatDateTime } from '@/lib/format';
 import type { Order } from '@/lib/types';
+import { getBranchState } from '@/lib/admin/branch';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,10 @@ export async function GET(request: Request) {
   if (!ctx?.permissions.has('orders.read')) return new Response('Ruxsat yo‘q', { status: 403 });
   const sp = Object.fromEntries(new URL(request.url).searchParams);
   const supabase = await getServerSupabase();
+  const filters = { ...sp, branch: (await getBranchState()).current };
   const rows: Order[] = [];
   for (let from = 0; from < 50_000; from += 1000) {
-    const { data, error } = await applyOrderFilters(supabase.from('orders').select('*'), sp).order('created_at', { ascending: false }).range(from, from + 999);
+    const { data, error } = await applyOrderFilters(supabase.from('orders').select('*'), filters).order('created_at', { ascending: false }).range(from, from + 999);
     if (error) return new Response('Eksport xatosi', { status: 500 });
     rows.push(...((data ?? []) as Order[]));
     if (!data || data.length < 1000) break;

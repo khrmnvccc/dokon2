@@ -6,8 +6,8 @@ export const metadata: Metadata = { title: 'Buyurtmani kuzatish', description: '
 export default function TrackPage() {
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-2xl font-bold">Buyurtmani kuzatish</h1>
-      <p className="mb-5 text-muted">Buyurtma raqami va buyurtmada ko‘rsatilgan telefon raqamini kiriting.</p>
+      <h1 className="mb-1 text-[22px] font-semibold tracking-tight sm:text-2xl">Buyurtmani kuzatish</h1>
+      <p className="mb-5 text-ink-3">Buyurtma raqami va buyurtmada ko‘rsatilgan telefon raqamini kiriting.</p>
       <TrackForm />
     </div>
   );

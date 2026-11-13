@@ -2,6 +2,7 @@
 
 O'zbekiston bozori uchun to'liq onlayn do'kon: mijozlar sayti va kuchli admin panel.
 Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Supabase, Zod, React Hook Form, Lucide.
+Dizayn — kassa saytidagi iOS uslubi: yorugʻ/qorongʻi rejim, shisha (blur) panellar, yumshoq burchaklar, jonli dashboard.
 
 ## Imkoniyatlar
 
@@ -13,6 +14,18 @@ manzillar, sevimlilar, chegirmalar, "Biz haqimizda", yetkazib berish, aloqa, FAQ
 ommaviy tahrirlash, CSV/Excel import va eksport), kategoriyalar, buyurtmalar (holatlar, trek raqami, izohlar, chop etish, filtrlar, eksport),
 mijozlar (bloklash), sharhlar moderatsiyasi, ombor harakatlari, bannerlar, aksiyalar, kuponlar, sahifalar (CMS), yetkazib berish va to'lov usullari,
 hisobotlar (foyda bilan, eksport), xodimlar va rollar, audit jurnali, sayt sozlamalari (saytda darhol qo'llanadi).
+
+**Kassa uslubidagi boshqaruv:**
+- **Brend va dizayn** (faqat Ega, Sozlamalar → Brend va dizayn): nom, shior, logotip, asosiy rang, burchaklar, fon effekti —
+  oʻzgarish darhol oldindan koʻrinadi va saqlangach butun sayt va admin panelga qoʻllanadi.
+- **Rollar:** Ega (`super_admin`), Admin (`manager`), Xodim. Xodimga har bir ruxsat alohida beriladi (tayyor toʻplamlar:
+  Operator, Kassir, Omborchi). Oʻzingizda yoʻq ruxsatni bera olmaysiz; “Xabarlarni boshqarish”ni faqat Ega beradi.
+- **Oynalar** (Sozlamalar → Oynalar): har bir admin sahifasini vaqtincha toʻxtatish, kim koʻrishini va menyudagi nomini belgilash.
+  “Sozlamalar” qulflangan.
+- **Filiallar:** sarlavhadagi tanlov; xodimni filialga biriktirsangiz, u faqat oʻz filiali buyurtmalarini koʻradi (bazada RLS).
+- **Tillar:** oʻzbek, rus, xitoy (doʻkon interfeysi).
+- **Telegram** (Xabarlar oynasi): yangi buyurtma, toʻlov, holat, bekor qilish, tugayotgan mahsulot va kechki hisobot;
+  matnlarni oʻzingiz yozasiz (jonli koʻrinish bilan), ommaviy xabarlar xodimlarga va obuna xaridorlarga.
 
 **Xavfsizlik:**
 - Barcha jadvallarda RLS. Ruxsatlar `role_permissions` jadvalida, ham bazada (`has_perm()`), ham serverda tekshiriladi.
@@ -40,6 +53,10 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | brauzer + server | yo'q (RLS himoyalaydi) |
 | `SUPABASE_SERVICE_ROLE_KEY` | faqat server: checkout, rate limit | **HA** |
 | `NEXT_PUBLIC_SITE_URL` | sitemap, OpenGraph, email havolalari | yo'q |
+| `CRON_SECRET` | faqat server: kechki hisobot va rejalashtirilgan xabarlar (`/api/cron/telegram`) | **HA** |
+
+> Telegram bot tokeni muhit oʻzgaruvchisida emas: uni Ega admin panelda bir marta kiritadi, u faqat bazadagi
+> yopiq `app_meta` jadvalida turadi va brauzerga hech qachon qaytarilmaydi.
 
 > `SUPABASE_SERVICE_ROLE_KEY` ni hech kimga yubormang, chatga yozmang va gitga qo'shmang (`.env*` fayllari `.gitignore` da).
 > Bu kalit bo'lmasa sayt ishlaydi, lekin checkout "vaqtincha ishlamayapti" xabarini qaytaradi.
@@ -53,6 +70,8 @@ cp .env.example .env.local
 4. `20261023000004_storage.sql` — `media` bucket
 5. `20261023000005_customer_views.sql` — mijozlar uchun xavfsiz funksiyalar
 6. `20261023000006_privileges.sql` — huquqlarni cheklash (tannarxni yashirish va h.k.)
+7. `20261113000001_kassa_admin.sql` — Ega/Admin/Xodim ruxsatlari, filiallar, Telegram jadvallari, jonli dashboard.
+   Mavjud ma'lumotga tegmaydi: eski buyurtmalar “Asosiy filial”ga tushadi. Qayta ishga tushirish xavfsiz.
 
 Demo ma'lumotlar (ixtiyoriy): `supabase/seed.sql`. Uni qayta generatsiya qilish: `npm run seed:generate`.
 
@@ -86,6 +105,23 @@ npm run dev        # http://localhost:3000
 4. Supabase → **Authentication → URL Configuration**: Site URL ni domeningizga qo'ying va Redirect URLs ga
    `https://domeningiz/auth/callback` ni qo'shing.
 
+## Telegram botni ulash
+1. Telegramda **@BotFather** → `/newbot` → bot nomini bering. BotFather token beradi.
+2. Admin panel → **Xabarlar → Ulanish** → tokenni qoʻying va **Saqlash**. (Tokenni chatga, AI'ga yoki boshqa joyga yozmang.)
+3. **Botni ochish** tugmasini bosing va Telegramda **Start** bosing (bir martalik kod avtomatik ketadi), keyin **Tekshirish**.
+4. Guruh (ixtiyoriy): botni guruhga qoʻshing, guruhda sahifada koʻrsatilgan `/start@bot G…` buyrugʻini yozing va **Tekshirish**.
+5. Xodimlar: har biri **Mening Telegramim** sahifasida oʻz Telegramini ulaydi; qaysi xabar kimga borishini Ega
+   **Xabar matnlari** boʻlimida belgilaydi.
+6. Xaridorlar: botga `/start` bosganlar **Ulanish → Xaridorlar → Yangilash** orqali obunachilar roʻyxatiga tushadi
+   (webhook kerak emas). `/stop` yozsa — chiqadi.
+7. Kechki hisobot va rejalashtirilgan ommaviy xabarlar: Vercel'da `CRON_SECRET` qoʻshing — `vercel.json` dagi cron
+   har kuni 21:00 (Toshkent) da `/api/cron/telegram?report=1` ni chaqiradi. Rejalashtirilgan xabarlar admin panel ochiq
+   turganda ham har daqiqada tekshiriladi.
+
+Xabarlar buyurtma saqlangandan keyin fonda (`after()`) yuboriladi, 10 soniyadan oshsa toʻxtatiladi va mijozni kutdirmaydi.
+Har bir yuborish “Yuborilganlar” jurnaliga tushadi (oxirgi 500 ta), Telegram xatolari oʻzbekchaga oʻgiriladi.
+Ommaviy xabar bitta serverda bir marta yuboriladi (“claim”) va xabarlar orasida 60 ms tanaffus bor.
+
 ## To'lovlar
 Hozir ishlaydigan usullar: **naqd pul** va **qabul qilganda to'lash** (karta/terminal).
 Click, Payme va Uzum admin panelda "Ulanmagan" deb ko'rsatiladi va checkout'da chiqmaydi: tizim ulanmagan
@@ -103,7 +139,7 @@ npm run lint
 npm test            # unit testlar: narx hisoblash, kuponlar, validatsiya (vitest)
 TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/dk_test npm run test:db
 ```
-`test:db` bo'sh test bazasida migratsiyalar, seed va RLS/huquq testlarini (`supabase/tests/db_test.sql`) ishga tushiradi.
+`test:db` bo'sh test bazasida migratsiyalar, seed va RLS/huquq testlarini (`supabase/tests/db_test.sql`, `kassa_test.sql`) ishga tushiradi.
 **Diqqat:** u ko'rsatilgan bazani tozalaydi, shuning uchun production bazani bermang.
 
 ## Loyiha tuzilishi

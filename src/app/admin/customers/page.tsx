@@ -24,19 +24,19 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
       <FilterBar resetHref="/admin/customers">
         <FilterField label="Qidiruv"><input name="q" defaultValue={sp.q} placeholder="Ism, telefon, email" className={`${inputSm} w-64`} /></FilterField>
       </FilterBar>
-      <div className="overflow-hidden rounded-xl border border-line bg-white">
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <Table>
           <thead><tr><th>Mijoz</th><th>Telefon</th><th className="text-right">Buyurtmalar</th><th className="text-right">Xaridlar summasi</th><th>Oxirgi buyurtma</th><th>Ro‘yxatdan o‘tgan</th></tr></thead>
           <tbody>
             {res.items.length === 0 && <EmptyRow cols={6} />}
             {res.items.map((c) => (
               <tr key={c.id}>
-                <td><Link href={`/admin/customers/${c.id}`} className="font-medium hover:text-brand">{c.full_name || 'Ismsiz'}</Link> {c.is_blocked && <Badge tone="red">Bloklangan</Badge>}<div className="text-xs text-muted">{c.email}</div></td>
+                <td><Link href={`/admin/customers/${c.id}`} className="font-medium hover:text-primary">{c.full_name || 'Ismsiz'}</Link> {c.is_blocked && <Badge tone="red">Bloklangan</Badge>}<div className="text-xs text-ink-3">{c.email}</div></td>
                 <td>{formatUzPhone(c.phone) || '—'}</td>
                 <td className="text-right tabular-nums">{c.orders_count}</td>
                 <td className="text-right tabular-nums">{formatPrice(c.total_spent)}</td>
-                <td className="text-muted">{formatDate(c.last_order_at) || '—'}</td>
-                <td className="text-muted">{formatDate(c.created_at)}</td>
+                <td className="text-ink-3">{formatDate(c.last_order_at) || '—'}</td>
+                <td className="text-ink-3">{formatDate(c.created_at)}</td>
               </tr>
             ))}
           </tbody>

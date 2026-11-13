@@ -61,27 +61,27 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
     <div className="space-y-5">
       <div>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className={cn('text-3xl font-extrabold', discount > 0 ? 'text-accent' : 'text-ink')}>{price(unitPrice)}</span>
+          <span className={cn('text-[26px] font-semibold tracking-tight', discount > 0 ? 'text-primary' : 'text-ink')}>{price(unitPrice)}</span>
           {discount > 0 && (
             <>
-              <span className="text-lg text-muted line-through">{price(compareAt)}</span>
-              <span className="rounded-lg bg-accent px-2 py-0.5 text-sm font-bold text-white">−{discount}%</span>
+              <span className="text-lg text-ink-3 line-through">{price(compareAt)}</span>
+              <span className="rounded-lg bg-primary px-2 py-0.5 text-sm font-semibold text-primary-fg">−{discount}%</span>
             </>
           )}
         </div>
-        <p className={cn('mt-1.5 text-sm font-medium', outOfStock ? 'text-red-600' : available !== null && available <= 5 ? 'text-amber-600' : 'text-emerald-600')}>
+        <p className={cn('mt-1.5 text-sm font-medium', outOfStock ? 'text-danger' : available !== null && available <= 5 ? 'text-warn' : 'text-success')}>
           {needsChoice ? 'Variantni tanlang' : outOfStock ? t('product.outOfStock') : available !== null && available <= 5 ? t('product.lowStock', { n: available }) : t('product.inStock')}
         </p>
       </div>
 
       {colors.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold">Rang: <span className="font-normal text-muted">{color ?? 'tanlanmagan'}</span></legend>
+          <legend className="mb-2 text-sm font-semibold">Rang: <span className="font-normal text-ink-3">{color ?? 'tanlanmagan'}</span></legend>
           <div className="flex flex-wrap gap-2">
             {colors.map(([name, hex]) => (
               <button key={name} type="button" onClick={() => setColor(name)} aria-pressed={color === name}
-                className={cn('flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm', color === name ? 'border-brand bg-brand-50' : 'border-line', !isAvailable(name, size) && 'opacity-45')}>
-                <span className="h-5 w-5 rounded-full border border-slate-300" style={{ background: hex ?? '#ccc' }} />{name}
+                className={cn('flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm', color === name ? 'border-primary bg-primary-soft' : 'border-line', !isAvailable(name, size) && 'opacity-45')}>
+                <span className="h-5 w-5 rounded-full border border-line-strong" style={{ background: hex ?? '#ccc' }} />{name}
               </button>
             ))}
           </div>
@@ -89,13 +89,13 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
       )}
       {sizes.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold">O‘lcham: <span className="font-normal text-muted">{size ?? 'tanlanmagan'}</span></legend>
+          <legend className="mb-2 text-sm font-semibold">O‘lcham: <span className="font-normal text-ink-3">{size ?? 'tanlanmagan'}</span></legend>
           <div className="flex flex-wrap gap-2">
             {sizes.map((s) => {
               const ok = isAvailable(color, s);
               return (
                 <button key={s} type="button" onClick={() => setSize(s)} aria-pressed={size === s} disabled={!ok}
-                  className={cn('h-11 min-w-12 rounded-xl border-2 px-3 text-sm font-semibold', size === s ? 'border-brand bg-brand-50' : 'border-line', !ok && 'cursor-not-allowed line-through opacity-40')}>
+                  className={cn('h-11 min-w-12 rounded-xl border-2 px-3 text-sm font-semibold', size === s ? 'border-primary bg-primary-soft' : 'border-line', !ok && 'cursor-not-allowed line-through opacity-40')}>
                   {s}
                 </button>
               );
@@ -109,7 +109,7 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
           <div className="flex flex-wrap gap-2">
             {variants.map((v) => (
               <button key={v.id} type="button" onClick={() => setPlainVariant(v.id)} disabled={v.stock <= 0} aria-pressed={plainVariant === v.id}
-                className={cn('rounded-xl border-2 px-3 py-2 text-sm', plainVariant === v.id ? 'border-brand bg-brand-50' : 'border-line', v.stock <= 0 && 'opacity-40')}>
+                className={cn('rounded-xl border-2 px-3 py-2 text-sm', plainVariant === v.id ? 'border-primary bg-primary-soft' : 'border-line', v.stock <= 0 && 'opacity-40')}>
                 {v.name}
               </button>
             ))}
@@ -118,13 +118,13 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
       )}
 
       <div className="flex items-center gap-3">
-        <div className="flex h-12 items-center rounded-xl border border-line bg-white">
-          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="flex h-12 w-11 items-center justify-center text-slate-600 disabled:opacity-40" disabled={qty <= 1} aria-label="Kamaytirish"><Minus className="h-4 w-4" /></button>
+        <div className="flex h-12 items-center rounded-xl border border-line bg-surface">
+          <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} className="flex h-12 w-11 items-center justify-center text-ink-2 disabled:opacity-40" disabled={qty <= 1} aria-label="Kamaytirish"><Minus className="h-4 w-4" /></button>
           <span className="w-8 text-center font-semibold" aria-live="polite">{qty}</span>
-          <button type="button" onClick={() => setQty((q) => Math.min(available ?? 99, q + 1))} className="flex h-12 w-11 items-center justify-center text-slate-600 disabled:opacity-40" disabled={available !== null && qty >= available} aria-label="Ko‘paytirish"><Plus className="h-4 w-4" /></button>
+          <button type="button" onClick={() => setQty((q) => Math.min(available ?? 99, q + 1))} className="flex h-12 w-11 items-center justify-center text-ink-2 disabled:opacity-40" disabled={available !== null && qty >= available} aria-label="Ko‘paytirish"><Plus className="h-4 w-4" /></button>
         </div>
-        <button type="button" onClick={() => wishlist.toggle(product.id)} className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-white" aria-label="Sevimlilar" aria-pressed={liked}>
-          <Heart className={cn('h-5 w-5', liked ? 'fill-red-500 text-red-500' : 'text-slate-600')} />
+        <button type="button" onClick={() => wishlist.toggle(product.id)} className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface" aria-label="Sevimlilar" aria-pressed={liked}>
+          <Heart className={cn('h-5 w-5', liked ? 'fill-danger text-danger' : 'text-ink-2')} />
         </button>
       </div>
 
@@ -137,9 +137,9 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
         </Button>
       </div>
 
-      <ul className="space-y-2 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-        <li className="flex gap-2"><Truck className="h-5 w-5 shrink-0 text-brand" />{freeShippingFrom > 0 ? `${price(freeShippingFrom)} dan ortiq buyurtmalarga bepul yetkazib berish` : 'Tez yetkazib berish'}</li>
-        <li className="flex gap-2"><ShieldCheck className="h-5 w-5 shrink-0 text-brand" />Sifat kafolati va 14 kun ichida qaytarish</li>
+      <ul className="space-y-2 rounded-2xl bg-surface-2 p-4 text-sm text-ink-2">
+        <li className="flex gap-2"><Truck className="h-5 w-5 shrink-0 text-primary" />{freeShippingFrom > 0 ? `${price(freeShippingFrom)} dan ortiq buyurtmalarga bepul yetkazib berish` : 'Tez yetkazib berish'}</li>
+        <li className="flex gap-2"><ShieldCheck className="h-5 w-5 shrink-0 text-primary" />Sifat kafolati va 14 kun ichida qaytarish</li>
       </ul>
     </div>
   );

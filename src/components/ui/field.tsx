@@ -1,20 +1,24 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { AlertCircle } from 'lucide-react';
 import { cn } from './cn';
 
-const base =
-  'w-full rounded-xl border border-line bg-white px-3.5 text-[15px] text-ink placeholder:text-slate-400 transition focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10 disabled:bg-slate-50 aria-[invalid=true]:border-red-400 aria-[invalid=true]:ring-red-100';
+// Kassa: label tepada, xato pastda qizil, h-10, rounded-lg, bg-surface-2.
+export const controlBase =
+  'w-full rounded-lg border border-line bg-surface-2 px-3 text-sm text-ink placeholder:text-ink-3 transition-colors outline-none focus:bg-surface focus:border-[var(--card)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--card)_15%,transparent)] disabled:text-ink-3 aria-[invalid=true]:border-danger';
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
-  return <input ref={ref} className={cn(base, 'h-11', className)} {...props} />;
+  return <input ref={ref} className={cn(controlBase, 'h-10', className)} {...props} />;
 });
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea({ className, ...props }, ref) {
-  return <textarea ref={ref} className={cn(base, 'min-h-24 py-2.5', className)} {...props} />;
+  return <textarea ref={ref} className={cn(controlBase, 'min-h-20 py-2', className)} {...props} />;
 });
 
-export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Select({ className, children, ...props }, ref) {
+const chevron = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a94a6' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";
+
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Select({ className, children, style, ...props }, ref) {
   return (
-    <select ref={ref} className={cn(base, 'h-11 appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%2364748b%27%20stroke-width%3D%272%27%3E%3Cpath%20d%3D%27m6%209%206%206%206-6%27/%3E%3C/svg%3E")] bg-[length:18px] bg-[right_10px_center] bg-no-repeat pr-9', className)} {...props}>
+    <select ref={ref} className={cn(controlBase, 'h-10 appearance-none bg-[length:16px] bg-[right_8px_center] bg-no-repeat pr-8', className)} style={{ backgroundImage: chevron, ...style }} {...props}>
       {children}
     </select>
   );
@@ -26,16 +30,16 @@ export function Field({ label, error, hint, children, htmlFor, required, classNa
   return (
     <div className={cn('space-y-1.5', className)}>
       {label && (
-        <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700">
+        <label htmlFor={htmlFor} className="block text-[13px] font-medium text-ink-2">
           {label}
-          {required && <span className="ml-0.5 text-red-500">*</span>}
+          {required && <span className="ml-0.5 text-danger">*</span>}
         </label>
       )}
       {children}
       {error ? (
-        <p className="text-xs font-medium text-red-600" role="alert">{error}</p>
+        <p className="flex items-center gap-1 text-xs text-danger anim-fade" role="alert"><AlertCircle className="size-3.5 shrink-0" />{error}</p>
       ) : hint ? (
-        <p className="text-xs text-muted">{hint}</p>
+        <p className="text-xs text-ink-3">{hint}</p>
       ) : null}
     </div>
   );
@@ -43,8 +47,8 @@ export function Field({ label, error, hint, children, htmlFor, required, classNa
 
 export function Checkbox({ label, className, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode }) {
   return (
-    <label className={cn('flex cursor-pointer items-center gap-2.5 text-sm text-slate-700', className)}>
-      <input type="checkbox" className="h-4.5 w-4.5 rounded border-slate-300 accent-[var(--brand)]" {...props} />
+    <label className={cn('flex cursor-pointer items-center gap-2.5 text-sm text-ink-2', className)}>
+      <input type="checkbox" className="size-4 rounded border-line-strong accent-[var(--primary)]" {...props} />
       <span>{label}</span>
     </label>
   );

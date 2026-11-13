@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { formatNumber } from '@/lib/format';
+import { applyFormat, type NumberFormat } from '@/components/ui/kit';
 
 /**
  * Bitta qatorli ustunli diagramma (masalan, kunlik savdo). Bitta seriya — legenda kerak emas, sarlavha nomlaydi.
  * Hover/focus'da tooltip; skrin-riderlar uchun jadval ko'rinishi ham bor.
  */
-export function BarChart({ data, valueLabel, formatValue = formatNumber, height = 220 }: {
+export function BarChart({ data, valueLabel, formatValue: fmt = formatNumber, height = 220 }: {
   data: { label: string; value: number; sub?: string }[];
   valueLabel: string;
-  formatValue?: (v: number) => string;
+  formatValue?: NumberFormat;
   height?: number;
 }) {
+  const formatValue = (v: number) => applyFormat(fmt, v);
   const [active, setActive] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -31,10 +33,10 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
   if (showTable) {
     return (
       <div>
-        <button className="mb-2 text-xs font-medium text-brand" onClick={() => setShowTable(false)}>Diagrammani ko‘rsatish</button>
+        <button className="mb-2 text-xs font-medium text-primary" onClick={() => setShowTable(false)}>Diagrammani ko‘rsatish</button>
         <div className="max-h-64 overflow-auto text-sm">
           <table className="w-full">
-            <thead><tr className="text-left text-xs text-muted"><th className="py-1">Sana</th><th className="py-1 text-right">{valueLabel}</th></tr></thead>
+            <thead><tr className="text-left text-xs text-ink-3"><th className="py-1">Sana</th><th className="py-1 text-right">{valueLabel}</th></tr></thead>
             <tbody>{data.map((d) => <tr key={d.label} className="border-t border-line"><td className="py-1">{d.label}</td><td className="py-1 text-right tabular-nums">{formatValue(d.value)}</td></tr>)}</tbody>
           </table>
         </div>
@@ -45,14 +47,14 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
   const a = active !== null ? data[active] : null;
   return (
     <div className="relative">
-      <button className="absolute -top-1 right-0 z-10 text-xs font-medium text-brand" onClick={() => setShowTable(true)}>Jadval</button>
+      <button className="absolute -top-1 right-0 z-10 text-xs font-medium text-primary" onClick={() => setShowTable(true)}>Jadval</button>
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={`${valueLabel} diagrammasi`} onMouseLeave={() => setActive(null)}>
         {ticks.map((t) => {
           const y = 8 + innerH - (t / nice) * innerH;
           return (
             <g key={t}>
               <line x1={padL} x2={W - 8} y1={y} y2={y} stroke="var(--line)" strokeWidth={1} />
-              <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--muted)">{compact(t)}</text>
+              <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--ink-3)">{compact(t)}</text>
             </g>
           );
         })}
@@ -66,7 +68,7 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
               {h > 0 && (
                 <path
                   d={`M${x},${8 + innerH} V${y + r} Q${x},${y} ${x + r},${y} H${x + barW - r} Q${x + barW},${y} ${x + barW},${y + r} V${8 + innerH} Z`}
-                  fill="var(--brand)"
+                  fill="var(--primary)"
                   opacity={active === null || active === i ? 1 : 0.45}
                 />
               )}
@@ -75,18 +77,18 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
                 onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onBlur={() => setActive(null)}
                 aria-label={`${d.label}: ${formatValue(d.value)}`} />
               {i % labelEvery === 0 && (
-                <text x={padL + i * slot + slot / 2} y={H - 6} textAnchor="middle" fontSize={11} fill="var(--muted)">{d.label}</text>
+                <text x={padL + i * slot + slot / 2} y={H - 6} textAnchor="middle" fontSize={11} fill="var(--ink-3)">{d.label}</text>
               )}
             </g>
           );
         })}
       </svg>
       {a && active !== null && (
-        <div className="pointer-events-none absolute top-2 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white shadow-pop"
+        <div className="pointer-events-none absolute top-2 rounded-lg border border-line bg-surface px-3 py-2 text-xs text-ink shadow-pop"
           style={{ left: `clamp(0px, calc(${((padL + active * slot + slot / 2) / W) * 100}% - 70px), calc(100% - 140px))` }}>
-          <p className="text-slate-300">{a.label}</p>
+          <p className="text-ink-3">{a.label}</p>
           <p className="font-semibold tabular-nums">{formatValue(a.value)}</p>
-          {a.sub && <p className="text-slate-300">{a.sub}</p>}
+          {a.sub && <p className="text-ink-3">{a.sub}</p>}
         </div>
       )}
     </div>
@@ -94,7 +96,8 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
 }
 
 /** Gorizontal ulushlar (holatlar bo'yicha taqsimot) — bitta rang, matnli yorliqlar */
-export function HBarList({ items, formatValue = formatNumber }: { items: { label: string; value: number; extra?: string }[]; formatValue?: (v: number) => string }) {
+export function HBarList({ items, formatValue: fmt = formatNumber }: { items: { label: string; value: number; extra?: string }[]; formatValue?: NumberFormat }) {
+  const formatValue = (v: number) => applyFormat(fmt, v);
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <ul className="space-y-3">
@@ -102,10 +105,10 @@ export function HBarList({ items, formatValue = formatNumber }: { items: { label
         <li key={i.label}>
           <div className="mb-1 flex justify-between gap-2 text-sm">
             <span>{i.label}</span>
-            <span className="tabular-nums text-muted">{formatValue(i.value)}{i.extra ? ` · ${i.extra}` : ''}</span>
+            <span className="tabular-nums text-ink-3">{formatValue(i.value)}{i.extra ? ` · ${i.extra}` : ''}</span>
           </div>
-          <div className="h-2 rounded-full bg-slate-100">
-            <div className="h-2 rounded-full bg-brand" style={{ width: `${(i.value / max) * 100}%` }} />
+          <div className="h-2 rounded-full bg-surface-2">
+            <div className="h-2 rounded-full bg-primary" style={{ width: `${(i.value / max) * 100}%` }} />
           </div>
         </li>
       ))}

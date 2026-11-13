@@ -12,7 +12,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
       <AccountNav name={profile?.full_name ?? profile?.email ?? 'Mijoz'} email={profile?.email ?? null} isStaff={Boolean(staff)} />
       <div className="min-w-0">
         {profile?.is_blocked && (
-          <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">Hisobingiz bloklangan{profile.blocked_reason ? `: ${profile.blocked_reason}` : ''}. Yangi buyurtma berib bo‘lmaydi.</p>
+          <p className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">Hisobingiz bloklangan{profile.blocked_reason ? `: ${profile.blocked_reason}` : ''}. Yangi buyurtma berib bo‘lmaydi.</p>
         )}
         {children}
       </div>

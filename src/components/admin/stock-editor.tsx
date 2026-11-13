@@ -24,8 +24,8 @@ export function StockEditor({ productId, variantId, stock, low }: { productId: s
       });
     }}>
       <input value={value} onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))} inputMode="numeric" aria-label="Qoldiq"
-        className={cn('h-9 w-20 rounded-lg border px-2 text-right tabular-nums', low ? 'border-amber-300 bg-amber-50 font-semibold text-amber-800' : 'border-line', stock === 0 && 'border-red-300 bg-red-50 text-red-700')} />
-      <button type="submit" disabled={!changed || pending} className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand text-white disabled:opacity-30" aria-label="Saqlash"><Check className="h-4 w-4" /></button>
+        className={cn('h-9 w-20 rounded-lg border px-2 text-right tabular-nums', low ? 'border-warn/40 bg-warn-soft font-semibold text-warn' : 'border-line', stock === 0 && 'border-danger/40 bg-danger-soft text-danger')} />
+      <button type="submit" disabled={!changed || pending} className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-fg disabled:opacity-30" aria-label="Saqlash"><Check className="h-4 w-4" /></button>
     </form>
   );
 }

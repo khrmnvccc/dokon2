@@ -12,7 +12,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   if (await getCurrentUser()) redirect('/account');
   return (
     <AuthCard title="Ro‘yxatdan o‘tish" subtitle="Buyurtmalar tarixi, saqlangan manzillar va sevimlilar"
-      footer={<>Hisobingiz bormi? <Link href="/login" className="font-semibold text-brand hover:underline">Kirish</Link></>}>
+      footer={<>Hisobingiz bormi? <Link href="/login" className="font-semibold text-primary hover:underline">Kirish</Link></>}>
       <RegisterForm next={next} />
     </AuthCard>
   );

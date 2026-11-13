@@ -33,10 +33,10 @@ export function ImportForm() {
 
   return (
     <Panel title="Fayl yuklash">
-      <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line px-4 py-8 text-center hover:border-brand">
-        <FileSpreadsheet className="h-8 w-8 text-brand" />
+      <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line px-4 py-8 text-center hover:border-primary">
+        <FileSpreadsheet className="h-8 w-8 text-primary" />
         <span className="text-sm font-medium">{file ? file.name : '.csv yoki .xlsx faylni tanlang'}</span>
-        <span className="text-xs text-muted">5 MB gacha, 5000 qatorgacha</span>
+        <span className="text-xs text-ink-3">5 MB gacha, 5000 qatorgacha</span>
         <input type="file" accept=".csv,.xlsx" className="sr-only" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setReport(null); }} />
       </label>
       <div className="mt-4 flex gap-2">
@@ -44,11 +44,11 @@ export function ImportForm() {
         <Button disabled={!file || !report?.dryRun} loading={pending} onClick={() => run(false)}>Import qilish</Button>
       </div>
       {report && (
-        <div className="mt-5 rounded-lg bg-slate-50 p-4 text-sm">
+        <div className="mt-5 rounded-lg bg-surface-2 p-4 text-sm">
           <p className="font-semibold">{report.dryRun ? 'Tekshiruv natijasi (hali saqlanmadi)' : 'Import natijasi'}</p>
-          <p className="mt-1">Jami: {report.total} · Yangi: <b>{report.created}</b> · Yangilanadi: <b>{report.updated}</b> · Xato: <b className="text-red-600">{report.errors.length}</b></p>
+          <p className="mt-1">Jami: {report.total} · Yangi: <b>{report.created}</b> · Yangilanadi: <b>{report.updated}</b> · Xato: <b className="text-danger">{report.errors.length}</b></p>
           {report.errors.length > 0 && (
-            <ul className="mt-3 max-h-64 space-y-1 overflow-auto text-xs text-red-700">
+            <ul className="mt-3 max-h-64 space-y-1 overflow-auto text-xs text-danger">
               {report.errors.slice(0, 200).map((e, i) => <li key={i}>{e.row}-qator: {e.message}</li>)}
             </ul>
           )}
