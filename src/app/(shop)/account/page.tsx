@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getCurrentProfile } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { formatDate } from '@/lib/format';
+import { formatDate, isTelegramEmail } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { Card } from '@/components/ui/misc';
 import { ProfileForm } from '@/components/shop/account-forms';
@@ -20,7 +20,7 @@ export default async function AccountPage() {
       </div>
       <Card>
         <h1 className="mb-4 text-xl font-semibold">Shaxsiy ma’lumotlar</h1>
-        <ProfileForm defaults={{ full_name: profile?.full_name ?? '', phone: profile?.phone ? formatUzPhone(profile.phone) : '' }} email={profile?.email ?? ''} />
+        <ProfileForm defaults={{ full_name: profile?.full_name ?? '', phone: profile?.phone ? formatUzPhone(profile.phone) : '' }} email={isTelegramEmail(profile?.email) ? 'Telegram orqali kirilgan' : profile?.email ?? ''} />
       </Card>
     </div>
   );

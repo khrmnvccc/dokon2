@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
-  unlinkPerson, syncCustomers, saveBroadcast, testBroadcast, removeBroadcast,
+  unlinkPerson, syncCustomers, saveBroadcast, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
 } from '@/lib/actions/admin/telegram';
 import {
   BROADCAST_MAX_BUTTONS, BROADCAST_MAX_TEXT, BROADCAST_STATUS, MAX_TEMPLATE_LENGTH, TEMPLATES, TEMPLATE_BY_KEY, TEMPLATE_GROUPS,
@@ -38,6 +38,9 @@ export interface MessagesData {
   logTotal: number;
   broadcasts: Broadcast[];
   subscribers: number;
+  shopBot: { botName: string; webhookError: string | null; setupAt: string; users: number } | null;
+  siteUrl: string;
+  adminUrl: string;
 }
 
 type Tab = 'connect' | 'templates' | 'broadcast' | 'log';
@@ -108,7 +111,16 @@ function ConnectTab({ data }: { data: MessagesData }) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
-      <Panel title="Bot" subtitle="Bot tokeni faqat bazada saqlanadi va brauzerga qaytmaydi">
+      <div className="xl:col-span-2 grid gap-3 sm:grid-cols-2">
+        <BotIntro tone="bg-[#2f80c1]" icon={ShoppingCart} title="Doʻkon boti — xaridorlar uchun"
+          text="Xaridor botni ochadi va doʻkon Telegram ichida ochiladi. Roʻyxatdan oʻtish shart emas, buyurtma holati botga keladi." ok={Boolean(data.shopBot)} />
+        <BotIntro tone="bg-[#14253b]" icon={Bot} title="Admin boti — siz va xodimlar uchun"
+          text="Yangi buyurtma, bekor qilish va kechki hisobot shu botga keladi. Menyu tugmasi admin panelni ochadi." ok={Boolean(t?.connected)} />
+      </div>
+
+      <ShopBotPanel data={data} />
+
+      <Panel title="Admin boti" subtitle="Siz va xodimlar uchun. Token faqat bazada saqlanadi va brauzerga qaytmaydi">
         {!t && (
           data.isOwner ? (
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); run(() => connectBot(token), () => setToken('')); }}>
@@ -201,6 +213,64 @@ function ConnectTab({ data }: { data: MessagesData }) {
         {t?.connected && <p className="mt-3 text-xs text-ink-3">Doʻkon havolasi: <span className="num">t.me/{t.botName}</span> — uni saytga yoki Instagramga qoʻying.</p>}
       </Panel>
     </div>
+  );
+}
+
+function BotIntro({ tone, icon: Icon, title, text, ok }: { tone: string; icon: LucideIcon; title: string; text: string; ok: boolean }) {
+  return (
+    <div className="flex gap-3 rounded-[var(--r-lg)] border border-line bg-surface p-4">
+      <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl text-white', tone)}><Icon className="size-5" /></span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">{title} {ok ? <Badge tone="green">Ulangan</Badge> : <Badge tone="gray">Ulanmagan</Badge>}</div>
+        <p className="mt-1 text-xs leading-relaxed text-ink-3">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function ShopBotPanel({ data }: { data: MessagesData }) {
+  const s = data.shopBot;
+  const { pending, run } = useRun();
+  const confirm = useConfirm();
+  const [token, setToken] = useState('');
+  return (
+    <Panel title="Doʻkon boti" subtitle="Xaridorlar uchun alohida bot. Token faqat bazada saqlanadi">
+      {!s ? (
+        data.isOwner ? (
+          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); run(() => connectShopBot(token), () => setToken('')); }}>
+            <ol className="list-decimal space-y-1.5 pl-5 text-sm text-ink-2">
+              <li>Telegramda <b>@BotFather</b> ni oching, <b>/newbot</b> yozing.</li>
+              <li>Bot nomini yozing (masalan, doʻkoningiz nomi), keyin <b>_bot</b> bilan tugaydigan manzil.</li>
+              <li>BotFather bergan tokenni shu yerga qoʻying — qolganini (menyu tugmasi, buyruqlar, tavsif) oʻzimiz sozlaymiz.</li>
+            </ol>
+            <Field label="Doʻkon boti tokeni" htmlFor="shop-token" hint="Admin botidan boshqa, yangi bot boʻlsin">
+              <Input id="shop-token" type="password" autoComplete="off" spellCheck={false} placeholder="123456789:AA…" value={token} onChange={(e) => setToken(e.target.value)} />
+            </Field>
+            <Button type="submit" loading={pending} disabled={!token.trim()}>Ulash</Button>
+          </form>
+        ) : <p className="text-sm text-ink-3">Botni Ega ulaydi.</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="size-5 shrink-0 text-success" />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold">@{s.botName}</div>
+              <div className="text-xs text-ink-3">{s.users} ta xaridor bot orqali kirgan · sozlangan {formatDateTime(s.setupAt)}</div>
+            </div>
+          </div>
+          {s.webhookError && <Alert tone="warn">{s.webhookError}</Alert>}
+          <div className="rounded-[var(--r-md)] bg-surface-2 p-3 text-xs leading-relaxed text-ink-2">
+            Bot havolasi: <a className="num font-semibold text-primary" href={`https://t.me/${s.botName}`} target="_blank" rel="noreferrer">t.me/{s.botName}</a> — uni Instagram, saytga va qadoqqa qoʻying.
+            Xaridor <b>Start</b> bosadi → <b>Doʻkon</b> tugmasi saytni Telegram ichida ochadi → avtomatik kiradi.
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a className={buttonClass('primary', 'md')} href={`https://t.me/${s.botName}`} target="_blank" rel="noreferrer"><Send className="size-4" /> Botni ochish</a>
+            {data.isOwner && <Button variant="secondary" loading={pending} onClick={() => run(refreshBots)}><RefreshCw className="size-4" /> Qayta sozlash</Button>}
+            {data.isOwner && <Button variant="ghost" onClick={async () => { if (await confirm({ title: 'Doʻkon botini uzish?', text: 'Xaridorlar botdan doʻkonni ocholmay qoladi.', danger: true, confirmText: 'Uzish' })) run(disconnectShopBot); }}>Uzish</Button>}
+          </div>
+        </div>
+      )}
+    </Panel>
   );
 }
 

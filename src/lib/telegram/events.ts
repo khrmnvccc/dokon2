@@ -3,8 +3,9 @@ import { getServiceSupabase } from '@/lib/supabase/admin';
 import { formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { orderStatusLabel } from '@/lib/order-status';
-import { SITE_URL } from '@/lib/env';
+import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify } from './server';
+import { notifyCustomer } from './shop-bot';
 import type { OrderStatus } from '@/lib/types';
 
 // Doʻkon hodisalari → Telegram. Hammasi after() ichida chaqiriladi: xaridor va xodim kutmaydi,
@@ -31,6 +32,7 @@ const base = (o: OrderRow) => ({
 });
 
 export async function onNewOrder(orderId: string) {
+  await notifyCustomer(orderId, 'new');
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;
@@ -42,7 +44,7 @@ export async function onNewOrder(orderId: string) {
   await notify('newOrder', {
     ...base(o), yetkazish: o.shipping_method_name, mahsulotlar: lines.join('\n'), izoh: o.comment,
     manzil: a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '',
-    havola: `${SITE_URL}/admin/orders/${o.id}`,
+    havola: `${ADMIN_URL}/admin/orders/${o.id}`,
   });
   await checkLowStock((items ?? []).map((i) => i.product_id).filter(Boolean));
 }
@@ -57,6 +59,7 @@ async function checkLowStock(productIds: string[]) {
 }
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {
+  if (change.status) await notifyCustomer(orderId, change.status);
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;

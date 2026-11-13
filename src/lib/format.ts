@@ -48,3 +48,7 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 80);
 }
+
+/** Telegram orqali yaratilgan akkauntning ichki emaili (tg123@telegram.user) foydalanuvchiga koʻrsatilmaydi. */
+export const isTelegramEmail = (email: string | null | undefined) => Boolean(email && email.endsWith('@telegram.user'));
+export const visibleEmail = (email: string | null | undefined) => (isTelegramEmail(email) ? null : email ?? null);

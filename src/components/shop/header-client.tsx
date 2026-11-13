@@ -54,7 +54,7 @@ export function HeaderActions() {
   return (
     <nav className="flex items-center gap-1" aria-label="Foydalanuvchi">
       {items.map(({ href, label, icon: Icon, badge, desktopOnly }) => (
-        <Link key={href} href={href} aria-label={label} title={label}
+        <Link key={href} href={href} aria-label={label} title={label} data-tour={href === '/cart' ? 'cart' : undefined}
           className={cn('relative size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink', desktopOnly ? 'hidden md:inline-flex' : 'inline-flex')}>
           <Icon className="size-[18px]" strokeWidth={1.9} aria-hidden />
           {!!badge && (
@@ -88,7 +88,7 @@ export function CatalogButton({ tree }: { tree: CategoryNode[] }) {
 
   const current = tree.find((c) => c.id === active);
   return (
-    <div ref={ref} className="relative hidden md:block">
+    <div ref={ref} className="relative hidden md:block" data-tour="catalog">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -167,7 +167,7 @@ export function MobileBottomNav() {
           if (center) {
             return (
               <li key={label} className="flex items-center justify-center">
-                <Link href={href} aria-label={label} className="relative">
+                <Link href={href} aria-label={label} className="relative" data-tour="cart">
                   <span className={cn('flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-fg shadow-pop transition-transform active:scale-95', active && 'ring-4 ring-surface-3')}>
                     <Icon className="size-6" aria-hidden />
                   </span>
@@ -178,7 +178,7 @@ export function MobileBottomNav() {
           }
           return (
             <li key={label}>
-              <Link href={href} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
+              <Link href={href} data-tour={href === '/catalog' ? 'catalog' : href === '/account/orders' || href === '/track' ? 'orders' : undefined} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} aria-hidden />
                 <span className="max-w-full truncate px-0.5">{label}</span>
               </Link>

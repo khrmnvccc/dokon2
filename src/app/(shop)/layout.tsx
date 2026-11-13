@@ -6,6 +6,7 @@ import { getT } from '@/lib/i18n/server';
 import { Header } from '@/components/shop/header';
 import { Footer } from '@/components/shop/footer';
 import { MobileBottomNav } from '@/components/shop/header-client';
+import { ShopTour } from '@/components/shop/shop-tour';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const [settings, tree, t] = await Promise.all([getSettings(), getCategoryTree(), getT()]);
@@ -35,6 +36,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <Footer settings={settings} t={t} />
       <MobileBottomNav />
+      <ShopTour />
     </>
   );
 }

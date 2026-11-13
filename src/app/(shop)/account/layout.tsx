@@ -1,3 +1,4 @@
+import { visibleEmail } from '@/lib/format';
 import type { Metadata } from 'next';
 import { requireUser, getCurrentProfile, getStaffContext } from '@/lib/auth';
 import { AccountNav } from '@/components/shop/account-nav';
@@ -9,7 +10,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const [profile, staff] = await Promise.all([getCurrentProfile(), getStaffContext()]);
   return (
     <div className="grid gap-4 md:grid-cols-[240px_1fr] md:items-start">
-      <AccountNav name={profile?.full_name ?? profile?.email ?? 'Mijoz'} email={profile?.email ?? null} isStaff={Boolean(staff)} />
+      <AccountNav name={profile?.full_name ?? visibleEmail(profile?.email) ?? 'Mijoz'} email={visibleEmail(profile?.email)} isStaff={Boolean(staff)} />
       <div className="min-w-0">
         {profile?.is_blocked && (
           <p className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">Hisobingiz bloklangan{profile.blocked_reason ? `: ${profile.blocked_reason}` : ''}. Yangi buyurtma berib bo‘lmaydi.</p>

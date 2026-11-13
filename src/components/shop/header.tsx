@@ -21,7 +21,7 @@ export function Header({ settings, tree }: { settings: SiteSettings; tree: Categ
         <Link href="/" className="min-w-0 shrink-0" aria-label="Bosh sahifa"><Logo compact /></Link>
         <CatalogButton tree={tree} />
         <Suspense fallback={<div className="hidden h-10 flex-1 rounded-lg bg-surface-2 md:block" />}>
-          <SearchBox className="hidden flex-1 md:flex" />
+          <div data-tour="search" className="hidden min-w-0 flex-1 md:flex"><SearchBox className="flex flex-1" /></div>
         </Suspense>
         <div className="ml-auto flex items-center gap-1 md:ml-0">
           <LangSwitch languages={localization.languages} className="hidden sm:inline-flex" />
@@ -29,7 +29,7 @@ export function Header({ settings, tree }: { settings: SiteSettings; tree: Categ
           <HeaderActions />
         </div>
       </div>
-      <div className="px-4 pb-2.5 md:hidden">
+      <div className="px-4 pb-2.5 md:hidden" data-tour="search">
         <Suspense fallback={<div className="h-10 rounded-lg bg-surface-2" />}>
           <SearchBox />
         </Suspense>
