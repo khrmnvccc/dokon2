@@ -69,3 +69,15 @@ delete from public.role_permissions where role = 'manager' and permission = 'sta
 do $$ begin
   assert (select count(*) from public.orders where branch_id <> 1) = 0, 'eski buyurtmalar 1-filialga tushmadi';
 end $$;
+
+-- 5) Ochiq kuponlar: anon faqat “saytda koʻrsatish” yoqilgan amaldagi kodni koʻradi, jadvalning oʻzi yopiq
+insert into public.coupons (code, value, is_public, design) values ('OCHIQ10', 10, true, '{"theme":"blue","badge":"11.11"}'), ('YASHIRIN', 20, false, '{}')
+on conflict (code) do nothing;
+set role anon;
+do $$ begin
+  assert (select count(*) from public.public_coupons() where code = 'OCHIQ10') = 1, 'ochiq kupon koʻrinmadi';
+  assert (select count(*) from public.public_coupons() where code = 'YASHIRIN') = 0, 'yashirin kupon koʻrindi!';
+  begin perform 1 from public.coupons; raise exception 'anon coupons jadvalini oʻqidi!'; exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+delete from public.coupons where code in ('OCHIQ10', 'YASHIRIN');

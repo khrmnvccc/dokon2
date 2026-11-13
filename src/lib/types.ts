@@ -121,6 +121,7 @@ export interface Promotion {
   starts_at: string | null;
   ends_at: string | null;
   is_active: boolean;
+  design?: unknown;
   sort_order: number;
 }
 
@@ -141,6 +142,8 @@ export interface Coupon {
   per_user_limit: number | null;
   used_count: number;
   is_active: boolean;
+  design?: unknown;
+  is_public?: boolean;
 }
 
 export interface ShippingMethod {

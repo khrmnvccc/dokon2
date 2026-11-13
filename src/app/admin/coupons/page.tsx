@@ -1,6 +1,7 @@
 import { requirePagePermission } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
+import { DiscountTabs } from '@/components/admin/discount-tabs';
 import { DiscountsManager } from '@/components/admin/discounts-manager';
 import type { Coupon } from '@/lib/types';
 
@@ -17,6 +18,7 @@ export default async function Page() {
   return (
     <div>
       <PageHeader title="Promo-kodlar" description="Mijoz checkout’da kiritadigan kodlar. Barcha tekshiruvlar serverda bajariladi." />
+      <DiscountTabs active="/admin/coupons" />
       <DiscountsManager kind="coupons" items={(data ?? []) as Coupon[]} categories={categories ?? []} products={products ?? []} />
     </div>
   );

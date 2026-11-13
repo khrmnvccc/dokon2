@@ -4,9 +4,12 @@ import { useMemo, useState } from 'react';
 import { Controller, useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
-import { Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronsUpDown, PartyPopper, Plus, Search, TicketPercent, X } from 'lucide-react';
+import { COUPON_THEMES, COUPON_THEME_KEYS, cleanDesign, couponCardProps, type CouponTheme } from '@/lib/coupon-design';
+import { CouponCard } from '@/components/coupon/coupon-card';
+import { cn } from '@/components/ui/cn';
 import { couponSchema, promotionSchema } from '@/lib/admin/schemas';
-import { formatDateTime, formatPrice, slugify } from '@/lib/format';
+import { formatPrice, slugify } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Modal } from '@/components/ui/dialog';
@@ -18,10 +21,6 @@ import type { Coupon, Promotion } from '@/lib/types';
 type Opt = { id: string; name: string };
 type Kind = 'promotions' | 'coupons';
 
-function period(starts: string | null, ends: string | null) {
-  if (!starts && !ends) return 'Muddatsiz';
-  return `${starts ? formatDateTime(starts) : '…'} — ${ends ? formatDateTime(ends) : '…'}`;
-}
 function statusOf(x: { is_active: boolean; starts_at: string | null; ends_at: string | null }) {
   const now = Date.now();
   if (!x.is_active) return <Badge>O‘chiq</Badge>;
@@ -32,37 +31,137 @@ function statusOf(x: { is_active: boolean; starts_at: string | null; ends_at: st
 const valueText = (x: { discount_type: string; value: number }) => (x.discount_type === 'percent' ? `${x.value}%` : formatPrice(x.value));
 const scopeText = { all: 'Barcha mahsulotlar', category: 'Kategoriyalar', product: 'Tanlangan mahsulotlar' } as const;
 
-export function DiscountsManager({ kind, items, categories, products }: { kind: Kind; items: (Promotion | Coupon)[]; categories: Opt[]; products: Opt[] }) {
+const shortDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) : '…');
+type Item = Promotion | Coupon;
+type DesignInput = { theme: CouponTheme; badge: string };
+
+export function DiscountsManager({ kind, items, categories, products }: { kind: Kind; items: Item[]; categories: Opt[]; products: Opt[] }) {
   const crud = useCrud(kind);
-  const [editing, setEditing] = useState<Promotion | Coupon | 'new' | null>(null);
+  const [editing, setEditing] = useState<Item | 'new' | null>(null);
+  const [q, setQ] = useState('');
+  const [onlyCurrent, setOnlyCurrent] = useState(true);
   const isCoupon = kind === 'coupons';
+  const now = Date.now();
+  const current = (x: Item) => x.is_active && !(x.ends_at && new Date(x.ends_at).getTime() <= now);
+  const shown = items.filter((x) => (!onlyCurrent || current(x)) && (!q || ('code' in x ? x.code : x.title).toLowerCase().includes(q.toLowerCase()) || (x.description ?? '').toLowerCase().includes(q.toLowerCase())));
+  const currentCount = items.filter(current).length;
   return (
     <div>
-      <div className="mb-3 flex justify-end"><Button size="sm" onClick={() => setEditing('new')}><Plus className="h-4 w-4" /> {isCoupon ? 'Promo-kod' : 'Aksiya'} qo‘shish</Button></div>
-      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <label className="relative">
+          <select value={onlyCurrent ? 'cur' : 'all'} onChange={(e) => setOnlyCurrent(e.target.value === 'cur')} aria-label="Filtr"
+            className="h-10 appearance-none rounded-xl border border-line bg-surface-solid pl-3 pr-8 text-sm font-semibold text-ink">
+            <option value="cur">Joriy · {currentCount}</option>
+            <option value="all">Hammasi · {items.length}</option>
+          </select>
+          <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
+        </label>
+        <label className="relative min-w-[200px] flex-1 sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Qidirish" aria-label="Qidirish"
+            className="h-10 w-full rounded-xl border border-line bg-surface-solid pl-9 pr-3 text-sm text-ink outline-none placeholder:text-ink-3 focus:border-line-strong" />
+        </label>
+        <Button className="ml-auto" onClick={() => setEditing('new')}><Plus className="h-4 w-4" /> {isCoupon ? 'Promo-kod' : 'Aksiya'} qoʻshish</Button>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface-solid">
         <Table>
-          <thead><tr><th>{isCoupon ? 'Kod' : 'Nomi'}</th><th>Chegirma</th><th>Qamrov</th><th>Muddat</th>{isCoupon && <th>Ishlatilgan</th>}<th>Holat</th><th>Faol</th><th /></tr></thead>
+          <thead><tr>
+            <th className="w-[150px]">Kupon</th><th>{isCoupon ? 'Kod' : 'Nomi'}</th><th className="hidden xl:table-cell">Kimga</th><th>Davr</th>
+            {isCoupon && <th>Ishlatildi</th>}<th>Holat</th><th className="text-right">Amal</th>
+          </tr></thead>
           <tbody>
-            {items.length === 0 && <EmptyRow cols={8} />}
-            {items.map((x) => (
-              <tr key={x.id}>
-                <td className="font-semibold">{'code' in x ? <code className="rounded bg-surface-2 px-1.5 py-0.5">{x.code}</code> : x.title}</td>
-                <td>{valueText(x)}{'max_discount' in x && x.max_discount ? <span className="text-xs text-ink-3"> (≤ {formatPrice(x.max_discount)})</span> : null}</td>
-                <td className="text-ink-3">{scopeText[x.scope]}{'min_order_amount' in x && x.min_order_amount > 0 && <div className="text-xs">min {formatPrice(x.min_order_amount)}</div>}</td>
-                <td className="text-xs text-ink-3">{period(x.starts_at, x.ends_at)}</td>
-                {isCoupon && 'used_count' in x && <td className="tabular-nums">{x.used_count}{x.usage_limit ? ` / ${x.usage_limit}` : ''}</td>}
-                <td>{statusOf(x)}</td>
-                <td><Toggle checked={x.is_active} label="Faol" onChange={(v) => crud.toggle(x.id, v)} disabled={crud.pending} /></td>
-                <td><RowActions onEdit={() => setEditing(x)} onDelete={() => crud.remove(x.id)} /></td>
-              </tr>
-            ))}
+            {shown.length === 0 && <EmptyRow cols={isCoupon ? 7 : 6} />}
+            {shown.map((x) => {
+              const card = couponCardProps(x, isCoupon ? 'Kupon' : 'Aksiya');
+              const used = 'used_count' in x ? x.used_count : 0;
+              const limit = 'usage_limit' in x ? x.usage_limit : null;
+              return (
+                <tr key={x.id}>
+                  <td><button type="button" onClick={() => setEditing(x)} className="block w-[132px]" aria-label="Dizaynni ochish"><CouponCard {...card} size="sm" /></button></td>
+                  <td>
+                    <div className="font-semibold text-ink">{'code' in x ? <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono">{x.code}</code> : x.title}</div>
+                    <div className="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-3">
+                      {isCoupon ? <TicketPercent className="size-3.5" /> : <PartyPopper className="size-3.5" />}
+                      {valueText(x)}
+                      {'is_public' in x && x.is_public && <Badge tone="card">saytda</Badge>}
+                    </div>
+                    <div className="mt-0.5 text-xs text-ink-3 xl:hidden">{scopeText[x.scope]}
+                    </div>
+                  </td>
+                  <td className="hidden whitespace-nowrap text-ink-2 xl:table-cell">{scopeText[x.scope]}{'min_order_amount' in x && x.min_order_amount > 0 && <div className="text-xs text-ink-3">min {formatPrice(x.min_order_amount)}</div>}</td>
+                  <td className="whitespace-nowrap text-ink-2 num">{!x.starts_at && !x.ends_at ? 'Doimiy' : `${shortDate(x.starts_at)} — ${shortDate(x.ends_at)}`}</td>
+                  {isCoupon && (
+                    <td className="min-w-[120px]">
+                      <div className="font-mono text-sm text-ink">{used}{limit ? ` / ${limit}` : ''}</div>
+                      {limit ? <div className="mt-1 h-1.5 w-28 overflow-hidden rounded-full bg-surface-3"><div className="h-full rounded-full bg-[#1d4f80] dark:bg-white/70" style={{ width: `${Math.min(100, (used / limit) * 100)}%` }} /></div> : null}
+                    </td>
+                  )}
+                  <td>{statusOf(x)}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-2">
+                      <Toggle checked={x.is_active} label="Faol" onChange={(v) => crud.toggle(x.id, v)} disabled={crud.pending} />
+                      <RowActions onEdit={() => setEditing(x)} onDelete={() => crud.remove(x.id)} />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
+        <div className="border-t border-line px-4 py-2.5 text-xs text-ink-3 num">{shown.length} / {items.length}</div>
       </div>
-      <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? 'Yangi' : 'Tahrirlash'} className="max-w-2xl">
+      <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? (isCoupon ? 'Yangi promo-kod' : 'Yangi aksiya') : 'Tahrirlash'} size="xl" className="max-w-5xl">
         {editing !== null && <DiscountForm kind={kind} item={editing === 'new' ? null : editing} categories={categories} products={products} onDone={() => setEditing(null)} save={crud.save} />}
       </Modal>
     </div>
+  );
+}
+
+/** Dizayn: rang toʻplami, chiptadagi yozuv va jonli koʻrinish (kartochka + telefon). */
+function DesignPanel({ control, watchAll, isCoupon }: { control: Control<Record<string, unknown>>; watchAll: Record<string, unknown>; isCoupon: boolean }) {
+  const card = couponCardProps({
+    discount_type: String(watchAll.discount_type ?? 'percent'), value: Number(watchAll.value) || 0, scope: String(watchAll.scope ?? 'all'),
+    ends_at: watchAll.ends_at ? new Date(String(watchAll.ends_at)).toISOString() : null,
+    min_order_amount: isCoupon ? Number(watchAll.min_order_amount) || 0 : 0, design: watchAll.design,
+  }, isCoupon ? 'Kupon' : 'Aksiya');
+  return (
+    <Controller control={control} name="design" render={({ field }) => {
+      const d = cleanDesign(field.value) as DesignInput;
+      const set = (patch: Partial<DesignInput>) => field.onChange({ ...d, ...patch });
+      return (
+        <div className="space-y-4">
+          <div>
+            <div className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">Ranglar</div>
+            <div className="grid grid-cols-5 gap-2">
+              {COUPON_THEME_KEYS.map((k) => {
+                const t = COUPON_THEMES[k];
+                return (
+                  <button key={k} type="button" onClick={() => set({ theme: k })} aria-pressed={d.theme === k} title={t.label}
+                    className={cn('overflow-hidden rounded-xl border-2 text-left transition', d.theme === k ? 'border-[#1d4f80] dark:border-white' : 'border-transparent hover:border-line-strong')}>
+                    <span className="flex h-9">
+                      <span className="w-1/3" style={{ background: `linear-gradient(160deg, ${t.stub[0]}, ${t.stub[1]})` }} />
+                      <span className="flex-1" style={{ background: `linear-gradient(135deg, ${t.main[0]}, ${t.main[1]})` }} />
+                    </span>
+                    <span className="block truncate px-1.5 py-1 text-[11px] font-medium text-ink-2">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <Field label="Chiptadagi yozuv" hint="Masalan 11.11, YANGI, VIP — koʻpi bilan 6 belgi" htmlFor="d-badge">
+            <Input id="d-badge" maxLength={6} value={d.badge} onChange={(e) => set({ badge: e.target.value })} placeholder={card.unit === '%' ? '%' : '★'} />
+          </Field>
+          <div>
+            <div className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink-2">Saytda koʻrinishi</div>
+            <div className="mx-auto w-full max-w-[300px] rounded-[2rem] border-[6px] border-[#14253b] bg-[var(--panel)] p-3 shadow-pop">
+              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-ink"><ChevronLeft className="size-4" /> Chegirma</div>
+              <CouponCard {...card} action={isCoupon ? 'Nusxalash' : 'Koʻrish'} />
+              <div className="h-16" />
+            </div>
+          </div>
+        </div>
+      );
+    }} />
   );
 }
 
@@ -101,10 +200,10 @@ function DiscountForm({ kind, item, categories, products, onDone, save }: { kind
   const defaults = useMemo(() => {
     if (!item) {
       return isCoupon
-        ? { code: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], min_order_amount: 0, max_discount: '', usage_limit: '', per_user_limit: 1, starts_at: '', ends_at: '', is_active: true }
-        : { title: '', slug: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], sort_order: 0, starts_at: '', ends_at: '', is_active: true };
+        ? { code: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], min_order_amount: 0, max_discount: '', usage_limit: '', per_user_limit: 1, starts_at: '', ends_at: '', is_active: true, is_public: false, design: { theme: 'red', badge: '' } }
+        : { title: '', slug: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], sort_order: 0, starts_at: '', ends_at: '', is_active: true, design: { theme: 'red', badge: '' } };
     }
-    return Object.fromEntries(Object.entries({ ...item, starts_at: toLocalInput(item.starts_at), ends_at: toLocalInput(item.ends_at) }).map(([k, v]) => [k, Array.isArray(v) ? v : s(v)]));
+    return Object.fromEntries(Object.entries({ ...item, starts_at: toLocalInput(item.starts_at), ends_at: toLocalInput(item.ends_at), design: cleanDesign(item.design), ...(isCoupon ? { is_public: Boolean((item as Coupon).is_public) } : {}) }).map(([k, v]) => [k, Array.isArray(v) || (v && typeof v === 'object') || typeof v === 'boolean' ? v : s(v)]));
   }, [item, isCoupon]);
   const { register, handleSubmit, control, watch, setValue, setError, formState: { errors, isSubmitting } } = useForm<Record<string, unknown>>({
     resolver: zodResolver(schema as unknown as z.ZodType<Record<string, unknown>>),
@@ -112,8 +211,10 @@ function DiscountForm({ kind, item, categories, products, onDone, save }: { kind
   });
   const err = (k: string) => (errors[k]?.message as string | undefined);
   const scope = watch('scope');
+  const all = watch();
   return (
-    <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={handleSubmit(async (d) => { if (await save(item?.id ?? null, d, setError)) onDone(); })}>
+    <form className="grid gap-6 lg:grid-cols-[1fr_320px]" noValidate onSubmit={handleSubmit(async (d) => { if (await save(item?.id ?? null, d, setError)) onDone(); })}>
+    <div className="grid content-start gap-4 sm:grid-cols-2">
       {isCoupon ? (
         <Field label="Kod" required error={err('code')} htmlFor="d-code" hint="Mijoz checkout’da kiritadi"><Input id="d-code" className="uppercase" {...register('code')} /></Field>
       ) : (
@@ -145,8 +246,11 @@ function DiscountForm({ kind, item, categories, products, onDone, save }: { kind
       <Field label="Boshlanish" htmlFor="d-start"><Input id="d-start" type="datetime-local" {...register('starts_at')} /></Field>
       <Field label="Tugash" error={err('ends_at')} htmlFor="d-end"><Input id="d-end" type="datetime-local" {...register('ends_at')} /></Field>
       <Checkbox label="Faol" {...register('is_active')} />
+      {isCoupon && <Checkbox label="Saytda “Kuponlar” boʻlimida koʻrsatish (kod hammaga koʻrinadi)" {...register('is_public')} />}
       {!isCoupon && <input type="hidden" {...register('sort_order')} />}
-      <div className="flex justify-end gap-2 sm:col-span-2">
+    </div>
+    <DesignPanel control={control} watchAll={all} isCoupon={isCoupon} />
+      <div className="flex justify-end gap-2 lg:col-span-2">
         <Button type="button" variant="outline" onClick={onDone}>Bekor qilish</Button>
         <Button type="submit" loading={isSubmitting}>Saqlash</Button>
       </div>

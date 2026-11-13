@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { parseCatalogParams } from '@/lib/catalog-params';
-import { getActivePromotions, getBanners } from '@/lib/data/public';
+import { getActivePromotions, getBanners, getPublicCoupons } from '@/lib/data/public';
+import { CouponCard } from '@/components/coupon/coupon-card';
+import { CopyCoupon } from '@/components/coupon/copy-coupon';
+import { couponCardProps } from '@/lib/coupon-design';
 import { CatalogView } from '@/components/shop/catalog-view';
 import { Breadcrumbs } from '@/components/shop/breadcrumbs';
 import { BannerSlide } from '@/components/shop/hero-slider';
@@ -13,23 +16,35 @@ export const metadata: Metadata = { title: 'Chegirmalar va aksiyalar', descripti
 export default async function SalePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const { params, page } = parseCatalogParams({ ...sp, discount: '1', sort: typeof sp.sort === 'string' ? sp.sort : 'discount' });
-  const [banners, promotions] = await Promise.all([getBanners('sale_page'), getActivePromotions()]);
+  const [banners, promotions, coupons] = await Promise.all([getBanners('sale_page'), getActivePromotions(), getPublicCoupons()]);
 
   return (
     <>
       <Breadcrumbs items={[{ name: 'Chegirmalar' }]} />
       <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">Chegirmalar va aksiyalar</h1>
       {banners[0] && <div className="mb-6 aspect-[16/6] overflow-hidden rounded-2xl sm:aspect-[16/5]"><BannerSlide banner={banners[0]} priority /></div>}
+      {coupons.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Kuponlar</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {coupons.map((c) => (
+              <CopyCoupon key={c.id} code={c.code} description={c.description} card={{ ...couponCardProps({ ...c, scope: undefined }, 'Kupon'), cutout: 'var(--bg)' }} />
+            ))}
+          </div>
+        </section>
+      )}
       {promotions.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-[15px] font-semibold tracking-tight">Faol aksiyalar</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {promotions.map((p) => (
               <article key={p.id} className="overflow-hidden rounded-xl border border-line bg-surface shadow-soft">
-                {p.image_url && (
+                {p.image_url ? (
                   <div className="relative aspect-[16/7]">
                     <Image src={p.image_url} alt={p.title} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover" unoptimized={isUnoptimizable(p.image_url)} />
                   </div>
+                ) : (
+                  <div className="p-3 pb-0"><CouponCard {...couponCardProps(p, 'Aksiya')} note={p.title} cutout="var(--surface-solid, #fff)" /></div>
                 )}
                 <div className="p-4">
                   <div className="flex items-center justify-between gap-2">
