@@ -23,7 +23,8 @@ export const getSettings = unstable_cache(
     }
     return parseSettings(data ?? []);
   },
-  ['site-settings'],
+  // v2: kassa dizayni bilan sozlamalarga `brand` va `pages` qoʻshildi; eski keshdagi obyektda ular yoʻq.
+  ['site-settings-v2'],
   { tags: [TAGS.settings], revalidate: REVALIDATE },
 );
 
