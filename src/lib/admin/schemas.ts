@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { designSchema } from '@/lib/coupon-design';
 
 const toNumber = (v: unknown) => {
   if (typeof v === 'number') return v;
@@ -111,6 +112,7 @@ const discountBase = {
   starts_at: dateOrNull,
   ends_at: dateOrNull,
   is_active: z.boolean(),
+  design: designSchema,
 };
 type DiscountShape = { discount_type: string; value: number; scope: string; category_ids: string[]; product_ids: string[]; starts_at: string | null; ends_at: string | null };
 const discountRefine = <T extends DiscountShape, I>(s: z.ZodType<T, z.ZodTypeDef, I>) =>
@@ -136,6 +138,7 @@ export const couponSchema = discountRefine(z.object({
   min_order_amount: money,
   usage_limit: z.preprocess((v) => (v === '' || v == null ? null : toNumber(v)), z.number().int().min(1).nullable()),
   per_user_limit: z.preprocess((v) => (v === '' || v == null ? null : toNumber(v)), z.number().int().min(1).nullable()),
+  is_public: z.boolean(),
   ...discountBase,
 }));
 

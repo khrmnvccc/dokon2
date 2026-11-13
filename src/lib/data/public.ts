@@ -217,3 +217,15 @@ export const getPaymentMethods = unstable_cache(
   ['payment-methods'],
   { tags: [TAGS.methods], revalidate: REVALIDATE },
 );
+
+export interface PublicCoupon {
+  id: string; code: string; description: string | null; discount_type: 'percent' | 'fixed'; value: number;
+  max_discount: number | null; min_order_amount: number; ends_at: string | null; design: unknown;
+}
+/** Ega “saytda koʻrsatish”ni yoqqan amaldagi promo-kodlar (RPC: kodlar jadvali anon uchun yopiq). */
+export async function getPublicCoupons(): Promise<PublicCoupon[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await getPublicSupabase().rpc('public_coupons');
+  if (error) return []; // migratsiya hali qoʻllanmagan boʻlsa — boʻlim koʻrinmaydi
+  return (data ?? []) as PublicCoupon[];
+}

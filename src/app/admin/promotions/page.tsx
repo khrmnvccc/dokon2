@@ -1,6 +1,7 @@
 import { requirePagePermission } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/admin/ui';
+import { DiscountTabs } from '@/components/admin/discount-tabs';
 import { DiscountsManager } from '@/components/admin/discounts-manager';
 import type { Promotion } from '@/lib/types';
 
@@ -17,6 +18,7 @@ export default async function Page() {
   return (
     <div>
       <PageHeader title="Aksiyalar" description="Avtomatik chegirmalar: saytda narx chegirma bilan ko‘rinadi. Bir nechta aksiya to‘g‘ri kelsa, eng kattasi qo‘llanadi." />
+      <DiscountTabs active="/admin/promotions" />
       <DiscountsManager kind="promotions" items={(data ?? []) as Promotion[]} categories={categories ?? []} products={products ?? []} />
     </div>
   );
