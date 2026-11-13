@@ -5,6 +5,12 @@ import { useState, type ReactNode } from 'react';
 import { AlertCircle, ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronDown, Minus, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './cn';
+import { formatPrice } from '@/lib/format';
+
+/** Server komponentdan funksiya uzatib boʻlmaydi — shuning uchun 'money' / 'number' satri ham qabul qilinadi. */
+export type NumberFormat = 'money' | 'number' | ((n: number) => string);
+export const applyFormat = (f: NumberFormat | undefined, n: number) =>
+  typeof f === 'function' ? f(n) : f === 'money' ? formatPrice(n) : n.toLocaleString('ru-RU').replace(/\s/g, ' ');
 
 export { Card, CardHeader, EmptyState, Badge, Skeleton } from './misc';
 
@@ -76,9 +82,9 @@ export function PageHeader({ title, subtitle, description, actions, collapse, fi
 /** Katta raqam, ↑/↓ foiz, skeleton yuklanish. href bo'lsa butun karta havola. */
 export function StatCard({ label, value, previous, hint, accent, loading, format, href, tone }: {
   label: string; value: number | ReactNode; previous?: number; hint?: ReactNode; accent?: string; loading?: boolean;
-  format?: (n: number) => string; href?: string; tone?: 'warn' | 'bad';
+  format?: NumberFormat; href?: string; tone?: 'warn' | 'bad';
 }) {
-  const shown = typeof value === 'number' ? (format ? format(value) : value.toLocaleString('ru-RU').replace(/\s/g, ' ')) : value;
+  const shown = typeof value === 'number' ? applyFormat(format, value) : value;
   const body = (
     <>
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink-2">
@@ -126,7 +132,7 @@ export function Toggle({ checked, onChange, label, disabled, name }: { checked: 
       className={cn('relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50',
         checked ? 'bg-success' : 'bg-surface-3')}>
       {name && <input type="hidden" name={name} value={checked ? 'on' : ''} />}
-      <span className={cn('inline-block size-5 rounded-full bg-surface shadow-soft transition-transform duration-200', checked ? 'translate-x-6' : 'translate-x-1')} />
+      <span className={cn('inline-block size-5 rounded-full bg-white shadow-soft transition-transform duration-200', checked ? 'translate-x-6' : 'translate-x-1')} />
     </button>
   );
 }

@@ -56,7 +56,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </div>
       <div className="mb-4 grid gap-4 xl:grid-cols-3">
         <Panel title="Tushum dinamikasi (so‘m)" className="xl:col-span-2">
-          {sales.length ? <BarChart valueLabel="Tushum" data={sales.map((r) => ({ label: periodLabel(r.period), value: Number(r.revenue), sub: `${r.orders_count} ta buyurtma` }))} formatValue={p} /> : <p className="py-10 text-center text-sm text-ink-3">Bu davrda savdo yo‘q</p>}
+          {sales.length ? <BarChart valueLabel="Tushum" data={sales.map((r) => ({ label: periodLabel(r.period), value: Number(r.revenue), sub: `${r.orders_count} ta buyurtma` }))} formatValue="money" /> : <p className="py-10 text-center text-sm text-ink-3">Bu davrda savdo yo‘q</p>}
         </Panel>
         <Panel title="Holatlar bo‘yicha">
           <HBarList items={statuses.map((s) => ({ label: orderStatusLabel[s.status as OrderStatus] ?? s.status, value: Number(s.orders_count), extra: p(Number(s.amount)) }))} />

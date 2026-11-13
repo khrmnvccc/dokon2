@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { formatNumber } from '@/lib/format';
+import { applyFormat, type NumberFormat } from '@/components/ui/kit';
 
 /**
  * Bitta qatorli ustunli diagramma (masalan, kunlik savdo). Bitta seriya — legenda kerak emas, sarlavha nomlaydi.
  * Hover/focus'da tooltip; skrin-riderlar uchun jadval ko'rinishi ham bor.
  */
-export function BarChart({ data, valueLabel, formatValue = formatNumber, height = 220 }: {
+export function BarChart({ data, valueLabel, formatValue: fmt = formatNumber, height = 220 }: {
   data: { label: string; value: number; sub?: string }[];
   valueLabel: string;
-  formatValue?: (v: number) => string;
+  formatValue?: NumberFormat;
   height?: number;
 }) {
+  const formatValue = (v: number) => applyFormat(fmt, v);
   const [active, setActive] = useState<number | null>(null);
   const [showTable, setShowTable] = useState(false);
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -52,7 +54,7 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
           return (
             <g key={t}>
               <line x1={padL} x2={W - 8} y1={y} y2={y} stroke="var(--line)" strokeWidth={1} />
-              <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--muted)">{compact(t)}</text>
+              <text x={padL - 8} y={y + 4} textAnchor="end" fontSize={11} fill="var(--ink-3)">{compact(t)}</text>
             </g>
           );
         })}
@@ -66,7 +68,7 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
               {h > 0 && (
                 <path
                   d={`M${x},${8 + innerH} V${y + r} Q${x},${y} ${x + r},${y} H${x + barW - r} Q${x + barW},${y} ${x + barW},${y + r} V${8 + innerH} Z`}
-                  fill="var(--brand)"
+                  fill="var(--primary)"
                   opacity={active === null || active === i ? 1 : 0.45}
                 />
               )}
@@ -75,7 +77,7 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
                 onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onBlur={() => setActive(null)}
                 aria-label={`${d.label}: ${formatValue(d.value)}`} />
               {i % labelEvery === 0 && (
-                <text x={padL + i * slot + slot / 2} y={H - 6} textAnchor="middle" fontSize={11} fill="var(--muted)">{d.label}</text>
+                <text x={padL + i * slot + slot / 2} y={H - 6} textAnchor="middle" fontSize={11} fill="var(--ink-3)">{d.label}</text>
               )}
             </g>
           );
@@ -94,7 +96,8 @@ export function BarChart({ data, valueLabel, formatValue = formatNumber, height 
 }
 
 /** Gorizontal ulushlar (holatlar bo'yicha taqsimot) — bitta rang, matnli yorliqlar */
-export function HBarList({ items, formatValue = formatNumber }: { items: { label: string; value: number; extra?: string }[]; formatValue?: (v: number) => string }) {
+export function HBarList({ items, formatValue: fmt = formatNumber }: { items: { label: string; value: number; extra?: string }[]; formatValue?: NumberFormat }) {
+  const formatValue = (v: number) => applyFormat(fmt, v);
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
     <ul className="space-y-3">

@@ -205,12 +205,12 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
                   <div className="space-y-2">
                     {addresses.map((a) => (
                       <label key={a.id} className={cn('flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === a.id ? 'border-primary bg-primary-soft' : 'border-line')}>
-                        <input type="radio" name="saved-address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} className="mt-1 accent-[var(--brand)]" />
+                        <input type="radio" name="saved-address" checked={selectedAddress === a.id} onChange={() => setSelectedAddress(a.id)} className="mt-1 accent-[var(--primary)]" />
                         <span><MapPin className="mr-1 inline h-4 w-4 text-primary" />{a.label && <b>{a.label}: </b>}{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</span>
                       </label>
                     ))}
                     <label className={cn('flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === 'new' ? 'border-primary bg-primary-soft' : 'border-line')}>
-                      <input type="radio" name="saved-address" checked={selectedAddress === 'new'} onChange={() => setSelectedAddress('new')} className="accent-[var(--brand)]" />
+                      <input type="radio" name="saved-address" checked={selectedAddress === 'new'} onChange={() => setSelectedAddress('new')} className="accent-[var(--primary)]" />
                       Yangi manzil
                     </label>
                   </div>

@@ -134,8 +134,8 @@ function SidebarBody({ nav, pathname, name, role, languages, onNavigate, onClose
         <Link href="/admin" className="min-w-0" onClick={onNavigate}><Logo /></Link>
         {onClose && <IconButton label="Yopish" onClick={onClose}><X className="size-5" /></IconButton>}
       </div>
-      <div className="scrollbar-thin mt-7 flex-1 overflow-y-auto"><NavLinks nav={nav} pathname={pathname} onNavigate={onNavigate} /></div>
-      <Link href="/" target="_blank" className="mb-2 flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">
+      <div className="scrollbar-thin mt-7 min-h-0 flex-1 overflow-y-auto border-b border-line pb-2"><NavLinks nav={nav} pathname={pathname} onNavigate={onNavigate} /></div>
+      <Link href="/" target="_blank" className="mb-2 mt-2 flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">
         <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} /> Saytni ochish
       </Link>
       {languages.length > 1 && <LangSwitch languages={languages} className="mb-2 flex [&>button]:flex-1" />}
