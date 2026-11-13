@@ -10,6 +10,7 @@ const PAGE = 50;
 const ENTITY_LABELS: Record<string, string> = {
   products: 'Mahsulot', product_variants: 'Variant', categories: 'Kategoriya', orders: 'Buyurtma', coupons: 'Promo-kod', promotions: 'Aksiya',
   banners: 'Banner', pages: 'Sahifa', site_settings: 'Sozlama', shipping_methods: 'Yetkazish', payment_methods: 'To‘lov', user_roles: 'Rol', profiles: 'Mijoz', reviews: 'Sharh',
+  branches: 'Filial', staff_members: 'Xodim ruxsati', broadcasts: 'Ommaviy xabar', telegram: 'Telegram',
 };
 const ACTION_TONE: Record<string, 'green' | 'amber' | 'red' | 'gray'> = { INSERT: 'green', UPDATE: 'amber', DELETE: 'red' };
 const ACTION_LABEL: Record<string, string> = { INSERT: 'Yaratildi', UPDATE: 'O‘zgartirildi', DELETE: 'O‘chirildi' };

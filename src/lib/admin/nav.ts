@@ -30,9 +30,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
       { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
       { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
+      { href: '/admin/messages', label: 'Xabarlar', icon: 'Send', perm: 'messages.manage' },
       { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
       { href: '/admin/audit', label: 'Faoliyat jurnali', icon: 'History', perm: 'audit.view' },
       { href: '/admin/settings', label: 'Sozlamalar', icon: 'Settings', perm: 'settings.write' },
+      { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Bot', perm: 'dashboard.view' },
     ],
   },
 ];

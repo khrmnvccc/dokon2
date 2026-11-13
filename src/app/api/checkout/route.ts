@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { checkoutSchema, fieldErrors } from '@/lib/validation';
 import { buildQuote, hasServiceKey } from '@/lib/checkout';
@@ -11,6 +11,7 @@ import { getClientIp, rateLimit } from '@/lib/rate-limit';
 import { couponErrorText, lineErrorText } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 import { TAGS } from '@/lib/cache-tags';
+import { onNewOrder } from '@/lib/telegram/events';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,5 +126,7 @@ export async function POST(request: Request) {
   }
 
   revalidateTag(TAGS.products);
+  // Telegram: javobni kutdirmaydi, fonda yuboriladi.
+  if (!order.duplicate) after(() => onNewOrder(order.id));
   return NextResponse.json({ ok: true, number: order.number, token: order.token });
 }

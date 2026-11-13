@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3, Bell, Circle, ExternalLink, FileText, FolderTree, History, Image, LayoutDashboard, LogOut, Menu, MessageSquare,
-  Building2, Package, Percent, Plus, Search, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
+  Bot, Building2, Package, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
 import type { AdminNavGroup } from '@/lib/admin/nav';
 import { logout } from '@/lib/actions/auth';
@@ -21,7 +21,7 @@ import type { Notification } from '@/lib/types';
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, ShoppingBag, Users, BarChart3, Package, FolderTree, Warehouse, MessageSquare, Image, Percent,
-  TicketPercent, FileText, Truck, Settings, ShieldCheck, History,
+  TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot,
 };
 
 const isActive = (pathname: string, href: string) => (href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(href + '/'));

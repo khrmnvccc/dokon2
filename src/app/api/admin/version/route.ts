@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { deliverDue } from '@/lib/telegram/broadcast';
 import { getStaffContext } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
 
@@ -20,6 +21,8 @@ export async function GET() {
       ? supabase.from('products').select('updated_at').order('updated_at', { ascending: false }).limit(1).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
+  // Rejalashtirilgan ommaviy xabarlar: panel ochiq turganda ham tekshiriladi (daqiqasiga bir marta).
+  after(() => deliverDue().catch((e) => console.error('deliverDue', e)));
   const v = [orders.data?.updated_at, products.data?.updated_at].filter(Boolean).join('|');
   return NextResponse.json({ v }, { headers: { 'cache-control': 'no-store' } });
 }
