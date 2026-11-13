@@ -76,6 +76,30 @@ function useLive() {
   return online;
 }
 
+/** Telefonda jadval kartaga aylanganda har katakka ustun nomini yozadi (data-label). */
+function useTableLabels() {
+  useEffect(() => {
+    const label = () => {
+      document.querySelectorAll<HTMLTableElement>('table.rtable').forEach((t) => {
+        const heads = Array.from(t.querySelectorAll('thead th')).map((th) => th.textContent?.trim() ?? '');
+        t.querySelectorAll('tbody tr').forEach((tr) => {
+          let i = 0;
+          tr.querySelectorAll(':scope > td').forEach((td) => {
+            const span = Number(td.getAttribute('colspan') || 1);
+            if (td.getAttribute('data-label') !== heads[i]) td.setAttribute('data-label', heads[i] ?? '');
+            i += span;
+          });
+        });
+      });
+    };
+    label();
+    let raf = 0;
+    const obs = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(label); });
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => { obs.disconnect(); cancelAnimationFrame(raf); };
+  }, []);
+}
+
 /* ───────────── Yuqori toʻq panel ───────────── */
 
 const barBtn = 'inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white/75 transition-colors hover:bg-white/10 hover:text-white';
@@ -238,6 +262,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
   useEffect(() => setCollapsed(readStore('dk_admin_side', false)), []);
   useEffect(() => setDrawer(false), [pathname]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [pathname]);
+  useTableLabels();
   const who = name || email || 'Xodim';
   const toggleSide = () => setCollapsed((v) => { writeStore('dk_admin_side', !v); return !v; });
 

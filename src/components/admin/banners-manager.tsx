@@ -48,17 +48,19 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
                 {list.map((b, i) => {
                   const st = scheduleState(b);
                   return (
-                    <li key={b.id} className="flex items-center gap-3 border-t border-line px-4 py-3 first:border-t-0">
+                    <li key={b.id} className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-3 first:border-t-0 sm:flex-nowrap">
                       <MoveButtons list={list} index={i} onReorder={crud.reorder} />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={b.image_url} alt="" className="h-14 w-28 shrink-0 rounded-lg object-cover" style={{ background: b.bg_color ?? undefined }} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{b.title || 'Sarlavhasiz'}</p>
+                      <img src={b.image_url} alt="" className="h-12 w-20 shrink-0 rounded-lg object-cover sm:h-14 sm:w-28" style={{ background: b.bg_color ?? undefined }} />
+                      <div className="min-w-[55%] flex-1 sm:min-w-0">
+                        <p className="line-clamp-2 font-medium sm:truncate">{b.title || 'Sarlavhasiz'}</p>
                         <p className="truncate text-xs text-ink-3">{b.link_url ?? 'havola yo‘q'}</p>
                         {st && <Badge tone={st.tone} className="mt-1">{st.text}</Badge>}
                       </div>
-                      <Toggle checked={b.is_active} label="Faol" onChange={(v) => crud.toggle(b.id, v)} disabled={crud.pending} />
-                      <RowActions onEdit={() => setEditing(b)} onDelete={() => crud.remove(b.id, 'Bannerni o‘chirish?')} />
+                      <div className="ml-auto flex items-center gap-2">
+                        <Toggle checked={b.is_active} label="Faol" onChange={(v) => crud.toggle(b.id, v)} disabled={crud.pending} />
+                        <RowActions onEdit={() => setEditing(b)} onDelete={() => crud.remove(b.id, 'Bannerni o‘chirish?')} />
+                      </div>
                     </li>
                   );
                 })}

@@ -89,7 +89,7 @@ export function StatCard({ label, value, previous, hint, accent, loading, format
     <>
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink-2">
         {accent && <span className="size-2 rounded-full" style={{ background: accent }} />}
-        <span className="truncate">{label}</span>
+        <span className="line-clamp-2">{label}</span>
         {href && <ChevronDown className="ml-auto size-4 -rotate-90 text-ink-3" />}
       </div>
       {loading ? <div className="skeleton mt-3 h-7 w-3/4" /> : (
@@ -97,7 +97,7 @@ export function StatCard({ label, value, previous, hint, accent, loading, format
       )}
       <div className="mt-1.5 flex min-h-5 items-center gap-2 text-xs text-ink-3">
         {!loading && previous !== undefined && typeof value === 'number' && <Delta current={value} previous={previous} />}
-        {hint && <span className="truncate">{hint}</span>}
+        {hint && <span className="line-clamp-2">{hint}</span>}
       </div>
     </>
   );
