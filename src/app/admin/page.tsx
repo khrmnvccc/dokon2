@@ -1,95 +1,113 @@
 import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
 import { requirePagePermission } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { getBranchState } from '@/lib/admin/branch';
 import { formatDateTime, formatNumber, formatPrice } from '@/lib/format';
 import { orderStatusLabel, orderStatusTone } from '@/lib/order-status';
+import { STATUS_COLOR, paymentTone, toneColor } from '@/lib/order-colors';
 import { Badge } from '@/components/ui/misc';
+import { Alert, Avatar } from '@/components/ui/kit';
+import { Capsule } from '@/components/ui/capsule';
 import { PageHeader, Panel, StatCard, Table, EmptyRow } from '@/components/admin/ui';
 import { BarChart } from '@/components/admin/charts';
 import type { OrderStatus } from '@/lib/types';
 
 interface Dashboard {
-  today_sales: number; today_orders: number; total_sales: number; orders_count: number; new_orders: number;
-  pending_orders: number; cancelled_orders: number; products_count: number; active_products: number; low_stock: number;
-  customers_count: number;
+  today_sales: number; yesterday_sales: number; today_orders: number; yesterday_orders: number; new_orders: number;
+  undelivered: number; low_stock: number; month_sales: number;
   sales_by_day: { date: string; revenue: number; orders: number }[];
-  top_products: { product_id: string; name: string; quantity: number; revenue: number }[];
-  recent_orders: { id: string; number: number; customer_name: string; total: number; status: OrderStatus; created_at: string }[];
+  by_payment: { name: string; kind: string; provider: string | null; total: number }[];
+  by_status: { status: OrderStatus; count: number }[];
+  recent_orders: { id: string; number: number; customer_name: string; total: number; status: OrderStatus; payment_method_name: string; created_at: string }[];
+  staff_rating: { name: string; actions: number }[];
 }
 
 export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
   const ctx = await requirePagePermission('dashboard.view');
   const { denied } = await searchParams;
   const supabase = await getServerSupabase();
-  const { data, error } = await supabase.rpc('admin_dashboard');
+  const branch = await getBranchState();
+  const { data, error } = await supabase.rpc('admin_dashboard_live', { p_branch: branch.current || null });
   const d = data as Dashboard | null;
   const p = (v: number) => formatPrice(v);
+  const can = (perm: string) => ctx.permissions.has(perm);
 
   return (
     <div>
-      <PageHeader title="Dashboard" description="Bugungi holat va oxirgi 30 kunlik ko‘rsatkichlar" />
-      {denied && <p className="mb-4 rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn">Sizda bu bo‘limga kirish huquqi yo‘q.</p>}
+      <PageHeader title="Dashboard" subtitle="Bugungi holat, 14 kunlik savdo va oxirgi buyurtmalar" />
+      {denied && <Alert tone="warn" className="mb-4">Sizda bu boʻlimga kirish huquqi yoʻq.</Alert>}
       {error || !d ? (
-        <p className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">Ma’lumotlarni yuklab bo‘lmadi.</p>
+        <Alert>Maʼlumotlarni yuklab boʻlmadi.</Alert>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label="Bugungi savdo" value={p(d.today_sales)} hint={`${d.today_orders} ta buyurtma`} />
-            <StatCard label="Yangi buyurtmalar" value={formatNumber(d.new_orders)} hint={`Jarayonda: ${d.pending_orders}`} tone={d.new_orders > 0 ? 'warn' : undefined} />
-            <StatCard label="Jami savdo" value={p(d.total_sales)} hint={`${formatNumber(d.orders_count)} ta buyurtma, bekor: ${d.cancelled_orders}`} />
-            <StatCard label="Mijozlar" value={formatNumber(d.customers_count)} hint={`Mahsulotlar: ${d.active_products} / ${d.products_count}`} />
+          {/* Jonli lenta: hech narsa o'zi aylanmaydi; ruxsati yo'q karta umuman chiqmaydi */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+            <StatCard label="Bugungi savdo" accent="var(--cash)" value={Number(d.today_sales)} previous={Number(d.yesterday_sales)} format={p} hint="kechagiga nisbatan" href={can('reports.view') ? '/admin/reports' : undefined} />
+            {can('orders.read') && <StatCard label="Buyurtmalar (bugun)" accent="var(--card)" value={Number(d.today_orders)} previous={Number(d.yesterday_orders)} href="/admin/orders" />}
+            {can('orders.read') && <StatCard label="Yangi buyurtmalar" accent="var(--yandex)" value={Number(d.new_orders)} tone={d.new_orders > 0 ? 'warn' : undefined} hint="tasdiqlash kutilmoqda" href="/admin/orders?status=new" />}
+            {can('orders.read') && <StatCard label="Yetkazilmaganlar" accent="var(--pochta)" value={Number(d.undelivered)} hint="tasdiqlangan, yigʻilmoqda, yoʻlda" href="/admin/orders?status=shipped" />}
+            {can('products.read') && <StatCard label="Kam qolgan mahsulotlar" accent="var(--danger)" value={Number(d.low_stock)} tone={d.low_stock > 0 ? 'bad' : undefined} hint="qoldiq chegaradan past" href={can('inventory.write') ? '/admin/inventory?low=1' : '/admin/products'} />}
           </div>
-          {d.low_stock > 0 && (
-            <Link href="/admin/inventory?low=1" className="flex items-center gap-2 rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-sm font-medium text-warn hover:opacity-90">
-              <AlertTriangle className="h-4 w-4" /> {d.low_stock} ta mahsulot qoldig‘i kam — ko‘rish →
-            </Link>
-          )}
+
           <div className="grid gap-4 xl:grid-cols-3">
-            <Panel title="Savdo, oxirgi 30 kun (so‘m)" className="xl:col-span-2">
+            <Panel title="Savdo, oxirgi 14 kun" subtitle={`Shu oy: ${p(Number(d.month_sales))}`} className="xl:col-span-2">
               <BarChart
                 valueLabel="Savdo"
                 data={d.sales_by_day.map((s) => ({
-                  label: new Date(s.date).toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' }),
+                  label: `${s.date.slice(8, 10)}.${s.date.slice(5, 7)}`,
                   value: Number(s.revenue),
                   sub: `${s.orders} ta buyurtma`,
                 }))}
                 formatValue={(v) => p(v)}
               />
             </Panel>
-            <Panel title="Top mahsulotlar (30 kun)">
-              {d.top_products.length === 0 ? <p className="py-8 text-center text-sm text-ink-3">Hali savdo yo‘q</p> : (
+            <Panel title="Toʻlov turlari ulushi" subtitle="Oxirgi 30 kun">
+              {d.by_payment.length === 0 ? <p className="py-8 text-center text-[13px] text-ink-3">Hali savdo yoʻq</p> : (
+                <Capsule parts={d.by_payment.map((m) => ({ label: m.name, value: Number(m.total), color: toneColor(paymentTone(m)), display: p(Number(m.total)) }))} />
+              )}
+              {d.by_status.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="mb-3 text-[13px] font-medium text-ink-2">Buyurtma holatlari</h3>
+                  <Capsule parts={d.by_status.map((s) => ({ label: orderStatusLabel[s.status], value: Number(s.count), color: STATUS_COLOR[s.status], display: `${formatNumber(s.count)} ta` }))} />
+                </div>
+              )}
+            </Panel>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-3">
+            {can('orders.read') && (
+              <Panel title="Oxirgi buyurtmalar" padded={false} className="xl:col-span-2" actions={<Link href="/admin/orders" className="text-sm font-medium text-primary">Barchasi →</Link>}>
+                <Table>
+                  <thead><tr><th>№</th><th>Mijoz</th><th className="text-right">Summa</th><th>Holat</th><th className="max-sm:hidden">Sana</th></tr></thead>
+                  <tbody>
+                    {d.recent_orders.length === 0 && <EmptyRow cols={5} text="Hali buyurtma yoʻq" />}
+                    {d.recent_orders.map((o) => (
+                      <tr key={o.id}>
+                        <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary num">#{o.number}</Link></td>
+                        <td>{o.customer_name}<div className="text-xs text-ink-3">{o.payment_method_name}</div></td>
+                        <td className="text-right num">{p(o.total)}</td>
+                        <td><Badge tone={orderStatusTone[o.status]}>{orderStatusLabel[o.status]}</Badge></td>
+                        <td className="text-ink-3 num max-sm:hidden">{formatDateTime(o.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </Panel>
+            )}
+            <Panel title="Xodimlar reytingi" subtitle="Buyurtma holatini oʻzgartirganlar, 30 kun">
+              {d.staff_rating.length === 0 ? <p className="py-8 text-center text-[13px] text-ink-3">Hali harakat yoʻq</p> : (
                 <ol className="space-y-3">
-                  {d.top_products.map((t, i) => (
-                    <li key={t.product_id ?? i} className="flex items-center gap-3 text-sm">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold">{i + 1}</span>
-                      <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                      <span className="shrink-0 text-right tabular-nums"><b>{t.quantity}</b> <span className="text-ink-3">dona</span></span>
+                  {d.staff_rating.map((s, i) => (
+                    <li key={s.name + i} className="flex items-center gap-3 text-sm">
+                      <Avatar name={s.name} size="sm" />
+                      <span className="min-w-0 flex-1 truncate">{s.name}</span>
+                      <span className="shrink-0 font-semibold num">{formatNumber(s.actions)}</span>
                     </li>
                   ))}
                 </ol>
               )}
             </Panel>
           </div>
-          {ctx.permissions.has('orders.read') && (
-            <Panel title="Oxirgi buyurtmalar" padded={false} actions={<Link href="/admin/orders" className="text-sm font-medium text-primary">Barchasi →</Link>}>
-              <Table>
-                <thead><tr><th>№</th><th>Mijoz</th><th>Summa</th><th>Holat</th><th>Sana</th></tr></thead>
-                <tbody>
-                  {d.recent_orders.length === 0 && <EmptyRow cols={5} text="Hali buyurtma yo‘q" />}
-                  {d.recent_orders.map((o) => (
-                    <tr key={o.id}>
-                      <td><Link href={`/admin/orders/${o.id}`} className="font-semibold text-primary">#{o.number}</Link></td>
-                      <td>{o.customer_name}</td>
-                      <td className="tabular-nums">{p(o.total)}</td>
-                      <td><Badge tone={orderStatusTone[o.status]}>{orderStatusLabel[o.status]}</Badge></td>
-                      <td className="text-ink-3">{formatDateTime(o.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Panel>
-          )}
         </div>
       )}
     </div>

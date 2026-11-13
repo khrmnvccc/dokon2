@@ -4,9 +4,11 @@ import { createServerClient } from '@supabase/ssr';
 // Sessiyani yangilash va himoyalangan bo'limlarga kirishni tekshirish.
 // Admin huquqi bu yerda emas, /admin layout va har bir server action ichida bazadan tekshiriladi.
 export async function middleware(request: NextRequest) {
+  // Admin layout "Oynalar" tekshiruvi uchun joriy yo'l (foydalanuvchi bergan qiymat ishonchli emas — ustidan yoziladi).
+  request.headers.set('x-pathname', request.nextUrl.pathname);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return NextResponse.next();
+  if (!url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {

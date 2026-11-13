@@ -10,6 +10,15 @@ export const HOME_SECTION_KEYS = ['hero', 'categories', 'bestsellers', 'promo', 
 export const settingsSchemas = {
   // Brend va dizayn (kassa app_meta 'brand'): bitta JSON, server va brauzer bir xil cleanBrand() bilan tekshiradi.
   brand: z.unknown().transform((v) => cleanBrand(v)),
+  // Oynalar (kassa app_meta 'pages'): har admin sahifasi uchun vaqtincha to'xtatish, kim ko'radi va menyudagi nomi.
+  pages: z.record(
+    z.string().regex(/^\/admin(\/[a-z-]+)*$/),
+    z.object({
+      paused: z.boolean().default(false),
+      who: z.enum(['all', 'admins', 'owner']).default('all'),
+      label: z.string().trim().max(30).default(''),
+    }),
+  ),
   store: z.object({
     name: z.string().trim().min(1).max(60),
     tagline: z.string().trim().max(120).default(''),
@@ -49,8 +58,8 @@ export const settingsSchemas = {
     order_note: z.string().trim().max(300).default(''),
   }),
   localization: z.object({
-    default_language: z.enum(['uz', 'ru']),
-    languages: z.array(z.enum(['uz', 'ru'])).min(1),
+    default_language: z.enum(['uz', 'ru', 'zh']),
+    languages: z.array(z.enum(['uz', 'ru', 'zh'])).min(1),
     currency: z.string().trim().min(3).max(3),
     currency_symbol: z.string().trim().min(1).max(10),
   }),
@@ -71,6 +80,7 @@ export type SiteSettings = { [K in SettingsKey]: z.infer<(typeof settingsSchemas
 
 export const defaultSettings: SiteSettings = {
   brand: DEFAULT_BRAND,
+  pages: {},
   store: { name: DEFAULT_BRAND.name, tagline: DEFAULT_BRAND.tagline, logo_url: null, favicon_url: null, primary_color: DEFAULT_BRAND.color, accent_color: '#ff9f0a' },
   contact: { phone: '', phone2: null, email: '', address: '', working_hours: '', map_url: null },
   social: { telegram: null, instagram: null, facebook: null, youtube: null, tiktok: null },

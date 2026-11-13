@@ -12,18 +12,20 @@ import { buttonClass } from '@/components/ui/button';
 import { cn } from '@/components/ui/cn';
 import { PageHeader, FilterBar, FilterField, Table, EmptyRow, inputSm } from '@/components/admin/ui';
 import type { Order } from '@/lib/types';
+import { getBranchState } from '@/lib/admin/branch';
 
 export const metadata = { title: 'Buyurtmalar' };
 const PAGE = 30;
 
-export default async function AdminOrders({ searchParams }: { searchParams: Promise<OrderFilters & { page?: string }> }) {
+export default async function AdminOrders({ searchParams }: { searchParams: Promise<Omit<OrderFilters, 'branch'> & { page?: string }> }) {
   await requirePagePermission('orders.read');
   const sp = await searchParams;
   const page = pageParam(sp.page);
   const supabase = await getServerSupabase();
+  const branch = await getBranchState();
   const query = applyOrderFilters(
     supabase.from('orders').select('id, number, status, payment_status, customer_name, customer_phone, total, items_count, payment_method_name, shipping_method_name, created_at', { count: 'exact' }),
-    sp,
+    { ...sp, branch: branch.current },
   );
   const [{ data, count }, options, { data: counts }] = await Promise.all([
     query.order('created_at', { ascending: false }).range((page - 1) * PAGE, page * PAGE - 1),

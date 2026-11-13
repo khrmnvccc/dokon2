@@ -13,9 +13,12 @@ import { ICONS } from '@/components/shop/dynamic-icon';
 import { SingleImageField } from './upload';
 import { Panel } from './ui';
 import { BrandCard } from './brand-card';
+import { BranchesTab, PagesTab, type BranchRow } from './owner-tabs';
 
 const TABS = [
   { id: 'brand', label: 'Brend va dizayn' },
+  { id: 'pages', label: 'Oynalar' },
+  { id: 'branches', label: 'Filiallar' },
   { id: 'store', label: 'Doʻkon' },
   { id: 'contact', label: 'Aloqa va ijtimoiy tarmoqlar' },
   { id: 'home', label: 'Bosh sahifa' },
@@ -25,6 +28,8 @@ const TABS = [
   { id: 'seo', label: 'SEO' },
   { id: 'maintenance', label: 'Texnik rejim' },
 ] as const;
+
+const OWNER_TABS: string[] = ['brand', 'pages', 'branches'];
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Asosiy slayder', categories: 'Kategoriyalar', bestsellers: 'Xit mahsulotlar', promo: 'Aksiya bannerlari', new: 'Yangi mahsulotlar',
@@ -56,9 +61,9 @@ function SaveBar({ pending, onSave }: { pending: boolean; onSave: () => void }) 
   return <div className="mt-5 flex justify-end border-t border-line pt-4"><Button loading={pending} onClick={onSave}>Saqlash</Button></div>;
 }
 
-export function SettingsEditor({ initial, isOwner }: { initial: SiteSettings; isOwner: boolean }) {
+export function SettingsEditor({ initial, isOwner, branches }: { initial: SiteSettings; isOwner: boolean; branches: BranchRow[] }) {
   // Brend va dizaynni faqat Ega ko'radi va o'zgartiradi.
-  const tabs = TABS.filter((t) => t.id !== 'brand' || isOwner);
+  const tabs = TABS.filter((t) => isOwner || !OWNER_TABS.includes(t.id));
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>(isOwner ? 'brand' : 'store');
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_1fr] lg:items-start">
@@ -72,6 +77,8 @@ export function SettingsEditor({ initial, isOwner }: { initial: SiteSettings; is
       </nav>
       <div>
         {tab === 'brand' && isOwner && <BrandCard />}
+        {tab === 'pages' && isOwner && <PagesTab initial={initial.pages} />}
+        {tab === 'branches' && isOwner && <BranchesTab key={branches.map((b) => b.id).join()} initial={branches} />}
         {tab === 'store' && <StoreTab initial={initial.store} />}
         {tab === 'contact' && <ContactTab contact={initial.contact} social={initial.social} />}
         {tab === 'home' && <HomeTab sections={initial.home_sections} advantages={initial.advantages} announcement={initial.announcement} />}
@@ -261,7 +268,7 @@ function CheckoutTab({ initial }: { initial: SiteSettings['checkout'] }) {
 function LocalizationTab({ initial }: { initial: SiteSettings['localization'] }) {
   const s = useSection('localization', initial);
   const v = s.value;
-  const toggleLang = (l: 'uz' | 'ru', on: boolean) => {
+  const toggleLang = (l: 'uz' | 'ru' | 'zh', on: boolean) => {
     const languages = on ? [...new Set([...v.languages, l])] : v.languages.filter((x) => x !== l);
     s.setValue({ ...v, languages, default_language: languages.includes(v.default_language) ? v.default_language : languages[0] ?? 'uz' });
   };
@@ -272,12 +279,13 @@ function LocalizationTab({ initial }: { initial: SiteSettings['localization'] })
           <p className="text-sm font-medium">Sayt tillari</p>
           <Checkbox label="O‘zbekcha" checked={v.languages.includes('uz')} onChange={(e) => toggleLang('uz', e.target.checked)} />
           <Checkbox label="Русский" checked={v.languages.includes('ru')} onChange={(e) => toggleLang('ru', e.target.checked)} />
+          <Checkbox label="中文" checked={v.languages.includes('zh')} onChange={(e) => toggleLang('zh', e.target.checked)} />
           {s.errors.languages && <p className="text-xs text-danger">Kamida bitta til tanlang</p>}
           <p className="text-xs text-ink-3">Interfeys matnlari tarjima qilinadi. Mahsulot va sahifa matnlari kiritilgan tilda ko‘rinadi.</p>
         </div>
         <Field label="Asosiy til">
-          <Select value={v.default_language} onChange={(e) => s.setValue({ ...v, default_language: e.target.value as 'uz' | 'ru' })}>
-            {v.languages.map((l) => <option key={l} value={l}>{l === 'uz' ? 'O‘zbekcha' : 'Русский'}</option>)}
+          <Select value={v.default_language} onChange={(e) => s.setValue({ ...v, default_language: e.target.value as 'uz' | 'ru' | 'zh' })}>
+            {v.languages.map((l) => <option key={l} value={l}>{l === 'uz' ? 'O‘zbekcha' : l === 'ru' ? 'Русский' : '中文'}</option>)}
           </Select>
         </Field>
         <Field label="Valyuta kodi" error={s.errors.currency}><Input value={v.currency} maxLength={3} onChange={(e) => s.setValue({ ...v, currency: e.target.value.toUpperCase() })} /></Field>

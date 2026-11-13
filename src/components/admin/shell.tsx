@@ -5,10 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3, Bell, Circle, ExternalLink, FileText, FolderTree, History, Image, LayoutDashboard, LogOut, Menu, MessageSquare,
-  Package, Percent, Plus, Search, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
+  Building2, Package, Percent, Plus, Search, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
 import type { AdminNavGroup } from '@/lib/admin/nav';
-import { ROLE_LABELS } from '@/lib/admin/nav';
 import { logout } from '@/lib/actions/auth';
 import { markStaffNotificationsRead } from '@/lib/actions/admin/misc';
 import { formatDateTime } from '@/lib/format';
@@ -100,6 +99,7 @@ function NavLinks({ nav, pathname, onNavigate }: { nav: AdminNavGroup[]; pathnam
                     active ? 'bg-surface-3 text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink')}>
                   <Icon className={cn('size-[18px] transition-colors', active ? 'text-ink' : 'text-ink-3 group-hover:text-ink-2')} strokeWidth={1.9} aria-hidden />
                   <span className="truncate">{item.label}</span>
+                  {item.paused && <span className="ml-auto rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-semibold text-warn">Vaqtincha</span>}
                 </Link>
               );
             })}
@@ -110,13 +110,13 @@ function NavLinks({ nav, pathname, onNavigate }: { nav: AdminNavGroup[]; pathnam
   );
 }
 
-function UserCard({ name, roles }: { name: string; roles: string[] }) {
+function UserCard({ name, role }: { name: string; role: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
       <Avatar name={name} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-ink">{name}</div>
-        <div className="truncate text-xs text-ink-3">{roles.map((r) => ROLE_LABELS[r] ?? r).join(', ')}</div>
+        <div className="truncate text-xs text-ink-3">{role}</div>
       </div>
       <form action={logout}>
         <IconButton label="Chiqish" type="submit"><LogOut className="size-4" /></IconButton>
@@ -125,8 +125,8 @@ function UserCard({ name, roles }: { name: string; roles: string[] }) {
   );
 }
 
-function SidebarBody({ nav, pathname, name, roles, languages, onNavigate, onClose }: {
-  nav: AdminNavGroup[]; pathname: string; name: string; roles: string[]; languages: string[]; onNavigate?: () => void; onClose?: () => void;
+function SidebarBody({ nav, pathname, name, role, languages, onNavigate, onClose }: {
+  nav: AdminNavGroup[]; pathname: string; name: string; role: string; languages: string[]; onNavigate?: () => void; onClose?: () => void;
 }) {
   return (
     <>
@@ -139,14 +139,16 @@ function SidebarBody({ nav, pathname, name, roles, languages, onNavigate, onClos
         <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} /> Saytni ochish
       </Link>
       {languages.length > 1 && <LangSwitch languages={languages} className="mb-2 flex [&>button]:flex-1" />}
-      <UserCard name={name} roles={roles} />
+      <UserCard name={name} role={role} />
     </>
   );
 }
 
-export function AdminShell({ nav, email, name, roles, notifications, unread, canSearch, languages, primaryAction, children }: {
-  nav: AdminNavGroup[]; email: string | null; name: string | null; roles: string[]; notifications: Notification[]; unread: number; canSearch: boolean;
-  languages: string[]; primaryAction: { href: string; label: string } | null; children: React.ReactNode;
+export interface BranchProps { mine: Array<{ id: number; name: string }>; current: number; total: number }
+
+export function AdminShell({ nav, email, name, roleName, notifications, unread, canSearch, languages, primaryAction, branches, children }: {
+  nav: AdminNavGroup[]; email: string | null; name: string | null; roles: string[]; roleName: string; notifications: Notification[]; unread: number; canSearch: boolean;
+  languages: string[]; primaryAction: { href: string; label: string } | null; branches: BranchProps; children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
@@ -163,7 +165,7 @@ export function AdminShell({ nav, email, name, roles, notifications, unread, can
     <div className="min-h-screen">
       {/* Kompyuter: chapda 248px sidebar */}
       <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-line bg-surface glass px-3 py-5 lg:flex">
-        <SidebarBody nav={nav} pathname={pathname} name={who} roles={roles} languages={languages} />
+        <SidebarBody nav={nav} pathname={pathname} name={who} role={roleName} languages={languages} />
       </aside>
 
       {/* Telefon: chapdan chiqadigan drawer (280px) */}
@@ -171,7 +173,7 @@ export function AdminShell({ nav, email, name, roles, notifications, unread, can
         <div className="no-print fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40 anim-fade" onClick={() => setDrawer(false)} />
           <div className="absolute inset-y-0 left-0 flex w-[280px] flex-col bg-surface glass px-3 py-5 shadow-pop anim-rise">
-            <SidebarBody nav={nav} pathname={pathname} name={who} roles={roles} languages={languages} onNavigate={() => setDrawer(false)} onClose={() => setDrawer(false)} />
+            <SidebarBody nav={nav} pathname={pathname} name={who} role={roleName} languages={languages} onNavigate={() => setDrawer(false)} onClose={() => setDrawer(false)} />
           </div>
         </div>
       )}
@@ -185,6 +187,7 @@ export function AdminShell({ nav, email, name, roles, notifications, unread, can
               <div className="hidden lg:block"><TodayLabel /></div>
             </div>
             {canSearch && <AdminSearch />}
+            <BranchSwitch branches={branches} className="hidden sm:inline-flex" />
             <SyncIndicator online={online} />
             <NotificationsBell items={notifications} unread={unread} />
             <ThemeToggle />
@@ -194,6 +197,8 @@ export function AdminShell({ nav, email, name, roles, notifications, unread, can
               </Link>
             )}
           </div>
+          {/* Telefonda sarlavha to'la: filial alohida qatorda */}
+          <div className="px-4 pb-2 empty:hidden sm:hidden"><BranchSwitch branches={branches} className="flex w-full" /></div>
         </header>
         <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-12 print:p-0">{children}</main>
       </div>
@@ -281,5 +286,33 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
         </div>
       )}
     </div>
+  );
+}
+
+/** Qaysi filial ko'rsatiladi. Faqat bir nechta filialni ko'radigan xodimda tanlagich; bittasida oddiy yozuv. */
+function BranchSwitch({ branches, className }: { branches: BranchProps; className?: string }) {
+  const router = useRouter();
+  if (branches.total < 2 || !branches.mine.length) return null;
+  if (branches.mine.length === 1) {
+    return (
+      <span className={cn('h-9 min-w-0 items-center gap-1.5 rounded-lg border border-line px-2.5 text-sm font-medium text-ink-2', className)} title="Sizning filialingiz">
+        <Building2 className="size-4 shrink-0 text-ink-3" /><span className="truncate">{branches.mine[0].name}</span>
+      </span>
+    );
+  }
+  const value = branches.current;
+  return (
+    <label className={cn('relative h-9 min-w-0 items-center gap-1.5 rounded-lg border border-line bg-surface pl-2.5 pr-2 text-sm font-medium text-ink hover:bg-surface-2', className)}>
+      <Building2 className="size-4 shrink-0 text-ink-3" />
+      <span className="flex-1 truncate">{value ? branches.mine.find((b) => b.id === value)?.name : 'Barcha filiallar'}</span>
+      <svg viewBox="0 0 20 20" className="size-4 shrink-0 text-ink-3" aria-hidden><path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <select aria-label="Filial" value={value} onChange={(e) => {
+        document.cookie = `dk_branch=${Number(e.target.value)}; path=/; max-age=31536000; samesite=lax`;
+        router.refresh();
+      }} className="absolute inset-0 cursor-pointer opacity-0">
+        <option value={0}>Barcha filiallar</option>
+        {branches.mine.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+      </select>
+    </label>
   );
 }

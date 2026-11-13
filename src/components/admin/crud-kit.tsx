@@ -7,7 +7,6 @@ import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
 import { deleteEntity, reorderEntity, saveEntity, toggleEntity, type EntityName } from '@/lib/actions/admin/crud';
 import { useToast } from '@/components/ui/toast';
 import { useConfirm } from '@/components/ui/dialog';
-import { cn } from '@/components/ui/cn';
 
 export function useCrud(name: EntityName) {
   const toast = useToast();

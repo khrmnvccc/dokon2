@@ -10,10 +10,15 @@ import { useConfirm } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/field';
 import { Panel, Table } from './ui';
+import { StaffAccessButton, type StaffRow } from './staff-access';
+import { roleLabel } from '@/lib/perms';
 
 type Role = 'super_admin' | 'manager' | 'operator' | 'warehouse';
 
-export function StaffManager({ staff, currentEmail }: { staff: { user_id: string; email: string | null; full_name: string | null; roles: string[] }[]; currentEmail: string | null }) {
+export function StaffManager({ staff, currentEmail, myPerms, isOwner, branches }: {
+  staff: StaffRow[]; currentEmail: string | null; myPerms: string[]; isOwner: boolean; branches: { id: number; name: string }[];
+}) {
+  const branchName = new Map(branches.map((b) => [b.id, b.name]));
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('operator');
   const [pending, start] = useTransition();
@@ -29,7 +34,7 @@ export function StaffManager({ staff, currentEmail }: { staff: { user_id: string
     <div className="grid gap-4 xl:grid-cols-[1fr_360px] xl:items-start">
       <Panel title={`Xodimlar (${staff.length})`} padded={false}>
         <Table>
-          <thead><tr><th>Xodim</th><th>Rollar</th></tr></thead>
+          <thead><tr><th>Xodim</th><th>Rollar</th><th>Lavozim va filial</th><th /></tr></thead>
           <tbody>
             {staff.map((s) => (
               <tr key={s.user_id}>
@@ -47,6 +52,14 @@ export function StaffManager({ staff, currentEmail }: { staff: { user_id: string
                       </span>
                     ))}
                   </div>
+                </td>
+                <td>
+                  <div className="text-sm font-medium">{roleLabel(s.roles, s.perms)}{s.perms && <span className="text-xs text-ink-3"> · {s.perms.length} ta ruxsat</span>}</div>
+                  <div className="text-xs text-ink-3">{s.branch_ids?.length ? s.branch_ids.map((id) => branchName.get(id) ?? `#${id}`).join(', ') : 'Barcha filiallar'}</div>
+                </td>
+                <td className="text-right">
+                  <StaffAccessButton row={s} myPerms={myPerms} isOwner={isOwner} branches={branches}
+                    disabled={s.roles.includes('super_admin') || s.email === currentEmail || (s.roles.includes('manager') && !isOwner)} />
                 </td>
               </tr>
             ))}

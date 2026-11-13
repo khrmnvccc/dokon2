@@ -10,11 +10,14 @@ export default async function SettingsPage() {
   const ctx = await requirePagePermission('settings.write');
   const supabase = await getServerSupabase();
   // Keshsiz, to'g'ridan-to'g'ri bazadan
-  const { data } = await supabase.from('site_settings').select('key, value');
+  const [{ data }, { data: branches }] = await Promise.all([
+    supabase.from('site_settings').select('key, value'),
+    supabase.from('branches').select('id, name, is_active').order('sort_order').order('id'),
+  ]);
   return (
     <div>
       <PageHeader title="Sozlamalar" subtitle="Oʻzgarishlar saqlangandan soʻng saytda darhol qoʻllanadi" />
-      <SettingsEditor initial={parseSettings(data ?? [])} isOwner={ctx.roles.includes('super_admin')} />
+      <SettingsEditor initial={parseSettings(data ?? [])} isOwner={ctx.roles.includes('super_admin')} branches={branches ?? []} />
     </div>
   );
 }

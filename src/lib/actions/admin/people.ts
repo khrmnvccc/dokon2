@@ -57,3 +57,27 @@ export async function setStaffRole(input: z.input<typeof roleSchema>): Promise<A
     return { ok: true, message: parsed.data.grant ? 'Rol berildi' : 'Rol olib tashlandi' };
   });
 }
+
+const accessSchema = z.object({
+  userId: z.string().uuid(),
+  // null — rol boʻyicha standart ruxsatlar
+  perms: z.array(z.string().regex(/^[a-z]+\.[a-z]+$/)).max(60).nullable(),
+  // boʻsh — barcha filiallar
+  branches: z.array(z.number().int().positive()).max(100),
+});
+
+/** Xodimning shaxsiy ruxsatlari va filiallari (kassa 3.2, 3.4). Tekshiruv bazadagi admin_set_staff_access ichida. */
+export async function setStaffAccess(input: z.input<typeof accessSchema>): Promise<ActionResult> {
+  return withPermission('staff.manage', async (ctx) => {
+    const parsed = accessSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: 'Notoʻgʻri soʻrov' };
+    if (parsed.data.userId === ctx.userId) return { ok: false, error: 'Oʻz ruxsatlaringizni oʻzgartira olmaysiz' };
+    const supabase = await getServerSupabase();
+    const { error } = await supabase.rpc('admin_set_staff_access', {
+      p_user: parsed.data.userId, p_perms: parsed.data.perms, p_branches: parsed.data.branches,
+    });
+    if (error) return { ok: false, error: dbErrorText(error) };
+    revalidatePath('/admin/staff');
+    return { ok: true, message: 'Ruxsatlar saqlandi' };
+  });
+}

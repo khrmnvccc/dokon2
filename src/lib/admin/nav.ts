@@ -1,4 +1,4 @@
-export interface AdminNavItem { href: string; label: string; icon: string; perm: string }
+export interface AdminNavItem { href: string; label: string; icon: string; perm: string; paused?: boolean }
 export interface AdminNavGroup { title: string; items: AdminNavItem[] }
 
 // Kassa tuzilishi: Asosiy / Hisobotlar / Boshqaruv. Har bo'lim faqat ruxsati bor xodimga ko'rinadi;

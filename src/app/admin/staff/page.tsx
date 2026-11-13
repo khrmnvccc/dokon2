@@ -3,6 +3,8 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { PageHeader, Panel } from '@/components/admin/ui';
 import { StaffManager } from '@/components/admin/staff-manager';
 import { ROLE_LABELS } from '@/lib/admin/nav';
+import type { StaffRow } from '@/components/admin/staff-access';
+import { getBranchState } from '@/lib/admin/branch';
 
 export const metadata = { title: 'Xodimlar va rollar' };
 
@@ -18,9 +20,10 @@ const PERM_LABELS: Record<string, string> = {
 export default async function StaffPage() {
   const ctx = await requirePagePermission('staff.manage');
   const supabase = await getServerSupabase();
-  const [{ data: staff }, { data: matrix }] = await Promise.all([
+  const [{ data: staff }, { data: matrix }, branch] = await Promise.all([
     supabase.rpc('admin_staff'),
     supabase.from('role_permissions').select('role, permission'),
+    getBranchState(),
   ]);
   const roles = Object.keys(ROLE_LABELS);
   const perms = Object.keys(PERM_LABELS);
@@ -28,7 +31,8 @@ export default async function StaffPage() {
   return (
     <div>
       <PageHeader title="Xodimlar va rollar" description="Rol berish uchun xodim avval saytda oddiy foydalanuvchi sifatida ro‘yxatdan o‘tishi kerak." />
-      <StaffManager staff={(staff ?? []) as { user_id: string; email: string | null; full_name: string | null; roles: string[] }[]} currentEmail={ctx.email} />
+      <StaffManager staff={(staff ?? []) as StaffRow[]} currentEmail={ctx.email} myPerms={[...ctx.permissions]}
+        isOwner={ctx.roles.includes('super_admin')} branches={branch.all.filter((b) => b.is_active).map(({ id, name }) => ({ id, name }))} />
       <Panel title="Rollar va ruxsatlar" className="mt-4" padded={false}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
