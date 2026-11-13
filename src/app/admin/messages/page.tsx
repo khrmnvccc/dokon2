@@ -7,7 +7,7 @@ import { MessagesEditor, type MessagesData } from '@/components/admin/messages-e
 import { getTelegram, getTelegramErrors, getTemplateSettings, groupCode } from '@/lib/telegram/server';
 import type { Broadcast } from '@/lib/telegram/templates';
 
-export const metadata = { title: 'Xabarlar' };
+export const metadata = { title: 'Matnlar / Push' };
 export const dynamic = 'force-dynamic';
 
 /**
@@ -20,7 +20,7 @@ export default async function MessagesPage() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return (
       <div>
-        <PageHeader title="Xabarlar" subtitle="Telegram bot, xabar matnlari va ommaviy xabarlar" />
+        <PageHeader title="Matnlar / Push" subtitle="Telegram bot, xabar matnlari va ommaviy xabarlar" />
         <Alert tone="warn">Serverda SUPABASE_SERVICE_ROLE_KEY sozlanmagan. README dagi “Telegram bot” boʻlimiga qarang.</Alert>
       </div>
     );
@@ -66,7 +66,7 @@ export default async function MessagesPage() {
 
   return (
     <div>
-      <PageHeader title="Xabarlar" subtitle="Telegram bot, xabar matnlari va ommaviy xabarlar" />
+      <PageHeader title="Matnlar / Push" subtitle="Telegram bot, xabar matnlari va ommaviy xabarlar" />
       <MessagesEditor data={data} />
     </div>
   );

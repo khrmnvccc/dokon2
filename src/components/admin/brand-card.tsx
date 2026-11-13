@@ -168,7 +168,7 @@ export function BrandCard() {
                 {b.tagline && <div className="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{b.tagline}</div>}
               </div>
             </div>
-            <div className="mt-4 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{groupLabel(b, 'Asosiy')}</div>
+            <div className="mt-4 px-1 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{groupLabel(b, 'Boshqaruv paneli')}</div>
             <div className="mt-1.5 rounded-lg bg-surface-3 px-3 py-2 text-sm font-medium text-ink">Dashboard</div>
             <div className="px-3 py-2 text-sm font-medium text-ink-2">Buyurtmalar</div>
             <div className="mt-3"><Button variant="primary" className="w-full" icon={<Plus className="size-4" />}>Yangi mahsulot</Button></div>

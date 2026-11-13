@@ -1,39 +1,55 @@
 export interface AdminNavItem { href: string; label: string; icon: string; perm: string; paused?: boolean }
-export interface AdminNavGroup { title: string; items: AdminNavItem[] }
+/** Yuqori paneldagi boʻlim (modul): ikonka bilan, ichida chap menyudagi sahifalar. */
+export interface AdminNavGroup { title: string; icon: string; items: AdminNavItem[] }
 
-// Kassa tuzilishi: Asosiy / Hisobotlar / Boshqaruv. Har bo'lim faqat ruxsati bor xodimga ko'rinadi;
-// sahifa va server action'larda ruxsat qayta tekshiriladi.
+// Boʻlimlar yuqori toʻq panelda ikonka boʻlib turadi; tanlangan boʻlim sahifalari chap menyuda.
+// Har sahifa faqat ruxsati bor xodimga koʻrinadi; sahifa va server action'larda ruxsat qayta tekshiriladi.
 export const ADMIN_NAV: AdminNavGroup[] = [
   {
-    title: 'Asosiy',
+    title: 'Boshqaruv paneli',
+    icon: 'LayoutDashboard',
     items: [
-      { href: '/admin', label: 'Dashboard', icon: 'LayoutDashboard', perm: 'dashboard.view' },
+      { href: '/admin', label: 'Boshqaruv paneli', icon: 'LayoutDashboard', perm: 'dashboard.view' },
+      { href: '/admin/reports', label: 'Hisobotlar', icon: 'BarChart3', perm: 'reports.view' },
+      { href: '/admin/audit', label: 'Faoliyat jurnali', icon: 'History', perm: 'audit.view' },
+    ],
+  },
+  {
+    title: 'Savdo',
+    icon: 'ShoppingBag',
+    items: [
       { href: '/admin/orders', label: 'Buyurtmalar', icon: 'ShoppingBag', perm: 'orders.read' },
+      { href: '/admin/customers', label: 'Mijozlar', icon: 'Users', perm: 'customers.read' },
+      { href: '/admin/reviews', label: 'Sharhlar', icon: 'MessageSquare', perm: 'reviews.moderate' },
+    ],
+  },
+  {
+    title: 'Katalog',
+    icon: 'Package',
+    items: [
       { href: '/admin/products', label: 'Mahsulotlar', icon: 'Package', perm: 'products.read' },
       { href: '/admin/categories', label: 'Kategoriyalar', icon: 'FolderTree', perm: 'categories.write' },
       { href: '/admin/inventory', label: 'Ombor', icon: 'Warehouse', perm: 'inventory.write' },
     ],
   },
   {
-    title: 'Hisobotlar',
+    title: 'Marketing',
+    icon: 'Megaphone',
     items: [
-      { href: '/admin/reports', label: 'Savdo hisobotlari', icon: 'BarChart3', perm: 'reports.view' },
+      { href: '/admin/messages', label: 'Matnlar / Push', icon: 'BellRing', perm: 'messages.manage' },
+      { href: '/admin/promotions', label: 'Aksiyalar', icon: 'Gift', perm: 'promotions.write' },
+      { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
+      { href: '/admin/banners', label: 'Bannerlar', icon: 'Image', perm: 'banners.write' },
     ],
   },
   {
-    title: 'Boshqaruv',
+    title: 'Sozlamalar',
+    icon: 'Settings',
     items: [
-      { href: '/admin/customers', label: 'Mijozlar', icon: 'Users', perm: 'customers.read' },
-      { href: '/admin/reviews', label: 'Sharhlar', icon: 'MessageSquare', perm: 'reviews.moderate' },
-      { href: '/admin/banners', label: 'Bannerlar', icon: 'Image', perm: 'banners.write' },
-      { href: '/admin/promotions', label: 'Aksiyalar', icon: 'Percent', perm: 'promotions.write' },
-      { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
-      { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
-      { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
-      { href: '/admin/messages', label: 'Xabarlar', icon: 'Send', perm: 'messages.manage' },
-      { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
-      { href: '/admin/audit', label: 'Faoliyat jurnali', icon: 'History', perm: 'audit.view' },
       { href: '/admin/settings', label: 'Sozlamalar', icon: 'Settings', perm: 'settings.write' },
+      { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
+      { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
+      { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
       { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Bot', perm: 'dashboard.view' },
     ],
   },
