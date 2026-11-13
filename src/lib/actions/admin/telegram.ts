@@ -10,6 +10,7 @@ import {
   ChatMoved, TelegramFail, chatTitle, getTelegram, groupCode, newCode, personCode, recentUpdates,
   saveTelegram, saveTemplate, sendToOwner, tg,
 } from '@/lib/telegram/server';
+import { TOKEN_RE, getShopBot, saveShopBot, setupAdminMenu, setupShopBot } from '@/lib/telegram/shop-bot';
 import { claim, deliver, parseBroadcast, recipients, sendOne, syncSubscribers, type BroadcastInput } from '@/lib/telegram/broadcast';
 import { MAX_TEMPLATE_LENGTH, TEMPLATE_BY_KEY, isTemplateKey, renderTemplate, sampleValues, type TemplateChats } from '@/lib/telegram/templates';
 import type { ActionResult } from '@/lib/types';
@@ -62,7 +63,8 @@ export async function checkOwnerChat(): Promise<ActionResult> {
       const match = updates.reverse().find((u) => u.message?.text?.includes(config.code) && u.message.chat.type === 'private');
       if (!match?.message) return { ok: false, error: `Botga hali kod kelmadi. @${config.botName} ni ochib, “Start” bosing yoki ${config.code} deb yozing` };
       const chat = match.message.chat;
-      await saveTelegram({ ...config, chatId: chat.id, chatName: chatTitle(chat) });
+      await saveTelegram({ ...config, chatId: chat.id, chatName: chatTitle(chat), ownerUserId: ctx.userId });
+      await setupAdminMenu(config.token);
       await tg(config.token, 'sendMessage', { chat_id: chat.id, text: '✅ Doʻkon ulandi. Yangi buyurtmalar va kechki hisobot shu yerga keladi.' }).catch(() => undefined);
       await audit(ctx, 'telegram_connect', { chat: chatTitle(chat) });
     } catch (e) { return fail(e); }
@@ -117,6 +119,55 @@ export async function disconnectTelegram(what: 'bot' | 'group'): Promise<ActionR
     } catch (e) { return fail(e); }
     revalidatePath(PAGE);
     return { ok: true, message: what === 'bot' ? 'Bot uzildi' : 'Guruh uzildi' };
+  });
+}
+
+// ---------- Doʻkon boti (xaridorlar uchun alohida bot) ----------
+/** Faqat Ega: doʻkon botining tokeni. Webhook, menyu tugmasi, buyruqlar va tavsif avtomatik sozlanadi. */
+export async function connectShopBot(token: string): Promise<ActionResult> {
+  return withPermission('messages.manage', async (ctx) => {
+    if (!isOwner(ctx)) return { ok: false, error: 'Botni faqat Ega ulaydi' };
+    const t = String(token ?? '').trim();
+    if (!TOKEN_RE.test(t)) return { ok: false, error: 'Bot tokeni notoʻgʻri. @BotFather bergan tokenni toʻliq nusxalang' };
+    try {
+      const admin = await getTelegram();
+      if (admin?.token === t) return { ok: false, error: 'Bu admin boti tokeni. Xaridorlar uchun @BotFather da yangi bot oching' };
+      const config = await setupShopBot(t, await getShopBot());
+      await saveShopBot(config);
+      await audit(ctx, 'shop_bot_set', { bot: config.botName });
+    } catch (e) { return fail(e); }
+    revalidatePath(PAGE);
+    return { ok: true, message: 'Doʻkon boti ulandi va sozlandi' };
+  });
+}
+
+/** Qayta sozlash (sayt manzili yoki doʻkon nomi oʻzgarsa): ikkala botning menyu tugmasi ham yangilanadi. */
+export async function refreshBots(): Promise<ActionResult> {
+  return withPermission('messages.manage', async (ctx) => {
+    if (!isOwner(ctx)) return { ok: false, error: 'Faqat Ega' };
+    try {
+      const shop = await getShopBot();
+      if (shop) await saveShopBot(await setupShopBot(shop.token, shop));
+      const admin = await getTelegram();
+      if (admin?.chatId) await setupAdminMenu(admin.token);
+      if (!shop && !admin?.chatId) return { ok: false, error: 'Hali bot ulanmagan' };
+    } catch (e) { return fail(e); }
+    revalidatePath(PAGE);
+    return { ok: true, message: 'Botlar qayta sozlandi' };
+  });
+}
+
+export async function disconnectShopBot(): Promise<ActionResult> {
+  return withPermission('messages.manage', async (ctx) => {
+    if (!isOwner(ctx)) return { ok: false, error: 'Faqat Ega' };
+    try {
+      const shop = await getShopBot();
+      if (shop) await tg(shop.token, 'deleteWebhook', {}).catch(() => undefined);
+      await saveShopBot(null);
+      await audit(ctx, 'shop_bot_disconnect');
+    } catch (e) { return fail(e); }
+    revalidatePath(PAGE);
+    return { ok: true, message: 'Doʻkon boti uzildi' };
   });
 }
 
@@ -213,7 +264,7 @@ export async function checkMyTelegram(): Promise<ActionResult> {
       .upsert({ user_id: ctx.userId, chat_id: chat.id, chat_name: chatTitle(chat), linked_at: new Date().toISOString() });
     if (error) throw error;
     // Bu chat endi xaridor obunachisi emas.
-    await getServiceSupabase().from('telegram_subscribers').delete().eq('chat_id', chat.id);
+    await getServiceSupabase().from('telegram_subscribers').delete().eq('chat_id', chat.id).eq('via', 'admin');
     await tg(config.token, 'sendMessage', { chat_id: chat.id, text: '✅ Doʻkon admin paneli ulandi. Qaysi xabarlar kelishini Ega belgilaydi.' }).catch(() => undefined);
     await audit(ctx, 'telegram_person_link', { chat: chatTitle(chat) });
     revalidatePath('/admin/telegram');

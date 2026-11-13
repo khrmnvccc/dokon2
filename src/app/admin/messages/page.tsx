@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/admin/ui';
 import { Alert } from '@/components/ui/kit';
 import { MessagesEditor, type MessagesData } from '@/components/admin/messages-editor';
 import { getTelegram, getTelegramErrors, getTemplateSettings, groupCode } from '@/lib/telegram/server';
+import { getShopBot } from '@/lib/telegram/shop-bot';
+import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import type { Broadcast } from '@/lib/telegram/templates';
 
 export const metadata = { title: 'Matnlar / Push' };
@@ -27,7 +29,7 @@ export default async function MessagesPage() {
   }
   const service = getServiceSupabase();
   const supabase = await getServerSupabase();
-  const [config, errors, templates, people, staff, log, logCount, broadcasts, subscribers] = await Promise.all([
+  const [config, errors, templates, people, staff, log, logCount, broadcasts, subscribers, shopBot, shopSubs] = await Promise.all([
     getTelegram(),
     getTelegramErrors(),
     getTemplateSettings(),
@@ -37,6 +39,8 @@ export default async function MessagesPage() {
     service.from('telegram_log').select('id', { count: 'exact', head: true }),
     service.from('broadcasts').select('id, title, text, buttons, audience, silent, send_at, status, delivered, failed, created_at, sent_at').order('id', { ascending: false }).limit(30),
     service.from('telegram_subscribers').select('chat_id', { count: 'exact', head: true }).eq('subscribed', true),
+    getShopBot(),
+    service.from('telegram_subscribers').select('chat_id', { count: 'exact', head: true }).eq('via', 'shop'),
   ]);
 
   const staffRows = ((staff.data ?? []) as Array<{ user_id: string; full_name: string | null; email: string | null }>);
@@ -62,6 +66,9 @@ export default async function MessagesPage() {
     logTotal: logCount.count ?? 0,
     broadcasts: (broadcasts.data ?? []) as Broadcast[],
     subscribers: subscribers.count ?? 0,
+    shopBot: shopBot ? { botName: shopBot.botName, webhookError: shopBot.webhookError ?? null, setupAt: shopBot.setupAt, users: shopSubs.count ?? 0 } : null,
+    siteUrl: SITE_URL,
+    adminUrl: ADMIN_URL,
   };
 
   return (

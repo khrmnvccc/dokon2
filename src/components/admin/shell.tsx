@@ -1,14 +1,27 @@
 'use client';
 
+import { SITE_URL } from '@/lib/env';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  BarChart3, Bell, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
+  BarChart3, Bell, HelpCircle, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
   Menu, MessageSquare, Moon, Package, PanelLeftClose, PanelLeftOpen, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, Sun,
   TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
 import type { AdminNavGroup, AdminNavItem } from '@/lib/admin/nav';
+import { Tour, openTour, type TourStep } from '@/components/tour';
+
+const ADMIN_TOUR: TourStep[] = [
+  { title: 'Admin panelga xush kelibsiz 👋', icon: <LayoutDashboard className="size-5" />, text: 'Bir daqiqada asosiy joylarni koʻrsatamiz. Keyin ham yuqoridagi “?” tugmasi bilan qayta ochasiz.' },
+  { target: 'modules', title: 'Boʻlimlar', icon: <Package className="size-5" />, text: 'Savdo, Katalog, Marketing va Sozlamalar. Boʻlimni tanlang — chapda uning sahifalari chiqadi.' },
+  { target: 'side', title: 'Boʻlim sahifalari', icon: <Menu className="size-5" />, text: 'Masalan, Savdo → Buyurtmalar. Menyuni yigʻib, joyni kengaytirish mumkin.' },
+  { target: 'menu', title: 'Menyu', icon: <Menu className="size-5" />, text: 'Telefonda barcha boʻlimlar shu tugmada.' },
+  { target: 'tabs', title: 'Ochiq oynalar', icon: <FileText className="size-5" />, text: 'Ochgan sahifalaringiz tab boʻlib turadi — ular orasida bir bosishda oʻtasiz.' },
+  { target: 'mobile-nav', title: 'Tezkor tugmalar', icon: <Plus className="size-5" />, text: 'Bosh sahifa, buyurtmalar, mahsulotlar va oʻrtada “+” — yangi mahsulot yoki buyurtma.' },
+  { target: 'bell', title: 'Bildirishnomalar', icon: <Bell className="size-5" />, text: 'Yangi buyurtma, sharh va kam qolgan mahsulotlar shu yerda. Telegramga ham keladi.' },
+  { title: 'Telegram botlar', icon: <Send className="size-5" />, text: 'Marketing → Matnlar / Push → Ulanish. U yerda doʻkon boti (xaridorlar) va admin boti (siz) ulanadi.' },
+];
 import { logout } from '@/lib/actions/auth';
 import { markStaffNotificationsRead } from '@/lib/actions/admin/misc';
 import { formatDateTime } from '@/lib/format';
@@ -120,7 +133,7 @@ function TopBrand() {
 function ModuleBar({ nav, active }: { nav: AdminNavGroup[]; active: AdminNavGroup | null }) {
   const brand = useBrand();
   return (
-    <nav className="hidden items-center gap-1 md:flex" aria-label="Boʻlimlar">
+    <nav className="hidden items-center gap-1 md:flex" aria-label="Boʻlimlar" data-tour="modules">
       {nav.map((g) => {
         const Icon = NAV_ICONS[g.icon] ?? Circle;
         const on = active?.title === g.title;
@@ -217,7 +230,7 @@ function TabsBar({ tabs, activeHref, onClose }: { tabs: Tab[]; activeHref: strin
   const router = useRouter();
   if (!tabs.length) return null;
   return (
-    <div className="no-print sticky top-14 z-20 hidden border-b border-line bg-[var(--admin-tabs)] md:block">
+    <div className="no-print sticky top-14 z-20 hidden border-b border-line bg-[var(--admin-tabs)] md:block" data-tour="tabs">
       <div className="no-scrollbar flex h-11 items-end gap-1 overflow-x-auto px-3">
         {tabs.map((t, i) => {
           const on = t.href === activeHref;
@@ -274,16 +287,18 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
 
   return (
     <div className="admin-ui min-h-screen bg-[var(--admin-bg)]">
+      <Tour id="admin" steps={ADMIN_TOUR} />
       {/* Yuqori toʻq panel */}
       <header className="no-print fixed inset-x-0 top-0 z-40 h-14 bg-[var(--admin-bar)] text-white">
         <div className="flex h-full items-center gap-2 px-3 sm:px-4">
-          <button type="button" className={cn(barBtn, 'lg:hidden')} onClick={() => setDrawer(true)} aria-label="Menyu"><Menu className="size-5" /></button>
+          <button type="button" data-tour="menu" className={cn(barBtn, 'lg:hidden')} onClick={() => setDrawer(true)} aria-label="Menyu"><Menu className="size-5" /></button>
           <TopBrand />
           <ModuleBar nav={nav} active={group} />
           <div className="flex-1" />
           {canSearch && <AdminSearch />}
           <BranchSwitch branches={branches} className="hidden sm:inline-flex" />
-          <NotificationsBell items={notifications} unread={unread} />
+          <span data-tour="bell" className="inline-flex"><NotificationsBell items={notifications} unread={unread} /></span>
+          <button type="button" className={cn(barBtn, 'hidden sm:inline-flex')} onClick={() => openTour('admin')} aria-label="Yoʻriqnoma" title="Yoʻriqnoma"><HelpCircle className="size-[18px]" /></button>
           <TopTheme />
           <span title={`${who} · ${roleName}`} className="hidden size-10 items-center justify-center rounded-full bg-[#2a5a8c] text-[13px] font-bold text-white sm:inline-flex">{initials(who)}</span>
           <form action={logout} className="hidden sm:block">
@@ -293,7 +308,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
       </header>
 
       {/* Kompyuter: chap menyu (tanlangan boʻlim sahifalari) */}
-      <aside className={cn('no-print fixed bottom-0 left-0 top-14 z-30 hidden flex-col border-r border-line bg-surface-solid transition-[width] duration-200 lg:flex', sideW)}>
+      <aside data-tour="side" className={cn('no-print fixed bottom-0 left-0 top-14 z-30 hidden flex-col border-r border-line bg-surface-solid transition-[width] duration-200 lg:flex', sideW)}>
         <div className={cn('flex h-14 items-center border-b border-line', collapsed ? 'justify-center' : 'justify-between pl-4 pr-3')}>
           {!collapsed && <span className="truncate text-[15px] font-bold tracking-tight text-ink">{group ? groupLabel(brand, group.title) : 'Menyu'}</span>}
           <IconButton label={collapsed ? 'Menyuni ochish' : 'Menyuni yigʻish'} onClick={toggleSide} className="border border-line">
@@ -304,7 +319,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
           {group && <SideItems group={group} pathname={pathname} collapsed={collapsed} />}
         </div>
         <div className={cn('border-t border-line p-2', collapsed && 'flex justify-center')}>
-          <Link href="/" target="_blank" title="Saytni ochish" className={cn('flex h-10 items-center gap-3 rounded-xl text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink', collapsed ? 'w-10 justify-center' : 'px-3')}>
+          <Link href={SITE_URL} target="_blank" title="Saytni ochish" className={cn('flex h-10 items-center gap-3 rounded-xl text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink', collapsed ? 'w-10 justify-center' : 'px-3')}>
             <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} />{!collapsed && 'Saytni ochish'}
           </Link>
           {!collapsed && languages.length > 1 && <LangSwitch languages={languages} className="mt-1 flex [&>button]:flex-1" />}
@@ -340,7 +355,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
       </div>
 
       {/* Telefon: pastki tab-bar */}
-      <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-solid pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Asosiy">
+      <nav data-tour="mobile-nav" className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-solid pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Asosiy">
         <div className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${mobileTabs.length + 1}, minmax(0, 1fr))` }}>
           {mobileTabs.map((tab) => {
             if (tab === '+') {

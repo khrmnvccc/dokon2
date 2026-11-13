@@ -1,3 +1,4 @@
+import { visibleEmail } from '@/lib/format';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getPaymentMethods, getSettings, getShippingMethods } from '@/lib/data/public';
@@ -27,7 +28,7 @@ export default async function CheckoutPage() {
       // Ulanmagan onlayn to'lovlar (Click/Payme) ko'rsatilmaydi
       paymentMethods={payments.filter(isPaymentMethodUsable)}
       addresses={addresses}
-      defaults={{ name: profile?.full_name ?? '', phone: profile?.phone ?? '', email: profile?.email ?? user?.email ?? '' }}
+      defaults={{ name: profile?.full_name ?? '', phone: profile?.phone ?? '', email: visibleEmail(profile?.email ?? user?.email) ?? '' }}
       isGuest={!user}
       orderNote={settings.checkout.order_note}
     />

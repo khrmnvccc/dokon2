@@ -7,6 +7,7 @@ import { getLang } from '@/lib/i18n/server';
 import { SITE_URL } from '@/lib/env';
 import { AppProviders } from '@/components/providers';
 import { BrandBoot } from '@/components/brand';
+import { TelegramBoot } from '@/components/telegram-boot';
 import { brandCss } from '@/lib/brand/css';
 import { THEME_BOOT } from '@/lib/theme';
 
@@ -67,6 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           user={user ? { id: user.id, email: user.email ?? null, name: profile?.full_name ?? null } : null}
           isStaff={Boolean(staff)}
         >
+          <TelegramBoot />
           {children}
         </AppProviders>
       </body>

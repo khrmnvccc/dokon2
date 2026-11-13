@@ -15,6 +15,7 @@ export function Footer({ settings, t }: { settings: SiteSettings; t: (k: 'footer
         <div className="lg:col-span-2">
           <Logo />
           {footer.about_text && <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-ink-3">{footer.about_text}</p>}
+          <Link href="/help" className="mt-3 inline-flex h-8 items-center rounded-lg bg-primary-soft px-3 text-[13px] font-semibold text-primary">Yordam markazi</Link>
           {socials.length > 0 && (
             <div className="mt-5">
               <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{t('footer.social')}</div>

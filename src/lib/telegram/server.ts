@@ -14,6 +14,8 @@ export interface TelegramConfig {
   code: string; // Ega botga yuboradigan bir martalik kod
   chatId?: number;
   chatName?: string;
+  /** Ega akkaunti: admin botidagi mini-ilova shu akkauntga kiritadi */
+  ownerUserId?: string;
   groupId?: number;
   groupName?: string;
   groupThreadId?: number;

@@ -1,6 +1,7 @@
 import 'server-only';
 import { getServiceSupabase } from '@/lib/supabase/admin';
 import { chatTitle, getTelegram, logSend, recentUpdates, tg, TelegramFail } from './server';
+import { tokenFor } from './shop-bot';
 import {
   BROADCAST_MAX_BUTTONS, BROADCAST_MAX_TEXT, renderTemplate,
   type Broadcast, type BroadcastAudience, type BroadcastButton,
@@ -45,7 +46,7 @@ export function parseBroadcast(body: BroadcastInput) {
   return { title, text, buttons, audience, silent: body.silent === true, sendAt };
 }
 
-export interface Recipient { chatId: number; name: string }
+export interface Recipient { chatId: number; name: string; via: 'admin' | 'shop' }
 
 /** Kimga yetadi: Telegramini ulagan xodimlar va/yoki obuna xaridorlar (bir chat bir marta). */
 export async function recipients(audience: BroadcastAudience): Promise<Recipient[]> {
@@ -54,11 +55,11 @@ export async function recipients(audience: BroadcastAudience): Promise<Recipient
     let q = db().from('telegram_people').select('user_id, chat_id, chat_name');
     if (audience.users?.length) q = q.in('user_id', audience.users);
     const { data } = await q;
-    for (const p of data ?? []) out.set(Number(p.chat_id), { chatId: Number(p.chat_id), name: `staff:${p.chat_name ?? ''}` });
+    for (const p of data ?? []) out.set(Number(p.chat_id), { chatId: Number(p.chat_id), name: `staff:${p.chat_name ?? ''}`, via: 'admin' });
   }
   if (audience.kind !== 'staff') {
-    const { data } = await db().from('telegram_subscribers').select('chat_id, name').eq('subscribed', true).limit(20_000);
-    for (const s of data ?? []) if (!out.has(Number(s.chat_id))) out.set(Number(s.chat_id), { chatId: Number(s.chat_id), name: `mijoz:${s.name ?? ''}` });
+    const { data } = await db().from('telegram_subscribers').select('chat_id, name, via').eq('subscribed', true).limit(20_000);
+    for (const s of data ?? []) if (!out.has(Number(s.chat_id))) out.set(Number(s.chat_id), { chatId: Number(s.chat_id), name: `mijoz:${s.name ?? ''}`, via: s.via === 'shop' ? 'shop' : 'admin' });
   }
   return [...out.values()];
 }
@@ -67,11 +68,10 @@ const keyboard = (buttons: BroadcastButton[]) =>
   buttons.length ? { reply_markup: { inline_keyboard: buttons.map((b) => [{ text: b.text, url: b.url }]) } } : {};
 
 /** Bitta chatga, ommaviy xabar qanday koʻrinsa shunday. */
-export async function sendOne(b: Pick<Broadcast, 'text' | 'buttons' | 'silent'>, chatId: number, prefix = '') {
-  const config = await getTelegram();
-  if (!config?.chatId) throw new TelegramFail('Telegram bot ulanmagan');
+export async function sendOne(b: Pick<Broadcast, 'text' | 'buttons' | 'silent'>, chatId: number, prefix = '', via: 'admin' | 'shop' = 'admin') {
+  const token = await tokenFor(via);
   const html = prefix + renderTemplate(b.text, {});
-  await tg(config.token, 'sendMessage', {
+  await tg(token, 'sendMessage', {
     chat_id: chatId, text: html, parse_mode: 'HTML', disable_web_page_preview: true, disable_notification: b.silent, ...keyboard(b.buttons),
   });
   return html;
@@ -97,7 +97,7 @@ export async function deliver(id: number) {
   try {
     for (const r of await recipients(b.audience)) {
       try {
-        const html = await sendOne(b, r.chatId);
+        const html = await sendOne(b, r.chatId, '', r.via);
         delivered++;
         await logSend('broadcast', r.name, html, null);
       } catch (e) {
@@ -147,7 +147,10 @@ export async function syncSubscribers() {
     else if (t.startsWith('/stop')) latest.set(m.chat.id, { on: false, name: chatTitle(m.chat), username: m.chat.username ?? null });
   }
   if (!latest.size) return { added: 0 };
-  const rows = [...latest].map(([chat_id, v]) => ({ chat_id, name: v.name, username: v.username, subscribed: v.on }));
+  const { data: viaShop } = await db().from('telegram_subscribers').select('chat_id').eq('via', 'shop').in('chat_id', [...latest.keys()]);
+  const shopChats = new Set((viaShop ?? []).map((r) => Number(r.chat_id)));
+  const rows = [...latest].filter(([chat_id]) => !shopChats.has(chat_id)).map(([chat_id, v]) => ({ chat_id, name: v.name, username: v.username, subscribed: v.on }));
+  if (!rows.length) return { added: 0 };
   const { error } = await db().from('telegram_subscribers').upsert(rows, { onConflict: 'chat_id' });
   if (error) throw error;
   return { added: rows.filter((r) => r.subscribed).length };
