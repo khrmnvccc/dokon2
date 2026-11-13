@@ -2,7 +2,10 @@
 
 import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, CheckCircle2, ExternalLink, Link2, RefreshCw, RotateCcw, Send, Trash2, Users } from 'lucide-react';
+import {
+  Ban, BarChart3, Bell, Bot, CheckCircle2, ChevronLeft, CreditCard, ExternalLink, Link2, Package, PackageMinus, RefreshCw, RotateCcw, Send,
+  ShoppingCart, Trash2, Undo2, Users, Zap, type LucideIcon,
+} from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
   unlinkPerson, syncCustomers, saveBroadcast, testBroadcast, removeBroadcast,
@@ -201,27 +204,73 @@ function ConnectTab({ data }: { data: MessagesData }) {
   );
 }
 
-// ---------- 2. Xabar matnlari ----------
+// ---------- 2. Xabar matnlari: chapda roʻyxat, oʻngda tahrir ----------
+const TEMPLATE_ICONS: Record<TemplateKey, LucideIcon> = {
+  newOrder: ShoppingCart, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
+  paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3,
+};
+const GROUP_TONES = ['bg-[#1d4f80]', 'bg-[#2f80c1]', 'bg-[#1f7a4d]', 'bg-[#8a5a12]'];
+
 function TemplatesTab({ data }: { data: MessagesData }) {
-  const [open, setOpen] = useState<TemplateKey | null>(null);
+  const [selected, setSelected] = useState<TemplateKey | null>(null);
+  const current = selected ?? TEMPLATES[0].key;
   const linkedPeople = data.people.filter((p) => p.linked);
+  const { pending, run } = useRun();
   return (
     <div className="space-y-4">
       {!data.telegram?.connected && <Alert tone="warn">Bot hali ulanmagan — matnlarni hozir sozlab qoʻyish mumkin.</Alert>}
-      {TEMPLATE_GROUPS.map((g) => (
-        <Panel key={g.key} title={<span><span className="mr-2 inline-flex size-6 items-center justify-center rounded-md bg-primary-soft text-xs font-bold text-primary">{g.letter}</span>{g.title}</span>} padded={false}>
-          <div className="divide-y divide-line">
-            {TEMPLATES.filter((t) => t.group === g.key).map((t) => (
-              <TemplateRow key={t.key} k={t.key} data={data} people={linkedPeople} open={open === t.key} onToggle={() => setOpen(open === t.key ? null : t.key)} />
-            ))}
-          </div>
-        </Panel>
-      ))}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(280px,360px)_1fr]">
+        <div className={cn('space-y-4 lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-1 scrollbar-thin', selected && 'hidden lg:block')}>
+          {TEMPLATE_GROUPS.map((g, gi) => (
+            <section key={g.key}>
+              <h3 className="mb-2 flex items-center gap-2 px-1 text-[13px] font-bold uppercase tracking-wide text-ink-2">
+                <span className={cn('inline-flex size-6 items-center justify-center rounded-md text-xs font-bold text-white', GROUP_TONES[gi % GROUP_TONES.length])}>{g.letter}</span>
+                {g.title}
+              </h3>
+              <div className="space-y-2">
+                {TEMPLATES.filter((t) => t.group === g.key).map((t) => {
+                  const Icon = TEMPLATE_ICONS[t.key] ?? Bell;
+                  const on = !data.templates.off.includes(t.key);
+                  const active = current === t.key;
+                  return (
+                    <div key={t.key} className={cn('flex items-center gap-3 rounded-2xl border bg-surface-solid px-3.5 py-3 transition-colors',
+                      active ? 'border-[#9fc0e3] bg-[#eef4fb] dark:border-white/25 dark:bg-white/5' : 'border-line hover:border-line-strong')}>
+                      <button type="button" onClick={() => setSelected(t.key)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-current={active ? 'true' : undefined}>
+                        <Icon className="size-[19px] shrink-0 text-ink-3" strokeWidth={1.8} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[15px] font-semibold text-ink">{t.title}</span>
+                          <span className="mt-0.5 flex items-center gap-1.5 text-ink-3">
+                            {data.templates.texts[t.key] && <span className="text-[11px] font-medium text-[#1d4f80] dark:text-white/80">oʻzgartirilgan</span>}
+                            {t.groupChat && <Users className="size-3.5" aria-label="Guruhga ham" />}
+                          </span>
+                        </span>
+                      </button>
+                      <Toggle label={`${t.title}: yoqilgan`} checked={on} disabled={pending} onChange={(v) => run(() => updateTemplate(t.key, { on: v }))} />
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+        <div className={cn(!selected && 'hidden lg:block')}>
+          <TemplateEditor key={current} k={current} data={data} people={linkedPeople} onBack={() => setSelected(null)} />
+        </div>
+      </div>
     </div>
   );
 }
 
-function TemplateRow({ k, data, people, open, onToggle }: { k: TemplateKey; data: MessagesData; people: MessagesData['people']; open: boolean; onToggle: () => void }) {
+function SectionLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
+  return (
+    <div className="mb-2 mt-5 flex items-center justify-between first:mt-0">
+      <span className="text-[13px] font-bold uppercase tracking-wide text-ink-2">{children}</span>
+      {right}
+    </div>
+  );
+}
+
+function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: MessagesData; people: MessagesData['people']; onBack: () => void }) {
   const def = TEMPLATE_BY_KEY[k];
   const settings = data.templates;
   const on = !settings.off.includes(k);
@@ -244,50 +293,70 @@ function TemplateRow({ k, data, people, open, onToggle }: { k: TemplateKey; data
   const setChats = (patch: TemplateChats) => run(() => updateTemplate(k, { chats: patch }));
 
   return (
-    <div>
-      <div className="flex items-center gap-3 px-4 py-3">
-        <button type="button" onClick={onToggle} className="min-w-0 flex-1 text-left" aria-expanded={open}>
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            {def.title}
-            {settings.texts[k] && <Badge tone="card">oʻzgartirilgan</Badge>}
-          </div>
-          <div className="text-xs text-ink-3">{def.hint}</div>
-        </button>
-        <Toggle label={`${def.title}: yoqilgan`} checked={on} disabled={pending} onChange={(v) => run(() => updateTemplate(k, { on: v }))} />
+    <div className="rounded-2xl border border-line bg-surface-solid p-4 sm:p-5">
+      <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-2 lg:hidden"><ChevronLeft className="size-4" /> Roʻyxat</button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[22px] font-bold tracking-tight text-ink">{def.title}</h2>
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink-2">
+            <Zap className="size-3.5" /> {def.hint}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-ink-3">
+          {on ? 'Yoqilgan' : 'Oʻchirilgan'}
+          <Toggle label={`${def.title}: yoqilgan`} checked={on} disabled={pending} onChange={(v) => run(() => updateTemplate(k, { on: v }))} />
+        </div>
       </div>
-      {open && (
-        <div className="grid gap-4 border-t border-line bg-surface-2/40 px-4 py-4 lg:grid-cols-2">
-          <div className="space-y-3">
-            <Textarea ref={ref} rows={8} value={text} maxLength={MAX_TEMPLATE_LENGTH} onChange={(e) => setText(e.target.value)} aria-label={`${def.title}: matn`} className="font-mono text-[13px]" />
-            <div className="flex flex-wrap gap-1.5">
-              {def.vars.map((v) => (
-                <button key={v.name} type="button" onClick={() => insert(v.name)} className="rounded-full border border-line bg-surface px-2.5 py-1 text-xs text-ink-2 hover:border-primary hover:text-primary">
-                  {v.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-ink-3">*yulduzcha orasida* — qalin. Qiymati boʻsh qator chiqmaydi. {text.length}/{MAX_TEMPLATE_LENGTH}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" loading={pending} disabled={text === saved} onClick={() => run(() => updateTemplate(k, { text }))}>Saqlash</Button>
-              <Button size="sm" variant="secondary" disabled={pending || !data.telegram?.connected} onClick={() => run(() => testTemplate(k, text))}><Send className="size-4" /> Namuna yuborish</Button>
-              <Button size="sm" variant="ghost" disabled={pending || text === def.text} onClick={() => { setText(def.text); run(() => updateTemplate(k, { text: null })); }}><RotateCcw className="size-4" /> Standart</Button>
-            </div>
-            {k !== 'dailyReport' && (
-              <div className="space-y-2 rounded-[var(--r-md)] border border-line bg-surface p-3">
-                <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">Kimga</div>
-                <Checkbox label="Mening chatim" checked={chats.personal !== false} disabled={pending} onChange={(e) => setChats({ personal: e.target.checked })} />
-                {def.groupChat && <Checkbox label={data.telegram?.groupName ? `Guruh: ${data.telegram.groupName}` : 'Guruh (ulanmagan)'} checked={chats.group !== false} disabled={pending} onChange={(e) => setChats({ group: e.target.checked })} />}
-                {def.staff && people.map((p) => (
-                  <Checkbox key={p.id} label={p.name} checked={chats.staff?.includes(p.id) ?? false} disabled={pending}
-                    onChange={(e) => setChats({ staff: e.target.checked ? [...(chats.staff ?? []), p.id] : (chats.staff ?? []).filter((x) => x !== p.id) })} />
-                ))}
-                {def.staff && !people.length && <p className="text-xs text-ink-3">Telegramini ulagan xodim yoʻq.</p>}
-              </div>
-            )}
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_320px]">
+        <div>
+          <SectionLabel right={<span className="text-xs text-ink-3 num">{text.length}/{MAX_TEMPLATE_LENGTH}</span>}>Matn</SectionLabel>
+          <Textarea ref={ref} rows={8} value={text} maxLength={MAX_TEMPLATE_LENGTH} onChange={(e) => setText(e.target.value)} aria-label={`${def.title}: matn`} className="rounded-2xl text-[15px] leading-relaxed" />
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-xs text-ink-3">Oʻzgaruvchi qoʻshish:</span>
+            {def.vars.map((v) => (
+              <button key={v.name} type="button" onClick={() => insert(v.name)} title={v.label}
+                className="rounded-lg border border-[#c9d9ea] bg-[#eef4fb] px-2 py-1 font-mono text-xs text-[#1d4f80] hover:border-[#1d4f80] dark:border-white/15 dark:bg-white/5 dark:text-white/85">
+                {`{{${v.name}}}`}
+              </button>
+            ))}
           </div>
+          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin. Qiymati boʻsh qator chiqmaydi.</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button loading={pending} disabled={text === saved} onClick={() => run(() => updateTemplate(k, { text }))}>Saqlash</Button>
+            <Button variant="secondary" disabled={pending || !data.telegram?.connected} onClick={() => run(() => testTemplate(k, text))}><Send className="size-4" /> Namuna yuborish</Button>
+            <Button variant="ghost" disabled={pending || text === def.text} onClick={() => { setText(def.text); run(() => updateTemplate(k, { text: null })); }}><RotateCcw className="size-4" /> Standart</Button>
+          </div>
+
+          {k !== 'dailyReport' && (
+            <>
+              <SectionLabel>Kimga yuboriladi</SectionLabel>
+              <div className="divide-y divide-line rounded-2xl border border-line">
+                <ChatRow label="Mening chatim" checked={chats.personal !== false} disabled={pending} onChange={(v) => setChats({ personal: v })} />
+                {def.groupChat && <ChatRow label={data.telegram?.groupName ? `Guruh: ${data.telegram.groupName}` : 'Guruh (ulanmagan)'} checked={chats.group !== false} disabled={pending} onChange={(v) => setChats({ group: v })} />}
+                {def.staff && people.map((p) => (
+                  <ChatRow key={p.id} label={p.name} checked={chats.staff?.includes(p.id) ?? false} disabled={pending}
+                    onChange={(v) => setChats({ staff: v ? [...(chats.staff ?? []), p.id] : (chats.staff ?? []).filter((x) => x !== p.id) })} />
+                ))}
+                {def.staff && !people.length && <p className="px-4 py-3 text-xs text-ink-3">Telegramini ulagan xodim yoʻq.</p>}
+              </div>
+            </>
+          )}
+        </div>
+        <div>
+          <SectionLabel>Telegramda koʻrinishi</SectionLabel>
           <TelegramPreview html={html} botName={data.telegram?.botName} />
         </div>
-      )}
+      </div>
+    </div>
+  );
+}
+
+function ChatRow({ label, checked, disabled, onChange }: { label: string; checked: boolean; disabled: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <span className="text-sm font-medium text-ink">{label}</span>
+      <Toggle label={label} checked={checked} disabled={disabled} onChange={onChange} />
     </div>
   );
 }

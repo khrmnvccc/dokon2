@@ -1,45 +1,51 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  BarChart3, Bell, Circle, ExternalLink, FileText, FolderTree, History, Image, LayoutDashboard, LogOut, Menu, MessageSquare,
-  Bot, Building2, Package, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
+  BarChart3, Bell, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
+  Menu, MessageSquare, Moon, Package, PanelLeftClose, PanelLeftOpen, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, Sun,
+  TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
-import type { AdminNavGroup } from '@/lib/admin/nav';
+import type { AdminNavGroup, AdminNavItem } from '@/lib/admin/nav';
 import { logout } from '@/lib/actions/auth';
 import { markStaffNotificationsRead } from '@/lib/actions/admin/misc';
 import { formatDateTime } from '@/lib/format';
 import { cn } from '@/components/ui/cn';
-import { Button, IconButton } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/kit';
-import { Logo, ThemeToggle } from '@/components/brand';
+import { BrandMark, Logo } from '@/components/brand';
 import { groupLabel, useBrand } from '@/lib/brand/store';
+import { useTheme } from '@/lib/theme';
 import { LangSwitch } from '@/components/shop/header-client';
 import type { Notification } from '@/lib/types';
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, ShoppingBag, Users, BarChart3, Package, FolderTree, Warehouse, MessageSquare, Image, Percent,
-  TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot,
+  TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot, Megaphone, BellRing, Gift,
 };
 
 const isActive = (pathname: string, href: string) => (href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(href + '/'));
 
-const WEEKDAYS = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
-function TodayLabel() {
-  const [text, setText] = useState('');
-  useEffect(() => {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' }));
-    const pad = (n: number) => String(n).padStart(2, '0');
-    setText(`${WEEKDAYS[now.getDay()]}|${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`);
-  }, []);
-  if (!text) return null;
-  const [day, date] = text.split('|');
-  return <div className="text-sm text-ink-3"><span className="text-ink-2">{day}</span>, <span className="num">{date}</span></div>;
+/** Joriy yoʻlga mos menyu bandi (eng uzun prefiks) va uning boʻlimi. */
+function locate(nav: AdminNavGroup[], pathname: string): { group: AdminNavGroup | null; item: AdminNavItem | null } {
+  let best: { group: AdminNavGroup; item: AdminNavItem } | null = null;
+  for (const group of nav) for (const item of group.items) {
+    if (isActive(pathname, item.href) && (!best || item.href.length > best.item.href.length)) best = { group, item };
+  }
+  return best ?? { group: null, item: null };
 }
 
-/** "Jonli" indikatori: /api/admin/version har 8 soniyada so'raladi; o'zgarsa sahifa yangilanadi. */
+/** Brauzer xotirasi (bloklangan boʻlishi mumkin: xato boʻlsa jim oʻtadi). */
+function readStore<T>(key: string, fallback: T): T {
+  try { const v = localStorage.getItem(key); return v ? (JSON.parse(v) as T) : fallback; } catch { return fallback; }
+}
+function writeStore(key: string, value: unknown) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* xotira bloklangan */ }
+}
+
+/** "Jonli" yangilanish: /api/admin/version har 15 soniyada soʻraladi; oʻzgarsa sahifa yangilanadi. */
 function useLive() {
   const router = useRouter();
   const [online, setOnline] = useState(true);
@@ -50,6 +56,7 @@ function useLive() {
       if (document.hidden) return;
       try {
         const res = await fetch('/api/admin/version', { cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) return; // sessiya tugagan: bu aloqa uzilishi emas
         if (!res.ok) throw new Error(String(res.status));
         const { v } = (await res.json()) as { v: string };
         if (stop) return;
@@ -61,7 +68,7 @@ function useLive() {
       }
     };
     tick();
-    const id = setInterval(tick, 8000);
+    const id = setInterval(tick, 15000);
     const onVisible = () => !document.hidden && tick();
     document.addEventListener('visibilitychange', onVisible);
     return () => { stop = true; clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
@@ -69,80 +76,151 @@ function useLive() {
   return online;
 }
 
-function SyncIndicator({ online }: { online: boolean }) {
+/* ───────────── Yuqori toʻq panel ───────────── */
+
+const barBtn = 'inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white/75 transition-colors hover:bg-white/10 hover:text-white';
+
+function TopBrand() {
+  const brand = useBrand();
   return (
-    <span className={cn('hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium sm:inline-flex', online ? 'border-line text-ink-2' : 'border-danger/30 bg-danger-soft text-danger')}
-      title={online ? 'Maʼlumotlar har bir necha soniyada avtomatik yangilanadi' : 'Server bilan aloqa yoʻq'}>
-      <span className="relative flex size-2">
-        {online && <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-50" />}
-        <span className={cn('relative inline-flex size-2 rounded-full', online ? 'bg-success' : 'bg-danger')} />
+    <Link href="/admin" className="flex min-w-0 items-center gap-2.5 pr-2">
+      <BrandMark brand={brand} className="h-9 max-w-[72px] shrink-0 rounded-xl" />
+      <span className="hidden min-w-0 leading-tight sm:block">
+        <span className="block truncate text-[15px] font-bold uppercase tracking-wide text-white">{brand.name}</span>
+        <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">Admin panel</span>
       </span>
-      {online ? 'Jonli' : 'Aloqa yoʻq'}
-    </span>
+    </Link>
   );
 }
 
-function NavLinks({ nav, pathname, onNavigate }: { nav: AdminNavGroup[]; pathname: string; onNavigate?: () => void }) {
+function ModuleBar({ nav, active }: { nav: AdminNavGroup[]; active: AdminNavGroup | null }) {
+  const brand = useBrand();
+  return (
+    <nav className="hidden items-center gap-1 md:flex" aria-label="Boʻlimlar">
+      {nav.map((g) => {
+        const Icon = NAV_ICONS[g.icon] ?? Circle;
+        const on = active?.title === g.title;
+        const label = groupLabel(brand, g.title);
+        return (
+          <Link key={g.title} href={g.items[0].href} title={label} aria-current={on ? 'true' : undefined}
+            className={cn('inline-flex h-10 items-center gap-2 rounded-xl text-sm font-semibold transition-colors',
+              on ? 'bg-[#2a5a8c] px-3.5 text-white shadow-[inset_0_0.5px_0_rgb(255_255_255/0.2)]' : 'w-10 justify-center text-white/70 hover:bg-white/10 hover:text-white')}>
+            <Icon className="size-[18px]" strokeWidth={1.9} />
+            {on && <span>{label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function TopTheme() {
+  const theme = useTheme();
+  return (
+    <button type="button" onClick={theme.toggle} className={cn(barBtn, 'border border-white/15')} aria-label={theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim'} title={theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim'}>
+      {theme.isDark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+    </button>
+  );
+}
+
+function initials(name: string) {
+  return name.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || '?';
+}
+
+/* ───────────── Chap menyu ───────────── */
+
+function SideItems({ group, pathname, collapsed, onNavigate }: { group: AdminNavGroup; pathname: string; collapsed: boolean; onNavigate?: () => void }) {
+  return (
+    <div className="space-y-1">
+      {group.items.map((item) => {
+        const active = isActive(pathname, item.href);
+        const Icon = NAV_ICONS[item.icon] ?? Circle;
+        return (
+          <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={collapsed ? item.label : undefined}
+            className={cn('relative flex h-11 items-center gap-3 rounded-xl text-[15px] font-medium transition-colors',
+              collapsed ? 'justify-center' : 'px-3',
+              active ? 'bg-[#e3edf8] text-[#1d4f80] dark:bg-white/10 dark:text-white' : 'text-ink-2 hover:bg-surface-2 hover:text-ink')}>
+            {active && <span className="absolute -left-2 top-2 h-7 w-[3px] rounded-r bg-[#1d4f80] dark:bg-white" aria-hidden />}
+            <Icon className="size-[19px] shrink-0" strokeWidth={1.9} aria-hidden />
+            {!collapsed && <span className="truncate">{item.label}</span>}
+            {!collapsed && item.paused && <span className="ml-auto rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-semibold text-warn">Vaqtincha</span>}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Telefondagi drawer: barcha boʻlimlar ketma-ket. */
+function DrawerNav({ nav, pathname, onNavigate }: { nav: AdminNavGroup[]; pathname: string; onNavigate: () => void }) {
   const brand = useBrand();
   return (
     <nav className="space-y-5" aria-label="Admin menyu">
-      {nav.map((group) => (
-        <div key={group.title}>
-          <div className="mb-1.5 px-3 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{groupLabel(brand, group.title)}</div>
-          <div className="space-y-0.5">
-            {group.items.map((item) => {
-              const active = isActive(pathname, item.href);
-              const Icon = NAV_ICONS[item.icon] ?? Circle;
-              return (
-                <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? 'page' : undefined}
-                  className={cn('group flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
-                    active ? 'bg-surface-3 text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink')}>
-                  <Icon className={cn('size-[18px] transition-colors', active ? 'text-ink' : 'text-ink-3 group-hover:text-ink-2')} strokeWidth={1.9} aria-hidden />
-                  <span className="truncate">{item.label}</span>
-                  {item.paused && <span className="ml-auto rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-semibold text-warn">Vaqtincha</span>}
-                </Link>
-              );
-            })}
-          </div>
+      {nav.map((g) => (
+        <div key={g.title}>
+          <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">{groupLabel(brand, g.title)}</div>
+          <SideItems group={g} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
         </div>
       ))}
     </nav>
   );
 }
 
-function UserCard({ name, role }: { name: string; role: string }) {
+/* ───────────── Ochiq sahifalar tablari ───────────── */
+
+interface Tab { href: string; label: string }
+
+function useTabs(current: AdminNavItem | null) {
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  useEffect(() => { setTabs(readStore<Tab[]>('dk_admin_tabs', [])); }, []);
+  useEffect(() => {
+    if (!current) return;
+    setTabs((list) => {
+      const next = list.some((t) => t.href === current.href)
+        ? list.map((t) => (t.href === current.href ? { ...t, label: current.label } : t))
+        : [...list, { href: current.href, label: current.label }].slice(-10);
+      writeStore('dk_admin_tabs', next);
+      return next;
+    });
+  }, [current]);
+  const close = useCallback((href: string) => {
+    setTabs((list) => { const next = list.filter((t) => t.href !== href); writeStore('dk_admin_tabs', next); return next; });
+  }, []);
+  return { tabs, close };
+}
+
+function TabsBar({ tabs, activeHref, onClose }: { tabs: Tab[]; activeHref: string | null; onClose: (href: string) => void }) {
+  const router = useRouter();
+  if (!tabs.length) return null;
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-2.5">
-      <Avatar name={name} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-ink">{name}</div>
-        <div className="truncate text-xs text-ink-3">{role}</div>
+    <div className="no-print sticky top-14 z-20 hidden border-b border-line bg-[var(--admin-tabs)] md:block">
+      <div className="no-scrollbar flex h-11 items-end gap-1 overflow-x-auto px-3">
+        {tabs.map((t, i) => {
+          const on = t.href === activeHref;
+          return (
+            <div key={t.href} className={cn('group flex h-9 shrink-0 items-center rounded-t-xl border border-b-0 text-sm font-medium transition-colors',
+              on ? 'border-line bg-surface-solid text-ink' : 'border-transparent text-ink-3 hover:bg-white/50 hover:text-ink-2 dark:hover:bg-white/5')}>
+              <Link href={t.href} className="flex h-full items-center gap-2 pl-4 pr-1">
+                {on && <span className="size-1.5 rounded-full bg-[#1d4f80] dark:bg-white" aria-hidden />}
+                <span className="max-w-[180px] truncate">{t.label}</span>
+              </Link>
+              <button type="button" aria-label={`${t.label} yopish`} title="Yopish"
+                onClick={() => {
+                  onClose(t.href);
+                  if (on) { const rest = tabs.filter((x) => x.href !== t.href); router.push((rest[i] ?? rest[i - 1])?.href ?? '/admin'); }
+                }}
+                className="mr-2 ml-1 inline-flex size-5 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink">
+                <X className="size-3.5" />
+              </button>
+            </div>
+          );
+        })}
       </div>
-      <form action={logout}>
-        <IconButton label="Chiqish" type="submit"><LogOut className="size-4" /></IconButton>
-      </form>
     </div>
   );
 }
 
-function SidebarBody({ nav, pathname, name, role, languages, onNavigate, onClose }: {
-  nav: AdminNavGroup[]; pathname: string; name: string; role: string; languages: string[]; onNavigate?: () => void; onClose?: () => void;
-}) {
-  return (
-    <>
-      <div className="flex items-center justify-between gap-2 px-2">
-        <Link href="/admin" className="min-w-0" onClick={onNavigate}><Logo /></Link>
-        {onClose && <IconButton label="Yopish" onClick={onClose}><X className="size-5" /></IconButton>}
-      </div>
-      <div className="scrollbar-thin mt-7 min-h-0 flex-1 overflow-y-auto border-b border-line pb-2"><NavLinks nav={nav} pathname={pathname} onNavigate={onNavigate} /></div>
-      <Link href="/" target="_blank" className="mb-2 mt-2 flex h-9 items-center gap-3 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">
-        <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} /> Saytni ochish
-      </Link>
-      {languages.length > 1 && <LangSwitch languages={languages} className="mb-2 flex [&>button]:flex-1" />}
-      <UserCard name={name} role={role} />
-    </>
-  );
-}
+/* ───────────── Qobiq ───────────── */
 
 export interface BranchProps { mine: Array<{ id: number; name: string }>; current: number; total: number }
 
@@ -151,62 +229,95 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
   languages: string[]; primaryAction: { href: string; label: string } | null; branches: BranchProps; children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const brand = useBrand();
   const [drawer, setDrawer] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const online = useLive();
+  const { group, item } = locate(nav, pathname);
+  const { tabs, close } = useTabs(item);
+  useEffect(() => setCollapsed(readStore('dk_admin_side', false)), []);
   useEffect(() => setDrawer(false), [pathname]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [pathname]);
   const who = name || email || 'Xodim';
+  const toggleSide = () => setCollapsed((v) => { writeStore('dk_admin_side', !v); return !v; });
 
   // Telefon tab-bar: 2 ta asosiy sahifa + o'rtada katta "+" + 1 sahifa + Menyu.
   const flat = nav.flatMap((g) => g.items);
-  const tabs = ['/admin', '/admin/orders', '+', '/admin/products'].map((h) => (h === '+' ? '+' : flat.find((i) => i.href === h))).filter(Boolean) as Array<'+' | (typeof flat)[number]>;
+  const mobileTabs = ['/admin', '/admin/orders', '+', '/admin/products'].map((h) => (h === '+' ? '+' : flat.find((i) => i.href === h))).filter(Boolean) as Array<'+' | AdminNavItem>;
+  const sideW = collapsed ? 'lg:w-[76px]' : 'lg:w-[232px]';
+  const mainPl = collapsed ? 'lg:pl-[76px]' : 'lg:pl-[232px]';
 
   return (
-    <div className="min-h-screen">
-      {/* Kompyuter: chapda 248px sidebar */}
-      <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-line bg-surface glass px-3 py-5 lg:flex">
-        <SidebarBody nav={nav} pathname={pathname} name={who} role={roleName} languages={languages} />
+    <div className="admin-ui min-h-screen bg-[var(--admin-bg)]">
+      {/* Yuqori toʻq panel */}
+      <header className="no-print fixed inset-x-0 top-0 z-40 h-14 bg-[var(--admin-bar)] text-white">
+        <div className="flex h-full items-center gap-2 px-3 sm:px-4">
+          <button type="button" className={cn(barBtn, 'lg:hidden')} onClick={() => setDrawer(true)} aria-label="Menyu"><Menu className="size-5" /></button>
+          <TopBrand />
+          <ModuleBar nav={nav} active={group} />
+          <div className="flex-1" />
+          {canSearch && <AdminSearch />}
+          <BranchSwitch branches={branches} className="hidden sm:inline-flex" />
+          <NotificationsBell items={notifications} unread={unread} />
+          <TopTheme />
+          <span title={`${who} · ${roleName}`} className="hidden size-10 items-center justify-center rounded-full bg-[#2a5a8c] text-[13px] font-bold text-white sm:inline-flex">{initials(who)}</span>
+          <form action={logout} className="hidden sm:block">
+            <button type="submit" className={cn(barBtn, 'border border-white/15')} aria-label="Chiqish" title="Chiqish"><LogOut className="size-[18px]" /></button>
+          </form>
+        </div>
+      </header>
+
+      {/* Kompyuter: chap menyu (tanlangan boʻlim sahifalari) */}
+      <aside className={cn('no-print fixed bottom-0 left-0 top-14 z-30 hidden flex-col border-r border-line bg-surface-solid transition-[width] duration-200 lg:flex', sideW)}>
+        <div className={cn('flex h-14 items-center border-b border-line', collapsed ? 'justify-center' : 'justify-between pl-4 pr-3')}>
+          {!collapsed && <span className="truncate text-[15px] font-bold tracking-tight text-ink">{group ? groupLabel(brand, group.title) : 'Menyu'}</span>}
+          <IconButton label={collapsed ? 'Menyuni ochish' : 'Menyuni yigʻish'} onClick={toggleSide} className="border border-line">
+            {collapsed ? <PanelLeftOpen className="size-[18px]" /> : <PanelLeftClose className="size-[18px]" />}
+          </IconButton>
+        </div>
+        <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-2 py-3">
+          {group && <SideItems group={group} pathname={pathname} collapsed={collapsed} />}
+        </div>
+        <div className={cn('border-t border-line p-2', collapsed && 'flex justify-center')}>
+          <Link href="/" target="_blank" title="Saytni ochish" className={cn('flex h-10 items-center gap-3 rounded-xl text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink', collapsed ? 'w-10 justify-center' : 'px-3')}>
+            <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} />{!collapsed && 'Saytni ochish'}
+          </Link>
+          {!collapsed && languages.length > 1 && <LangSwitch languages={languages} className="mt-1 flex [&>button]:flex-1" />}
+        </div>
       </aside>
 
-      {/* Telefon: chapdan chiqadigan drawer (280px) */}
+      {/* Telefon: chapdan chiqadigan drawer */}
       {drawer && (
         <div className="no-print fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40 anim-fade" onClick={() => setDrawer(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[280px] flex-col bg-surface glass px-3 py-5 shadow-pop anim-rise">
-            <SidebarBody nav={nav} pathname={pathname} name={who} role={roleName} languages={languages} onNavigate={() => setDrawer(false)} onClose={() => setDrawer(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[290px] flex-col bg-surface-solid px-3 py-4 shadow-pop anim-rise">
+            <div className="flex items-center justify-between gap-2 px-2">
+              <Link href="/admin" className="min-w-0" onClick={() => setDrawer(false)}><Logo /></Link>
+              <IconButton label="Yopish" onClick={() => setDrawer(false)}><X className="size-5" /></IconButton>
+            </div>
+            <div className="scrollbar-thin mt-5 min-h-0 flex-1 overflow-y-auto border-b border-line pb-2 pl-2"><DrawerNav nav={nav} pathname={pathname} onNavigate={() => setDrawer(false)} /></div>
+            <div className="mt-3 flex items-center gap-3 rounded-xl border border-line p-2.5">
+              <Avatar name={who} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-ink">{who}</div>
+                <div className="truncate text-xs text-ink-3">{roleName}</div>
+              </div>
+              <form action={logout}><IconButton label="Chiqish" type="submit"><LogOut className="size-4" /></IconButton></form>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="lg:pl-[248px] print:pl-0">
-        <header className="no-print sticky top-0 z-20 border-b border-line bg-surface glass">
-          <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:h-16 lg:px-8">
-            <IconButton label="Menyu" className="-ml-2 lg:hidden" onClick={() => setDrawer(true)}><Menu className="size-5" /></IconButton>
-            <div className="min-w-0 flex-1">
-              <div className="lg:hidden"><Logo compact /></div>
-              <div className="hidden lg:block"><TodayLabel /></div>
-            </div>
-            {canSearch && <AdminSearch />}
-            <BranchSwitch branches={branches} className="hidden sm:inline-flex" />
-            <SyncIndicator online={online} />
-            <NotificationsBell items={notifications} unread={unread} />
-            <ThemeToggle />
-            {primaryAction && pathname !== primaryAction.href && (
-              <Link href={primaryAction.href} className="hidden sm:block">
-                <Button variant="primary" icon={<Plus className="size-4" />}>{primaryAction.label}</Button>
-              </Link>
-            )}
-          </div>
-          {/* Telefonda sarlavha to'la: filial alohida qatorda */}
-          <div className="px-4 pb-2 empty:hidden sm:hidden"><BranchSwitch branches={branches} className="flex w-full" /></div>
-        </header>
-        <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-12 print:p-0">{children}</main>
+      <div className={cn('pt-14 transition-[padding] duration-200 print:p-0', mainPl)}>
+        <TabsBar tabs={tabs} activeHref={item?.href ?? null} onClose={close} />
+        {!online && <div className="no-print bg-danger-soft px-4 py-1.5 text-center text-xs font-medium text-danger">Server bilan aloqa yoʻq — maʼlumotlar yangilanmayapti</div>}
+        <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pb-12 print:p-0">{children}</main>
       </div>
 
       {/* Telefon: pastki tab-bar */}
-      <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface glass pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Asosiy">
-        <div className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${tabs.length + 1}, minmax(0, 1fr))` }}>
-          {tabs.map((tab) => {
+      <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface-solid pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Asosiy">
+        <div className="mx-auto grid h-16 max-w-md" style={{ gridTemplateColumns: `repeat(${mobileTabs.length + 1}, minmax(0, 1fr))` }}>
+          {mobileTabs.map((tab) => {
             if (tab === '+') {
               if (!primaryAction) return <span key="+" />;
               return (
@@ -238,10 +349,10 @@ function AdminSearch() {
   const router = useRouter();
   const [q, setQ] = useState('');
   return (
-    <form role="search" className="relative hidden w-full max-w-xs md:block" onSubmit={(e) => { e.preventDefault(); if (q.trim()) router.push(`/admin/search?q=${encodeURIComponent(q.trim())}`); }}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
-      <input value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder="Buyurtma №, telefon, mahsulot…" aria-label="Admin qidiruv"
-        className="h-9 w-full rounded-lg border border-transparent bg-surface-2 pl-9 pr-3 text-sm text-ink placeholder:text-ink-3 outline-none focus:border-[var(--card)] focus:bg-surface" />
+    <form role="search" className="relative hidden w-full max-w-[240px] xl:block" onSubmit={(e) => { e.preventDefault(); if (q.trim()) router.push(`/admin/search?q=${encodeURIComponent(q.trim())}`); }}>
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/55" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder="Buyurtma №, telefon…" aria-label="Admin qidiruv"
+        className="h-10 w-full rounded-xl border border-white/10 bg-white/10 pl-9 pr-3 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/30 focus:bg-white/15" />
     </form>
   );
 }
@@ -258,12 +369,12 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
   }, [open]);
   return (
     <div ref={ref} className="relative">
-      <IconButton label={`Bildirishnomalar: ${unread} ta yangi`} onClick={() => setOpen((v) => !v)} aria-expanded={open} className="relative">
+      <button type="button" aria-label={`Bildirishnomalar: ${unread} ta yangi`} title="Bildirishnomalar" onClick={() => setOpen((v) => !v)} aria-expanded={open} className={cn(barBtn, 'relative')}>
         <Bell className="size-[18px]" />
         {unread > 0 && <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger px-1 text-center text-[10px] font-semibold leading-[18px] text-white num">{unread > 99 ? '99+' : unread}</span>}
-      </IconButton>
+      </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-pop anim-pop">
+        <div className="absolute right-0 z-40 mt-2 w-80 text-ink max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-pop anim-pop">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="text-[15px] font-semibold tracking-tight">Bildirishnomalar</span>
             {unread > 0 && <button className="text-xs font-medium text-primary" onClick={async () => { await markStaffNotificationsRead(); router.refresh(); setOpen(false); }}>Hammasi oʻqildi</button>}
@@ -295,17 +406,17 @@ function BranchSwitch({ branches, className }: { branches: BranchProps; classNam
   if (branches.total < 2 || !branches.mine.length) return null;
   if (branches.mine.length === 1) {
     return (
-      <span className={cn('h-9 min-w-0 items-center gap-1.5 rounded-lg border border-line px-2.5 text-sm font-medium text-ink-2', className)} title="Sizning filialingiz">
-        <Building2 className="size-4 shrink-0 text-ink-3" /><span className="truncate">{branches.mine[0].name}</span>
+      <span className={cn('h-10 min-w-0 max-w-[180px] items-center gap-1.5 rounded-xl border border-white/15 px-2.5 text-sm font-medium text-white/80', className)} title="Sizning filialingiz">
+        <Building2 className="size-4 shrink-0 text-white/55" /><span className="truncate">{branches.mine[0].name}</span>
       </span>
     );
   }
   const value = branches.current;
   return (
-    <label className={cn('relative h-9 min-w-0 items-center gap-1.5 rounded-lg border border-line bg-surface pl-2.5 pr-2 text-sm font-medium text-ink hover:bg-surface-2', className)}>
-      <Building2 className="size-4 shrink-0 text-ink-3" />
+    <label className={cn('relative h-10 min-w-0 max-w-[200px] items-center gap-1.5 rounded-xl border border-white/15 pl-2.5 pr-2 text-sm font-medium text-white hover:bg-white/10', className)}>
+      <Building2 className="size-4 shrink-0 text-white/55" />
       <span className="flex-1 truncate">{value ? branches.mine.find((b) => b.id === value)?.name : 'Barcha filiallar'}</span>
-      <svg viewBox="0 0 20 20" className="size-4 shrink-0 text-ink-3" aria-hidden><path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <svg viewBox="0 0 20 20" className="size-4 shrink-0 text-white/55" aria-hidden><path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
       <select aria-label="Filial" value={value} onChange={(e) => {
         document.cookie = `dk_branch=${Number(e.target.value)}; path=/; max-age=31536000; samesite=lax`;
         router.refresh();

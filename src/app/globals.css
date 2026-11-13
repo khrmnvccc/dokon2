@@ -13,6 +13,7 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
+  --color-surface-solid: var(--panel);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
@@ -222,3 +223,16 @@ button:not(:disabled):active { transform: scale(0.98); transition: transform 80m
 #splash { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: var(--bg); transition: opacity .35s ease, transform .35s ease; }
 #splash.sp-out { opacity: 0; transform: scale(1.04); pointer-events: none; }
 @media print { #splash { display: none !important; } }
+
+/* ===== Admin panel: yuqori toʻq panel, tekis oq kartalar =====
+   Admin koʻp maʼlumotli ish joyi: shisha (blur) va rangli fon iPad va telefonda har aylantirishda
+   qayta chizilib, sahifani qotirardi. Shuning uchun admin ichida blur va fon gradienti oʻchirilgan. */
+:root { --panel: #ffffff; --admin-bg: #f1f4f8; --admin-bar: #14253b; --admin-tabs: #e7ecf2; }
+.dark { --panel: #1c1c1e; --admin-bg: #0d0e11; --admin-bar: #0b1626; --admin-tabs: #15171b; }
+body:has(.admin-ui) { background: var(--admin-bg); background-attachment: scroll; }
+body:has(.admin-ui)::before { display: none; }
+.admin-ui .glass, .admin-ui .shadow-soft.bg-surface, .admin-ui .shadow-pop.bg-surface, .admin-ui .shadow-pop.bg-bg, .admin-ui .backdrop-blur-sm {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.admin-ui .bg-surface, .admin-ui .glass { background: var(--panel); }
+.admin-ui .shadow-soft.bg-surface { box-shadow: 0 1px 2px rgb(16 24 40 / 0.04); }
