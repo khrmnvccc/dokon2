@@ -73,6 +73,8 @@ export const settingsSchemas = {
   maintenance: z.object({ enabled: z.boolean(), message: z.string().trim().max(300).default('') }),
   advantages: z.array(z.object({ icon: z.string().trim().max(40), title: z.string().trim().min(1).max(60), text: z.string().trim().max(120) })).max(8),
   announcement: z.object({ enabled: z.boolean(), text: z.string().trim().max(200).default(''), link: optUrl }),
+  // Sayt matnlarining ruscha tarjimasi: {"ru": {"announcement.text": "…"}} (Sozlamalar → Tarjimalar).
+  translations: z.object({ ru: z.record(z.string().max(120), z.string().max(2000)).default({}) }),
 };
 
 export type SettingsKey = keyof typeof settingsSchemas;
@@ -93,6 +95,7 @@ export const defaultSettings: SiteSettings = {
   maintenance: { enabled: false, message: '' },
   advantages: [],
   announcement: { enabled: false, text: '', link: null },
+  translations: { ru: {} },
 };
 
 /** Bazadagi xom qiymatlarni xavfsiz tarzda tiplangan sozlamalarga aylantiradi. Noto'g'ri qiymat — default. */

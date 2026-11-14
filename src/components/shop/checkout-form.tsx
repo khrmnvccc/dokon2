@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Banknote, CreditCard, MapPin, ShoppingCart, Store, Truck, Package, Info } from 'lucide-react';
-import { useApp, useCart } from '@/components/providers';
+import { useApp, useCart, useL } from '@/components/providers';
 import { useToast } from '@/components/ui/toast';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/field';
@@ -22,11 +22,11 @@ import { useQuote } from './use-quote';
 import { CouponBox, readSavedCoupon, saveCoupon } from './cart-view';
 
 const formSchema = z.object({
-  customer_name: z.string().trim().min(2, 'Ismingizni kiriting').max(120),
+  customer_name: z.string().trim().min(2, "Ismingizni kiriting").max(120),
   phone: uzPhone,
   email: z.union([emailSchema, z.literal('')]).optional(),
-  shippingMethodId: z.string().min(1, 'Yetkazib berish usulini tanlang'),
-  paymentMethodId: z.string().min(1, 'To‘lov usulini tanlang'),
+  shippingMethodId: z.string().min(1, "Yetkazib berish usulini tanlang"),
+  paymentMethodId: z.string().min(1, "To‘lov usulini tanlang"),
   region: z.string().optional(),
   city: z.string().optional(),
   street: z.string().optional(),
@@ -49,6 +49,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
   isGuest: boolean;
   orderNote: string;
 }) {
+  const L = useL();
   const { t, price } = useApp();
   const cart = useCart();
   const toast = useToast();
@@ -73,7 +74,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       email: defaults.email,
       shippingMethodId: shippingMethods[0]?.id ?? '',
       paymentMethodId: paymentMethods[0]?.id ?? '',
-      region: 'Toshkent shahri',
+      region: L("Toshkent shahri"),
       saveAddress: !isGuest && addresses.length === 0,
     },
   });
@@ -128,7 +129,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setServerError(data.error ?? 'Xatolik yuz berdi');
+        setServerError(data.error ?? L("Xatolik yuz berdi"));
         if (data.fieldErrors?.couponCode) {
           setCoupon(null);
           saveCoupon(null);
@@ -143,7 +144,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       router.replace(`/order/success?token=${encodeURIComponent(data.token)}`);
     } catch {
       // Tarmoq xatosi: bir xil idempotency kalit bilan qayta yuborish xavfsiz (dublikat yaratilmaydi)
-      toast('Internet aloqasini tekshirib, qayta bosing', 'error');
+      toast(L("Internet aloqasini tekshirib, qayta bosing"), 'error');
       setSubmitting(false);
     }
   };
@@ -156,27 +157,27 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       {serverError && <div role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-medium text-danger">{serverError}</div>}
       {isGuest && (
         <p className="mb-4 rounded-xl bg-card/10 px-4 py-3 text-sm text-card">
-          Buyurtmalaringizni kuzatish uchun <Link href="/login?next=/checkout" className="font-semibold underline">tizimga kiring</Link> yoki ro‘yxatdan o‘tmasdan davom eting.
+          {L("Buyurtmalaringizni kuzatish uchun")} <Link href="/login?next=/checkout" className="font-semibold underline">{L("tizimga kiring")}</Link> {L("yoki ro‘yxatdan o‘tmasdan davom eting.")}
         </p>
       )}
       <div className="grid gap-4 lg:grid-cols-[1fr_380px] lg:items-start">
         <div className="space-y-4">
-          <Section n={1} title="Qabul qiluvchi">
+          <Section n={1} title={L("Qabul qiluvchi")}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Ism va familiya" required error={errors.customer_name?.message} htmlFor="customer_name">
+              <Field label={L("Ism va familiya")} required error={(L(errors.customer_name?.message ?? '') || undefined)} htmlFor="customer_name">
                 <Input id="customer_name" autoComplete="name" aria-invalid={!!errors.customer_name} {...register('customer_name')} />
               </Field>
-              <Field label="Telefon" required error={errors.phone?.message} htmlFor="phone">
+              <Field label={L("Telefon")} required error={(L(errors.phone?.message ?? '') || undefined)} htmlFor="phone">
                 <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+998 90 123 45 67" aria-invalid={!!errors.phone} {...register('phone')} />
               </Field>
-              <Field label="Email" hint="Ixtiyoriy" error={errors.email?.message} htmlFor="email" className="sm:col-span-2">
+              <Field label={L("Email")} hint="Ixtiyoriy" error={(L(errors.email?.message ?? '') || undefined)} htmlFor="email" className="sm:col-span-2">
                 <Input id="email" type="email" autoComplete="email" aria-invalid={!!errors.email} {...register('email')} />
               </Field>
             </div>
           </Section>
 
-          <Section n={2} title="Yetkazib berish">
-            {shippingMethods.length === 0 && <p className="text-sm text-danger">Yetkazib berish usullari sozlanmagan.</p>}
+          <Section n={2} title={L("Yetkazib berish")}>
+            {shippingMethods.length === 0 && <p className="text-sm text-danger">{L("Yetkazib berish usullari sozlanmagan.")}</p>}
             <div className="grid gap-2 sm:grid-cols-2">
               {shippingMethods.map((m) => {
                 const Icon = shipIcon[m.kind];
@@ -211,38 +212,38 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
                     ))}
                     <label className={cn('flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 text-sm', selectedAddress === 'new' ? 'border-primary bg-primary-soft' : 'border-line')}>
                       <input type="radio" name="saved-address" checked={selectedAddress === 'new'} onChange={() => setSelectedAddress('new')} className="accent-[var(--primary)]" />
-                      Yangi manzil
+                      {L("Yangi manzil")}
                     </label>
                   </div>
                 )}
                 {!savedAddress && (
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Viloyat" required error={errors.region?.message} htmlFor="region">
+                    <Field label={L("Viloyat")} required error={(L(errors.region?.message ?? '') || undefined)} htmlFor="region">
                       <Select id="region" {...register('region')}>
                         {UZ_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                       </Select>
                     </Field>
-                    <Field label="Tuman / shahar" error={errors.city?.message} htmlFor="city">
+                    <Field label="Tuman / shahar" error={(L(errors.city?.message ?? '') || undefined)} htmlFor="city">
                       <Input id="city" autoComplete="address-level2" {...register('city')} />
                     </Field>
-                    <Field label="Ko‘cha, uy" required error={errors.street?.message} htmlFor="street" className="sm:col-span-2">
+                    <Field label="Ko‘cha, uy" required error={(L(errors.street?.message ?? '') || undefined)} htmlFor="street" className="sm:col-span-2">
                       <Input id="street" autoComplete="street-address" aria-invalid={!!errors.street} {...register('street')} />
                     </Field>
                     <Field label="Xonadon / ofis" htmlFor="apartment">
                       <Input id="apartment" {...register('apartment')} />
                     </Field>
-                    <Field label="Mo‘ljal" htmlFor="landmark">
-                      <Input id="landmark" placeholder="Masalan: maktab yonida" {...register('landmark')} />
+                    <Field label={L("Mo‘ljal")} htmlFor="landmark">
+                      <Input id="landmark" placeholder={L("Masalan: maktab yonida")} {...register('landmark')} />
                     </Field>
-                    {!isGuest && <Checkbox label="Manzilni saqlab qo‘yish" {...register('saveAddress')} className="sm:col-span-2" />}
+                    {!isGuest && <Checkbox label={L("Manzilni saqlab qo‘yish")} {...register('saveAddress')} className="sm:col-span-2" />}
                   </div>
                 )}
               </div>
             )}
           </Section>
 
-          <Section n={3} title="To‘lov usuli">
-            {paymentMethods.length === 0 && <p className="text-sm text-danger">To‘lov usullari sozlanmagan.</p>}
+          <Section n={3} title={L("To‘lov usuli")}>
+            {paymentMethods.length === 0 && <p className="text-sm text-danger">{L("To‘lov usullari sozlanmagan.")}</p>}
             <div className="grid gap-2 sm:grid-cols-2">
               {paymentMethods.map((m) => {
                 const Icon = payIcon[m.kind];
@@ -259,7 +260,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
               })}
             </div>
             {errors.paymentMethodId && <p className="mt-2 text-xs text-danger">{errors.paymentMethodId.message}</p>}
-            <Field label="Izoh" hint="Kuryer uchun qo‘shimcha ma’lumot" htmlFor="comment" className="mt-4">
+            <Field label={L("Izoh")} hint={L("Kuryer uchun qo‘shimcha ma’lumot")} htmlFor="comment" className="mt-4">
               <Textarea id="comment" rows={3} maxLength={1000} {...register('comment')} />
             </Field>
           </Section>
@@ -269,7 +270,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
           <CouponBox applied={quote?.coupon?.code ?? null} requested={coupon} error={quote?.couponError ?? null}
             onApply={(c) => { setCoupon(c); saveCoupon(c); }} />
           <div className={cn('rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-5', loading && 'opacity-70')}>
-            <h2 className="mb-3 font-semibold">Buyurtmangiz</h2>
+            <h2 className="mb-3 font-semibold">{L("Buyurtmangiz")}</h2>
             <ul className="max-h-72 space-y-3 overflow-auto pr-1">
               {(quote?.lines ?? []).map((l) => (
                 <li key={`${l.productId}:${l.variantId ?? ''}`} className="flex gap-3 text-sm">
@@ -292,13 +293,13 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
               </dl>
             )}
             {quote?.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
-            {quote?.hasErrors && <p className="mt-3 text-xs font-medium text-danger">Savatchadagi xatolarni tuzating. <Link href="/cart" className="underline">Savatchaga qaytish</Link></p>}
+            {quote?.hasErrors && <p className="mt-3 text-xs font-medium text-danger">{L("Savatchadagi xatolarni tuzating.")} <Link href="/cart" className="underline">{L("Savatchaga qaytish")}</Link></p>}
             <Button type="submit" data-tour="place-order" size="lg" className="mt-4 w-full" loading={submitting} disabled={blocked || submitting}>
               {t('checkout.place')}
             </Button>
             {orderNote && <p className="mt-3 flex gap-1.5 text-xs text-ink-3"><Info className="h-4 w-4 shrink-0" />{orderNote}</p>}
             <p className="mt-2 text-center text-xs text-ink-3">
-              Buyurtma berish orqali <Link href="/terms" className="underline">foydalanish shartlariga</Link> rozilik bildirasiz
+              {L("Buyurtma berish orqali")} <Link href="/terms" className="underline">{L("foydalanish shartlariga")}</Link> {L("rozilik bildirasiz")}
             </p>
           </div>
         </aside>

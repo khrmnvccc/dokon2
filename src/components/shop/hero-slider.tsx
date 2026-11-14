@@ -1,5 +1,6 @@
 'use client';
 
+import { useL } from '@/components/providers';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -27,6 +28,7 @@ export function BannerSlide({ banner, priority, className }: { banner: Banner; p
 }
 
 export function HeroSlider({ banners }: { banners: Banner[] }) {
+  const L = useL();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchX = useRef<number | null>(null);
@@ -43,7 +45,7 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
   return (
     <section data-tour="banner"
       aria-roledescription="carousel"
-      aria-label="Aksiya bannerlari"
+      aria-label={L("Aksiya bannerlari")}
       className="group relative aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-soft sm:aspect-[16/6]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { AlertTriangle, Minus, Plus, ShoppingCart, Tag, Trash2, Truck, X } from 'lucide-react';
-import { useApp, useCart } from '@/components/providers';
+import { useApp, useCart, useL } from '@/components/providers';
 import { useConfirm } from '@/components/ui/dialog';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Input } from '@/components/ui/field';
@@ -30,6 +30,7 @@ export function saveCoupon(code: string | null) {
 }
 
 export function CartView() {
+  const L = useL();
   const { t } = useApp();
   const cart = useCart();
   const confirm = useConfirm();
@@ -62,9 +63,9 @@ export function CartView() {
         </h1>
         <button
           className="flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-danger"
-          onClick={async () => (await confirm({ title: 'Savatchani tozalash?', text: 'Barcha mahsulotlar olib tashlanadi.', confirmText: 'Tozalash', danger: true })) && cart.clear()}
+          onClick={async () => (await confirm({ title: L("Savatchani tozalash?"), text: L("Barcha mahsulotlar olib tashlanadi."), confirmText: L("Tozalash"), danger: true })) && cart.clear()}
         >
-          <Trash2 className="h-4 w-4" /> Tozalash
+          <Trash2 className="h-4 w-4" /> {L("Tozalash")}
         </button>
       </div>
       {error && <p className="mb-3 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
@@ -146,12 +147,13 @@ function CartLine({ line }: { line: PricedLine }) {
 }
 
 export function CouponBox({ applied, requested, error, onApply }: { applied: string | null; requested: string | null; error: QuoteResult['couponError']; onApply: (code: string | null) => void }) {
+  const L = useL();
   const [value, setValue] = useState('');
   if (applied) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-success-soft px-4 py-3 text-sm">
         <span className="flex items-center gap-2 font-semibold text-success"><Tag className="h-4 w-4" /> {applied} qo‘llandi</span>
-        <button className="text-success underline" onClick={() => onApply(null)}>Bekor qilish</button>
+        <button className="text-success underline" onClick={() => onApply(null)}>{L("Bekor qilish")}</button>
       </div>
     );
   }
@@ -165,10 +167,10 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
         if (code) onApply(code);
       }}
     >
-      <label htmlFor="coupon" className="mb-2 block text-sm font-semibold">Promo-kod</label>
+      <label htmlFor="coupon" className="mb-2 block text-sm font-semibold">{L("Promo-kod")}</label>
       <div className="flex gap-2">
         <Input id="coupon" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Masalan: XUSH10" maxLength={32} autoComplete="off" className="uppercase" />
-        <Button type="submit" variant="secondary" disabled={!value.trim()}>Qo‘llash</Button>
+        <Button type="submit" variant="secondary" disabled={!value.trim()}>{L("Qo‘llash")}</Button>
       </div>
       {requested && error && <p className="mt-2 text-xs font-medium text-danger">{couponErrorText[error]}</p>}
     </form>
@@ -176,6 +178,7 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
 }
 
 function Summary({ quote, loading }: { quote: QuoteResult; loading: boolean }) {
+  const L = useL();
   const { t, price } = useApp();
   const blocked = quote.hasErrors || quote.belowMinimum;
   return (
@@ -190,7 +193,7 @@ function Summary({ quote, loading }: { quote: QuoteResult; loading: boolean }) {
           <dd className="font-semibold">{price(quote.subtotal - quote.discount)}</dd>
         </div>
       </dl>
-      <p className="mt-1 text-xs text-ink-3">Yetkazib berish narxi keyingi bosqichda hisoblanadi</p>
+      <p className="mt-1 text-xs text-ink-3">{L("Yetkazib berish narxi keyingi bosqichda hisoblanadi")}</p>
       {quote.amountToFreeShipping > 0 && (
         <div className="mt-4 rounded-lg bg-primary-soft p-3 text-xs text-primary">
           <p className="flex items-center gap-1.5 font-semibold"><Truck className="h-4 w-4" /> {t('cart.toFree', { amount: price(quote.amountToFreeShipping) })}</p>
@@ -200,7 +203,7 @@ function Summary({ quote, loading }: { quote: QuoteResult; loading: boolean }) {
         </div>
       )}
       {quote.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
-      {quote.hasErrors && <p className="mt-3 text-xs font-medium text-danger">Davom etish uchun belgilangan mahsulotlarni to‘g‘rilang yoki olib tashlang</p>}
+      {quote.hasErrors && <p className="mt-3 text-xs font-medium text-danger">{L("Davom etish uchun belgilangan mahsulotlarni to‘g‘rilang yoki olib tashlang")}</p>}
       <Link
         data-tour="checkout"
         href={blocked ? '#' : '/checkout'}

@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import { Clock, Mail, MapPin, Phone, Send } from 'lucide-react';
 import { CmsPageView, cmsMetadata } from '@/components/shop/cms-page';
 import { getSettings } from '@/lib/data/public';
@@ -6,14 +7,15 @@ import { SITE_URL } from '@/lib/env';
 export const generateMetadata = () => cmsMetadata('contact');
 
 export default async function ContactPage() {
+  const L = await getL();
   const { contact, social, store } = await getSettings();
   const rows = [
-    contact.phone && { icon: Phone, label: 'Telefon', value: contact.phone, href: `tel:${contact.phone.replace(/\s/g, '')}` },
-    contact.phone2 && { icon: Phone, label: 'Qo‘shimcha telefon', value: contact.phone2, href: `tel:${contact.phone2.replace(/\s/g, '')}` },
-    contact.email && { icon: Mail, label: 'Email', value: contact.email, href: `mailto:${contact.email}` },
+    contact.phone && { icon: Phone, label: L("Telefon"), value: contact.phone, href: `tel:${contact.phone.replace(/\s/g, '')}` },
+    contact.phone2 && { icon: Phone, label: L("Qo‘shimcha telefon"), value: contact.phone2, href: `tel:${contact.phone2.replace(/\s/g, '')}` },
+    contact.email && { icon: Mail, label: L("Email"), value: contact.email, href: `mailto:${contact.email}` },
     social.telegram && { icon: Send, label: 'Telegram', value: social.telegram.replace(/^https?:\/\//, ''), href: social.telegram },
-    contact.address && { icon: MapPin, label: 'Manzil', value: contact.address, href: contact.map_url ?? undefined },
-    contact.working_hours && { icon: Clock, label: 'Ish vaqti', value: contact.working_hours },
+    contact.address && { icon: MapPin, label: L("Manzil"), value: contact.address, href: contact.map_url ?? undefined },
+    contact.working_hours && { icon: Clock, label: L("Ish vaqti"), value: contact.working_hours },
   ].filter(Boolean) as { icon: typeof Phone; label: string; value: string; href?: string }[];
 
   const jsonLd = {
@@ -33,7 +35,7 @@ export default async function ContactPage() {
         slug="contact"
         aside={
           <aside className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
-            <h2 className="mb-4 font-semibold">Bog‘lanish</h2>
+            <h2 className="mb-4 font-semibold">{L("Bog‘lanish")}</h2>
             <ul className="space-y-4">
               {rows.map(({ icon: Icon, label, value, href }) => (
                 <li key={label} className="flex gap-3">

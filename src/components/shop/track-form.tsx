@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Search } from 'lucide-react';
 import type { z } from 'zod';
 import { trackSchema } from '@/lib/validation';
-import { useApp } from '@/components/providers';
+import { useApp, useL } from '@/components/providers';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { Badge } from '@/components/ui/misc';
@@ -21,7 +21,8 @@ interface Tracked {
 }
 
 export function TrackForm() {
-  const { price } = useApp();
+  const L = useL();
+  const { price, lang } = useApp();
   const [result, setResult] = useState<Tracked | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<z.input<typeof trackSchema>, unknown, z.output<typeof trackSchema>>({
@@ -33,20 +34,20 @@ export function TrackForm() {
     setResult(null);
     const res = await fetch('/api/track', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(values) }).catch(() => null);
     const data = await res?.json().catch(() => ({}));
-    if (!res?.ok) setError(data?.error ?? 'Xatolik yuz berdi');
+    if (!res?.ok) setError(data?.error ?? L("Xatolik yuz berdi"));
     else setResult(data.order);
   };
 
   return (
     <div className="space-y-4">
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:p-6" noValidate>
-        <Field label="Buyurtma raqami" error={errors.number?.message} htmlFor="number">
+        <Field label={L("Buyurtma raqami")} error={(L(errors.number?.message ?? '') || undefined)} htmlFor="number">
           <Input id="number" inputMode="numeric" placeholder="100001" {...register('number')} />
         </Field>
-        <Field label="Telefon" error={errors.phone?.message} htmlFor="phone">
+        <Field label={L("Telefon")} error={(L(errors.phone?.message ?? '') || undefined)} htmlFor="phone">
           <Input id="phone" type="tel" placeholder="+998 90 123 45 67" {...register('phone')} />
         </Field>
-        <Button type="submit" loading={isSubmitting}><Search className="h-4 w-4" /> Tekshirish</Button>
+        <Button type="submit" loading={isSubmitting}><Search className="h-4 w-4" /> {L("Tekshirish")}</Button>
       </form>
       {error && <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
       {result && (
@@ -56,9 +57,9 @@ export function TrackForm() {
               <h2 className="text-[15px] font-semibold tracking-tight">Buyurtma #{result.number}</h2>
               <p className="text-sm text-ink-3">{formatDateTime(result.created_at)} · {result.items_count} dona · {price(result.total)}</p>
             </div>
-            <Badge tone={orderStatusTone[result.status]}>{orderStatusLabel[result.status]}</Badge>
+            <Badge tone={orderStatusTone[result.status]}>{L(orderStatusLabel[result.status])}</Badge>
           </div>
-          <StatusTimeline status={result.status} history={result.history} />
+          <StatusTimeline status={result.status} history={result.history} lang={lang} />
           <p className="mt-4 text-sm text-ink-3">Yetkazib berish: {result.shipping_method_name}{result.tracking_number ? ` · Kuzatuv raqami: ${result.tracking_number}` : ''}</p>
         </div>
       )}

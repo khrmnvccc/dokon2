@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -30,9 +31,10 @@ async function findCategory(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const L = await getL();
   const { slug } = await params;
   const found = await findCategory(slug);
-  if (!found) return { title: 'Kategoriya topilmadi' };
+  if (!found) return { title: L("Kategoriya topilmadi") };
   const { category } = found;
   return {
     title: category.seo_title || category.name,
@@ -43,6 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
+  const L = await getL();
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const found = await findCategory(slug);
   if (!found) notFound();
@@ -52,7 +55,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <Breadcrumbs items={[{ name: 'Katalog', href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` }))]} />
+      <Breadcrumbs items={[{ name: L("Katalog"), href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` }))]} />
       <h1 className="mb-2 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">{category.name}</h1>
       {category.description && <p className="mb-4 max-w-3xl text-sm text-ink-3">{category.description}</p>}
       {children.length > 0 && (

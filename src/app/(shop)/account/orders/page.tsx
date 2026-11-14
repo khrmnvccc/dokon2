@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { getServerSupabase } from '@/lib/supabase/server';
@@ -14,6 +15,7 @@ const PAGE = 10;
 interface Row { id: string; number: number; status: OrderStatus; total: number; items_count: number; created_at: string; payment_method_name: string; images: string[] }
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
+  const L = await getL();
   const sp = await searchParams;
   const status = ORDER_STATUSES.includes(sp.status as OrderStatus) ? (sp.status as OrderStatus) : null;
   const page = Math.max(1, Number(sp.page) || 1);
@@ -27,24 +29,24 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <h1 className="mb-3 text-xl font-semibold">Buyurtmalarim</h1>
+      <h1 className="mb-3 text-xl font-semibold">{L("Buyurtmalarim")}</h1>
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
         {tabs.map((s) => (
           <Link key={s ?? 'all'} href={s ? `?status=${s}` : '?'} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium', status === s ? 'bg-primary text-primary-fg' : 'bg-surface text-ink-2 shadow-soft')}>
-            {s ? orderStatusLabel[s] : 'Barchasi'}
+            {s ? L(orderStatusLabel[s]) : L("Barchasi")}
           </Link>
         ))}
       </div>
       {result.items.length === 0 ? (
-        <EmptyState icon={<Package className="h-8 w-8" />} title="Buyurtmalar yo‘q" text="Bu yerda buyurtmalaringiz va ularning holati ko‘rinadi."
-          action={<Link href="/catalog" className={buttonClass('primary')}>Xarid qilish</Link>} />
+        <EmptyState icon={<Package className="h-8 w-8" />} title={L("Buyurtmalar yo‘q")} text={L("Bu yerda buyurtmalaringiz va ularning holati ko‘rinadi.")}
+          action={<Link href="/catalog" className={buttonClass('primary')}>{L("Xarid qilish")}</Link>} />
       ) : (
         <ul className="space-y-3">
           {result.items.map((o) => (
             <li key={o.id}>
               <Link href={`/account/orders/${o.id}`} className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-surface p-4 shadow-soft transition hover:shadow-pop">
                 <div className="min-w-40 flex-1">
-                  <p className="font-semibold">#{o.number} <Badge tone={orderStatusTone[o.status]} className="ml-1">{orderStatusLabel[o.status]}</Badge></p>
+                  <p className="font-semibold">#{o.number} <Badge tone={orderStatusTone[o.status]} className="ml-1">{L(orderStatusLabel[o.status])}</Badge></p>
                   <p className="mt-0.5 text-xs text-ink-3">{formatDateTime(o.created_at)} · {o.items_count} dona · {o.payment_method_name}</p>
                 </div>
                 <div className="flex -space-x-2">

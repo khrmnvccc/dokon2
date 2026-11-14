@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Grid2x2, Heart, Home, LayoutGrid, Package, Search, ShoppingCart, User, X } from 'lucide-react';
 import type { CategoryNode } from '@/lib/types';
-import { useApp, useCart, useWishlist } from '@/components/providers';
+import { useApp, useCart, useWishlist, useL } from '@/components/providers';
 import { cn } from '@/components/ui/cn';
 import { DynamicIcon } from './dynamic-icon';
 
@@ -67,6 +67,7 @@ export function HeaderActions() {
 }
 
 export function CatalogButton({ tree }: { tree: CategoryNode[] }) {
+  const L = useL();
   const { t } = useApp();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(tree[0]?.id ?? null);
@@ -136,7 +137,7 @@ export function CatalogButton({ tree }: { tree: CategoryNode[] }) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 text-sm text-ink-3">Barcha mahsulotlarni ko‘rish uchun kategoriya nomini bosing.</p>
+                  <p className="mt-3 text-sm text-ink-3">{L("Barcha mahsulotlarni ko‘rish uchun kategoriya nomini bosing.")}</p>
                 )}
               </>
             )}
@@ -149,6 +150,7 @@ export function CatalogButton({ tree }: { tree: CategoryNode[] }) {
 
 /** Telefonda pastki tab-bar (kassa 1.9/1.13): Bosh sahifa, Katalog, o'rtada katta "Savat", Buyurtmalarim, Profil. */
 export function MobileBottomNav() {
+  const L = useL();
   const { t, user, lang } = useApp();
   const cart = useCart();
   const pathname = usePathname();
@@ -156,11 +158,11 @@ export function MobileBottomNav() {
     { href: '/', label: t('nav.home'), icon: Home },
     { href: '/catalog', label: t('nav.catalog'), icon: Grid2x2 },
     { href: '/cart', label: t('nav.cart'), icon: ShoppingCart, center: true },
-    { href: user ? '/account/orders' : '/track', label: lang === 'ru' ? 'Заказы' : 'Buyurtmalar', icon: Package },
+    { href: user ? '/account/orders' : '/track', label: lang === 'ru' ? 'Заказы' : L("Buyurtmalar"), icon: Package },
     { href: user ? '/account' : '/login', label: t('nav.profile'), icon: User },
   ];
   return (
-    <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface glass pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Asosiy navigatsiya">
+    <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface glass pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label={L("Asosiy navigatsiya")}>
       <ul className="mx-auto grid h-16 max-w-md grid-cols-5">
         {items.map(({ href, label, icon: Icon, center }) => {
           const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');

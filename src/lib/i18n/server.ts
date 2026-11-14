@@ -1,17 +1,17 @@
 import 'server-only';
-import { cookies } from 'next/headers';
-import { getSettings } from '@/lib/data/public';
-import { LANGS, translate, type Lang, type TKey } from './dict';
+import { currentLang } from '@/lib/data/public';
+import { translate, type TKey } from './dict';
+import { tr } from './ui-ru';
 
-export async function getLang(): Promise<Lang> {
-  const settings = await getSettings();
-  const enabled = settings.localization.languages;
-  const fromCookie = (await cookies()).get('lang')?.value as Lang | undefined;
-  if (fromCookie && LANGS.includes(fromCookie) && enabled.includes(fromCookie)) return fromCookie;
-  return settings.localization.default_language;
-}
+export const getLang = currentLang;
 
 export async function getT() {
   const lang = await getLang();
   return (key: TKey, vars?: Record<string, string | number>) => translate(lang, key, vars);
+}
+
+/** Server komponentlar uchun: const L = await getL(); L('Bosh sahifa') */
+export async function getL() {
+  const lang = await getLang();
+  return (s: string) => tr(lang, s);
 }

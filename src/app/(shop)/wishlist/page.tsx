@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
@@ -11,10 +12,11 @@ import { ProductGrid } from '@/components/shop/product-card';
 export const metadata: Metadata = { title: 'Sevimlilar', robots: { index: false } };
 
 export default async function WishlistPage() {
+  const L = await getL();
   const user = await getCurrentUser();
   if (!user) {
-    return <EmptyState icon={<Heart className="h-8 w-8" />} title="Sevimlilar" text="Yoqqan mahsulotlarni saqlash uchun tizimga kiring."
-      action={<Link href="/login?next=/wishlist" className={buttonClass('primary')}>Kirish</Link>} />;
+    return <EmptyState icon={<Heart className="h-8 w-8" />} title={L("Sevimlilar")} text={L("Yoqqan mahsulotlarni saqlash uchun tizimga kiring.")}
+      action={<Link href="/login?next=/wishlist" className={buttonClass('primary')}>{L("Kirish")}</Link>} />;
   }
   const supabase = await getServerSupabase();
   const { data } = await supabase.from('wishlists').select('product_id').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100);
@@ -24,10 +26,10 @@ export default async function WishlistPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl">Sevimlilar <span className="text-base font-medium text-ink-3">({ordered.length})</span></h1>
+      <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl">{L("Sevimlilar")} <span className="text-base font-medium text-ink-3">({ordered.length})</span></h1>
       {ordered.length === 0 ? (
-        <EmptyState icon={<Heart className="h-8 w-8" />} title="Hozircha bo‘sh" text="Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi."
-          action={<Link href="/catalog" className={buttonClass('primary')}>Katalogga o‘tish</Link>} />
+        <EmptyState icon={<Heart className="h-8 w-8" />} title={L("Hozircha bo‘sh")} text={L("Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi.")}
+          action={<Link href="/catalog" className={buttonClass('primary')}>{L("Katalogga o‘tish")}</Link>} />
       ) : (
         <ProductGrid products={ordered} />
       )}

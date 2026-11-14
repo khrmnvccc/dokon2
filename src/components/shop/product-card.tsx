@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { Heart, ShoppingCart, Check } from 'lucide-react';
 import type { ProductCard as ProductCardType } from '@/lib/types';
 import { discountPercent } from '@/lib/format';
-import { useApp, useCart, useWishlist } from '@/components/providers';
+import { useApp, useCart, useWishlist, useL } from '@/components/providers';
 import { useToast } from '@/components/ui/toast';
 import { Rating } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import { ProductImage } from './product-image';
 
 export function ProductCard({ product, priority }: { product: ProductCardType; priority?: boolean }) {
+  const L = useL();
   const { t, price } = useApp();
   const cart = useCart();
   const wishlist = useWishlist();
@@ -43,7 +44,7 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
         type="button"
         onClick={() => wishlist.toggle(product.id)}
         className="absolute right-3.5 top-3.5 flex size-8 items-center justify-center rounded-full border border-line bg-surface glass transition-transform active:scale-95"
-        aria-label={liked ? 'Sevimlilardan olib tashlash' : 'Sevimlilarga qoʻshish'}
+        aria-label={liked ? L("Sevimlilardan olib tashlash") : L("Sevimlilarga qoʻshish")}
         aria-pressed={liked}
       >
         <Heart className={cn('size-4', liked ? 'fill-danger text-danger' : 'text-ink-2')} />

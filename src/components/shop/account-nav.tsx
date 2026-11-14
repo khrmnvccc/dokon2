@@ -1,5 +1,6 @@
 'use client';
 
+import { useL } from '@/components/providers';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bell, Heart, LayoutDashboard, LogOut, MapPin, Package, User } from 'lucide-react';
@@ -7,14 +8,15 @@ import { logout } from '@/lib/actions/auth';
 import { cn } from '@/components/ui/cn';
 
 const links = [
-  { href: '/account', label: 'Profil', icon: User },
-  { href: '/account/orders', label: 'Buyurtmalarim', icon: Package },
-  { href: '/account/addresses', label: 'Manzillar', icon: MapPin },
-  { href: '/account/notifications', label: 'Bildirishnomalar', icon: Bell },
-  { href: '/wishlist', label: 'Sevimlilar', icon: Heart },
+  { href: '/account', label: "Profil", icon: User },
+  { href: '/account/orders', label: "Buyurtmalarim", icon: Package },
+  { href: '/account/addresses', label: "Manzillar", icon: MapPin },
+  { href: '/account/notifications', label: "Bildirishnomalar", icon: Bell },
+  { href: '/wishlist', label: "Sevimlilar", icon: Heart },
 ];
 
 export function AccountNav({ name, email, isStaff }: { name: string; email: string | null; isStaff: boolean }) {
+  const L = useL();
   const pathname = usePathname();
   return (
     <aside className="rounded-xl border border-line bg-surface p-3 shadow-soft">
@@ -31,18 +33,18 @@ export function AccountNav({ name, email, isStaff }: { name: string; email: stri
           return (
             <Link key={href} href={href} aria-current={active ? 'page' : undefined}
               className={cn('flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium', active ? 'bg-primary-soft text-primary' : 'text-ink-2 hover:bg-surface-2')}>
-              <Icon className="h-[18px] w-[18px]" /> {label}
+              <Icon className="h-[18px] w-[18px]" /> {L(label)}
             </Link>
           );
         })}
         {isStaff && (
           <Link href="/admin" className="flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2">
-            <LayoutDashboard className="h-[18px] w-[18px]" /> Admin panel
+            <LayoutDashboard className="h-[18px] w-[18px]" /> {L("Admin panel")}
           </Link>
         )}
         <form action={logout}>
           <button className="flex w-full shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-danger hover:bg-danger-soft">
-            <LogOut className="h-[18px] w-[18px]" /> Chiqish
+            <LogOut className="h-[18px] w-[18px]" /> {L("Chiqish")}
           </button>
         </form>
       </nav>

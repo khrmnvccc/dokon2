@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -8,11 +9,12 @@ import { RegisterForm } from '@/components/shop/auth-forms';
 export const metadata: Metadata = { title: 'Ro‘yxatdan o‘tish', robots: { index: false } };
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const L = await getL();
   const { next } = await searchParams;
   if (await getCurrentUser()) redirect('/account');
   return (
-    <AuthCard title="Ro‘yxatdan o‘tish" subtitle="Buyurtmalar tarixi, saqlangan manzillar va sevimlilar"
-      footer={<>Hisobingiz bormi? <Link href="/login" className="font-semibold text-primary hover:underline">Kirish</Link></>}>
+    <AuthCard title={L("Ro‘yxatdan o‘tish")} subtitle={L("Buyurtmalar tarixi, saqlangan manzillar va sevimlilar")}
+      footer={<>{L("Hisobingiz bormi?")} <Link href="/login" className="font-semibold text-primary hover:underline">{L("Kirish")}</Link></>}>
       <RegisterForm next={next} />
     </AuthCard>
   );
