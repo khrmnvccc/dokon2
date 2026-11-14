@@ -28,7 +28,7 @@ export function MyTelegram({ botName, linked, chatName, code, messages }: { botN
           <div>
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Sizga keladigan xabarlar</div>
             {messages.length ? <ul className="list-disc pl-5 text-sm">{messages.map((m) => <li key={m}>{m}</li>)}</ul>
-              : <p className="text-sm text-ink-3">Hozircha yoʻq — Ega “Xabarlar” oynasida belgilaydi.</p>}
+              : <p className="text-sm text-ink-3">Hozircha yoʻq — Ega “Telegram → Xabarlar va Push” boʻlimida belgilaydi.</p>}
           </div>
           <Button variant="ghost" loading={pending} onClick={() => run(unlinkMyTelegram)}>Uzish</Button>
         </div>

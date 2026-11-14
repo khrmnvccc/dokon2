@@ -38,7 +38,7 @@ export const EFFECTS = [
 ] as const;
 export type EffectName = (typeof EFFECTS)[number]['value'];
 
-export const MENU_GROUPS = ['Boshqaruv paneli', 'Savdo', 'Katalog', 'Marketing', 'Sozlamalar'] as const;
+export const MENU_GROUPS = ['Boshqaruv paneli', 'Savdo', 'Katalog', 'Marketing', 'Telegram', 'Sozlamalar'] as const;
 export type MenuGroup = (typeof MENU_GROUPS)[number];
 
 export const DEFAULT_BRAND: BrandSettings = {

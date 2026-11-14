@@ -43,7 +43,7 @@ export interface MessagesData {
   adminUrl: string;
 }
 
-type Tab = 'connect' | 'templates' | 'broadcast' | 'log';
+type Tab = 'templates' | 'broadcast' | 'log';
 
 /** Amal + toast + sahifani yangilash. */
 function useRun() {
@@ -59,17 +59,18 @@ function useRun() {
 }
 
 export function MessagesEditor({ data }: { data: MessagesData }) {
-  const [tab, setTab] = useState<Tab>(data.telegram?.connected ? 'templates' : 'connect');
+  const [tab, setTab] = useState<Tab>('templates');
   return (
     <div className="space-y-4">
+      {!data.telegram?.connected && (
+        <Alert tone="warn">Admin boti hali ulanmagan — xabarlar yuborilmaydi. <a href="/admin/bots" className="font-semibold underline">Telegram → Botlar</a> boʻlimida ulang.</Alert>
+      )}
       <Segmented<Tab> label="Boʻlim" value={tab} onChange={setTab} className="no-scrollbar max-w-full overflow-x-auto"
         options={[
-          { value: 'connect', label: 'Ulanish' },
           { value: 'templates', label: 'Xabar matnlari' },
           { value: 'broadcast', label: 'Ommaviy xabar' },
           { value: 'log', label: `Yuborilganlar${data.logTotal ? ` · ${data.logTotal}` : ''}` },
         ]} />
-      {tab === 'connect' && <ConnectTab data={data} />}
       {tab === 'templates' && <TemplatesTab data={data} />}
       {tab === 'broadcast' && <BroadcastTab data={data} />}
       {tab === 'log' && <LogTab data={data} />}
@@ -102,8 +103,8 @@ export function TelegramPreview({ html, buttons = [], botName, time = '12:00' }:
   );
 }
 
-// ---------- 1. Ulanish ----------
-function ConnectTab({ data }: { data: MessagesData }) {
+// ---------- Botlar (alohida sahifa: Telegram → Botlar) ----------
+export function BotsManager({ data }: { data: MessagesData }) {
   const t = data.telegram;
   const { pending, run } = useRun();
   const confirm = useConfirm();
