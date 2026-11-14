@@ -1,5 +1,6 @@
 import { getL } from '@/lib/i18n/server';
 import Link from 'next/link';
+import { ChevronRight, Star } from 'lucide-react';
 import Image from 'next/image';
 import type { Category, ProductCard } from '@/lib/types';
 import type { SiteSettings } from '@/lib/settings-schema';
@@ -70,7 +71,21 @@ export function Advantages({ items, title }: { items: SiteSettings['advantages']
 /** Bosh sahifa: “Mijozlar fikri” — umumiy baho va oxirgi matnli sharhlar (gorizontal lenta). */
 export async function ReviewsSection({ title, reviews, stats }: { title: string; reviews: PublicReview[]; stats: ReviewStats }) {
   const L = await getL();
-  if (!reviews.length) return null;
+  if (!reviews.length) {
+    // Hali sharh yoʻq: blok baribir koʻrinadi — xaridorlarni baho berishga chaqiradi.
+    return (
+      <section>
+        <Link href={stats.count ? '/reviews' : '/account/orders?status=delivered'} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft transition hover:shadow-pop">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--yandex)_18%,transparent)] text-[var(--yandex)]"><Star className="size-5 fill-current" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold tracking-tight">{title}</span>
+            <span className="block text-[13px] text-ink-3">{stats.count ? `${stats.avg.toFixed(1)} ★ · ${stats.count} ${L("ta sharh")}` : L("Xarid qilgan mahsulotingizga baho bering — fikringiz boshqalarga yordam beradi")}</span>
+          </span>
+          <ChevronRight className="size-5 shrink-0 text-ink-3" />
+        </Link>
+      </section>
+    );
+  }
   return (
     <section>
       <SectionHeader title={title} href="/reviews" linkText={L("Barchasi")} />
