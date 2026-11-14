@@ -11,7 +11,7 @@ export default async function Page() {
   await requirePagePermission('coupons.write');
   const supabase = await getServerSupabase();
   const [{ data }, { data: categories }, { data: products }] = await Promise.all([
-    supabase.from('coupons').select('*').order('created_at', { ascending: false }),
+    supabase.from('coupons').select('*').is('owner_id', null).order('created_at', { ascending: false }),
     supabase.from('categories').select('id, name').order('name'),
     supabase.from('products').select('id, name').order('name').limit(2000),
   ]);

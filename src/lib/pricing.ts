@@ -145,8 +145,10 @@ export function buildCategoryChain(categories: { id: string; parent_id: string |
   };
 }
 
-export function validateCoupon(coupon: Coupon | null, now = new Date()): CouponError | null {
+export function validateCoupon(coupon: Coupon | null, now = new Date(), userId: string | null = null): CouponError | null {
   if (!coupon) return 'not_found';
+  // Shaxsiy kupon (doʻst taklifi, sovgʻa) — faqat egasi ishlata oladi; begonaga “topilmadi” deymiz
+  if (coupon.owner_id && coupon.owner_id !== userId) return 'not_found';
   if (!coupon.is_active) return 'inactive';
   if (coupon.starts_at && new Date(coupon.starts_at) > now) return 'not_started';
   if (coupon.ends_at && new Date(coupon.ends_at) <= now) return 'expired';
@@ -162,6 +164,7 @@ export interface QuoteInput {
   chain: CategoryChain;
   coupon?: Coupon | null;
   couponRequested?: boolean;
+  userId?: string | null;
   shippingMethod?: ShippingMethod | null;
   freeShippingThreshold: number;
   minOrderAmount: number;
@@ -228,7 +231,7 @@ export function computeQuote(input: QuoteInput): QuoteResult {
   let couponError: CouponError | null = null;
   if (input.couponRequested) {
     const coupon = input.coupon ?? null;
-    couponError = validateCoupon(coupon, now);
+    couponError = validateCoupon(coupon, now, input.userId ?? null);
     if (!couponError && coupon) {
       if (subtotal < coupon.min_order_amount) couponError = 'min_order';
       else {

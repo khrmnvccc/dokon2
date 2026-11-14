@@ -139,6 +139,12 @@ describe('computeQuote', () => {
 });
 
 describe('validateCoupon', () => {
+  it('shaxsiy kupon faqat egasiga', () => {
+    const own = { ...coupon(), owner_id: 'u-1' };
+    expect(validateCoupon(own, new Date(), 'u-1')).toBeNull();
+    expect(validateCoupon(own, new Date(), 'u-2')).toBe('not_found');
+    expect(validateCoupon(own, new Date(), null)).toBe('not_found');
+  });
   it('holatlarni aniqlaydi', () => {
     expect(validateCoupon(coupon())).toBeNull();
     expect(validateCoupon(coupon({ is_active: false }))).toBe('inactive');

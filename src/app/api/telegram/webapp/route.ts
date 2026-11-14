@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase/admin';
 import { getTelegram } from '@/lib/telegram/server';
 import { getShopBot } from '@/lib/telegram/shop-bot';
 import { verifyInitData, type WebAppUser } from '@/lib/telegram/webapp-auth';
 import { ensureShopUser, profileOf } from '@/lib/telegram/tg-users';
+import { attachReferral } from '@/lib/referral-server';
+import { parseRefCode } from '@/lib/referral';
+import { referralAttachedNotice } from '@/lib/telegram/shop-bot';
 
 // Telegram mini-ilova ichida avtomatik kirish. Brauzer Telegram imzolagan initData ni yuboradi; server uni
 // bot tokeni bilan tekshiradi va sessiya cookie sini oʻrnatadi. Parol ham, email ham soʻralmaydi.
@@ -39,6 +42,13 @@ export async function POST(request: Request) {
   } else {
     userId = await ensureShopUser(tgUser, current?.id ?? null);
     if (!userId) return deny('Akkaunt yaratib boʻlmadi. Birozdan keyin qayta urinib koʻring', 500);
+    // Doʻst havolasi orqali ochilgan mini-ilova: start_param = ref_<ID> (imzo bilan tasdiqlangan)
+    const refNo = parseRefCode(new URLSearchParams(initData).get('start_param'));
+    if (refNo) {
+      const res = await attachReferral(userId, refNo, 'webapp');
+      const friendId = userId;
+      if (res.ok) after(() => referralAttachedNotice(res, friendId));
+    }
   }
 
   const profile = await profileOf(userId);

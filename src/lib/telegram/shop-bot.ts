@@ -8,6 +8,8 @@ import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import { chatTitle, getTelegram, logSend, tg, TelegramFail } from './server';
 import type { OrderStatus } from '@/lib/types';
 import { ensureShopUser, profileOf, savePhone, tgDisplay } from './tg-users';
+import { attachReferral, trackRefOpen } from '@/lib/referral-server';
+import { parseRefCode } from '@/lib/referral';
 import { renderTemplate } from './templates';
 import {
   CAPTION_MAX, CUSTOMER_MSG_BY_KEY, customerImage, customerSample,
@@ -182,13 +184,20 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
     // Akkaunt darhol ochiladi; raqami yoʻq boʻlsa — salomdan keyin bir bosishda roʻyxatdan oʻtish taklif qilinadi.
     const startUser = m.from ? await ensureShopUser(m.from) : null;
     const startProfile = startUser ? await profileOf(startUser) : null;
+    // Doʻst havolasi: /start ref_1234 — yangi mijoz taklif qilgan odamga bogʻlanadi
+    const refNo = parseRefCode(text.split(/\s+/)[1]);
+    if (refNo) await trackRefOpen(refNo);
+    if (startUser && refNo) {
+      const res = await attachReferral(startUser, refNo, 'bot');
+      if (res.ok) await afterReferralAttach(config, res, startUser, m.chat.id);
+    }
     const first = esc(m.from?.first_name || m.chat.first_name || '');
     await send(config, m.chat.id,
       `Assalomu alaykum${first ? `, <b>${first}</b>` : ''}! 👋\n\n<b>${name}</b> botiga xush kelibsiz.\n\n` +
       `🛍 <b>Doʻkonni ochish</b> tugmasini bosing — doʻkon shu yerda, Telegram ichida ochiladi. Roʻyxatdan oʻtish shart emas.\n` +
       `📦 Buyurtma bersangiz, holati shu chatga keladi.\n🎁 Aksiya va kuponlar haqida birinchi boʻlib bilasiz.\n\n` +
       `Xabarlar kerak boʻlmasa — /stop`,
-      [[openButton('🛍 Doʻkonni ochish')], [openButton('🎁 Aksiyalar', '/sale'), openButton('📦 Buyurtmalarim', '/account/orders')]],
+      [[openButton('🛍 Doʻkonni ochish')], [openButton('🎁 Aksiyalar', '/sale'), openButton('📦 Buyurtmalarim', '/account/orders')], [openButton('🤝 Doʻstni taklif qilish', '/account/referral')]],
     );
     if (startUser && !startProfile?.phone) await askPhone(config, m.chat.id);
     return;
@@ -334,7 +343,7 @@ async function couponMessage(couponId: string, name: string) {
  * Kuponni doʻkon boti orqali yuboradi: hamma obunachilarga yoki bitta mijozga (ID raqami boʻyicha).
  * Bitta chatga bir marta; botni bloklaganlar obunadan chiqariladi.
  */
-export async function sendCouponToCustomers(couponId: string, clientNo: number | null) {
+export async function sendCouponToCustomers(couponId: string, clientNo: number | null, path = '/sale') {
   const config = await getShopBot();
   if (!config) throw new TelegramFail('Doʻkon boti ulanmagan. Telegram → Botlar boʻlimida ulang');
   let q = db().from('telegram_subscribers').select('chat_id, name, user_id').eq('via', 'shop');
@@ -352,7 +361,7 @@ export async function sendCouponToCustomers(couponId: string, clientNo: number |
   const base = await couponMessage(couponId, '');
   for (const s of subs) {
     const first = String(s.name ?? '').split(' ')[0];
-    const msg = await customerMessage('coupon', { ...base.values, mijoz: first }, { path: '/sale' }, base.extra);
+    const msg = await customerMessage('coupon', { ...base.values, mijoz: first }, { path }, base.extra);
     if (!msg) throw new TelegramFail('“Sizga kupon berildi” xabari oʻchirilgan. Xabarlar va Push → Mijozga boʻlimida yoqing');
     try {
       await sendRich(config.token, Number(s.chat_id), msg);
@@ -390,4 +399,104 @@ export async function tokenFor(via: 'admin' | 'shop') {
   const admin = await getTelegram();
   if (!admin?.chatId) throw new TelegramFail('Telegram bot ulanmagan');
   return admin.token;
+}
+
+// ---------- Doʻstni taklif qilish: bot xabarlari ----------
+async function chatsOf(userId: string) {
+  const { data } = await db().from('telegram_subscribers').select('chat_id, name').eq('user_id', userId).eq('via', 'shop').limit(3);
+  return (data ?? []) as { chat_id: number; name: string | null }[];
+}
+
+async function textToUser(config: ShopBotConfig, userId: string, html: string, keyboard?: unknown[][]) {
+  for (const c of await chatsOf(userId)) {
+    try { await send(config, Number(c.chat_id), html, keyboard); } catch (e) { console.error('referral msg', e); }
+  }
+}
+
+/** Bogʻlangandan keyin: doʻstga sovgʻa kupon, taklif qilganga “doʻstingiz qoʻshildi”. */
+async function afterReferralAttach(config: ShopBotConfig, res: { referrer_id?: string; welcome_coupon_id?: string | null }, friendId: string, chatId: number) {
+  try {
+    const friend = await profileOf(friendId);
+    if (res.welcome_coupon_id) {
+      const { data: c } = await db().from('coupons').select('value, min_order_amount, ends_at').eq('id', res.welcome_coupon_id).maybeSingle();
+      if (c) {
+        await send(config, chatId,
+          `🎁 <b>Sizga sovgʻa!</b>\nDoʻstingiz taklifi bilan kelganingiz uchun <b>${formatPrice(Number(c.value), 'soʻm')}</b> chegirma kuponi berildi.` +
+          (Number(c.min_order_amount) ? `\nBuyurtma ${formatPrice(Number(c.min_order_amount), 'soʻm')} dan boshlab.` : '') +
+          (c.ends_at ? `\nAmal qiladi: ${fmtDate(String(c.ends_at))} gacha.` : '') +
+          `\n\nKupon kabinetingizda — rasmiylashtirishda bir bosishda qoʻllanadi.`,
+          [[openButton('🎟 Kuponlarim', '/account/referral')]]);
+      }
+    }
+    if (res.referrer_id) {
+      const first = esc(String(friend?.full_name ?? '').split(' ')[0] || 'Doʻstingiz');
+      await textToUser(config, res.referrer_id,
+        `🤝 <b>${first}</b> havolangiz orqali qoʻshildi!\nU birinchi buyurtmasini olgach, sizga kupon beriladi.`,
+        [[openButton('📊 Taklif qilish', '/account/referral')]]);
+    }
+  } catch (e) {
+    console.error('referral attach msg', e);
+  }
+}
+
+/**
+ * Bosqich kuponlari: bazada buyurtma holati oʻzgarganda yaratiladi, bu yerda egasiga botda yuboriladi.
+ * Har biri bir marta (notified_at). Bot ulanmagan boʻlsa ham belgilanadi — kupon baribir kabinetda turadi.
+ */
+export async function notifyReferralRewards() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+  try {
+    const { data } = await db().from('referral_rewards').select('id, referrer_id, coupon_id, step')
+      .is('notified_at', null).order('created_at').limit(20);
+    if (!data?.length) return;
+    const config = await getShopBot();
+    for (const r of data) {
+      await db().from('referral_rewards').update({ notified_at: new Date().toISOString() }).eq('id', r.id).is('notified_at', null);
+      if (!config || !r.coupon_id) continue;
+      const chats = await chatsOf(String(r.referrer_id));
+      if (!chats.length) continue;
+      try {
+        const base = await couponMessage(String(r.coupon_id), '');
+        for (const c of chats) {
+          const msg = await customerMessage('coupon', { ...base.values, mijoz: String(c.name ?? '').split(' ')[0] }, { path: '/account/referral' }, base.extra);
+          if (!msg) break;
+          try {
+            await sendRich(config.token, Number(c.chat_id), msg);
+            await logSend('customer:referral', `mijoz:${c.name ?? c.chat_id}`, msg.html, null);
+          } catch (e) {
+            await logSend('customer:referral', `mijoz:${c.name ?? c.chat_id}`, msg.html, e);
+          }
+        }
+      } catch (e) {
+        console.error('referral reward msg', e);
+      }
+    }
+  } catch (e) {
+    console.error('referral rewards', e);
+  }
+}
+
+/** Admin qoʻlda bergan shaxsiy kuponni egasiga yuboradi (bot ulanmagan boʻlsa — false). */
+export async function sendPersonalCoupon(couponId: string, userId: string) {
+  const config = await getShopBot();
+  if (!config) return false;
+  const chats = await chatsOf(userId);
+  if (!chats.length) return false;
+  const base = await couponMessage(couponId, '');
+  let sent = false;
+  for (const c of chats) {
+    const msg = await customerMessage('coupon', { ...base.values, mijoz: String(c.name ?? '').split(' ')[0] }, { path: '/account/referral' }, base.extra);
+    if (!msg) return false;
+    try { await sendRich(config.token, Number(c.chat_id), msg); sent = true; await logSend('customer:gift', `mijoz:${c.name ?? c.chat_id}`, msg.html, null); }
+    catch (e) { await logSend('customer:gift', `mijoz:${c.name ?? c.chat_id}`, msg.html, e); }
+  }
+  return sent;
+}
+
+/** Mini-ilova yoki sayt orqali bogʻlanganda ham xabarlar (bot ulangan boʻlsa). */
+export async function referralAttachedNotice(res: { referrer_id?: string; welcome_coupon_id?: string | null }, friendId: string) {
+  const config = await getShopBot().catch(() => null);
+  if (!config) return;
+  const chats = await chatsOf(friendId);
+  await afterReferralAttach(config, { ...res, welcome_coupon_id: chats.length ? res.welcome_coupon_id : null }, friendId, chats[0]?.chat_id ?? 0);
 }

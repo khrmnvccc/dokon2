@@ -3,6 +3,7 @@ import { quoteRequestSchema } from '@/lib/validation';
 import { buildQuote } from '@/lib/checkout';
 import { localizeCards } from '@/lib/data/public';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
     items: parsed.data.items,
     couponCode: parsed.data.couponCode,
     shippingMethodId: parsed.data.shippingMethodId,
+    userId: parsed.data.couponCode ? (await getCurrentUser())?.id ?? null : null,
   });
   // Tannarx mijozga yuborilmaydi; nom joriy tilda (buyurtmaga esa asl nomi yoziladi)
   const named = await localizeCards(quote.lines.map((l) => ({ id: l.productId, name: l.name })));

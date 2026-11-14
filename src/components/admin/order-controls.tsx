@@ -14,7 +14,9 @@ export function OrderControls({ orderId, status, nextStatuses, paymentStatus, tr
   orderId: string; status: OrderStatus; nextStatuses: OrderStatus[]; paymentStatus: PaymentStatus; trackingNumber: string | null;
   adminNote: string | null; canWrite: boolean; canFulfill: boolean;
 }) {
-  const [next, setNext] = useState<OrderStatus | ''>(nextStatuses[0] ?? '');
+  const [picked, setNext] = useState<OrderStatus | ''>(nextStatuses[0] ?? '');
+  // Holat oʻzgargach (router.refresh) roʻyxat yangilanadi — eski tanlov roʻyxatda boʻlmasa, birinchisi olinadi.
+  const next: OrderStatus | '' = picked && nextStatuses.includes(picked) ? picked : nextStatuses[0] ?? '';
   const [note, setNote] = useState('');
   const [tracking, setTracking] = useState(trackingNumber ?? '');
   const [internal, setInternal] = useState(adminNote ?? '');

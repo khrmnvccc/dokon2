@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, Minus, Plus, ShoppingCart, Tag, Trash2, Truck, X } from 'lucide-react';
 import { useApp, useCart, useL } from '@/components/providers';
 import { useConfirm } from '@/components/ui/dialog';
@@ -9,6 +9,7 @@ import { Button, buttonClass } from '@/components/ui/button';
 import { Input } from '@/components/ui/field';
 import { EmptyState, Skeleton } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
+import { myActiveCoupons } from '@/lib/actions/referral';
 import { couponErrorText, lineErrorText, type PricedLine, type QuoteResult } from '@/lib/pricing';
 import { ProductImage } from './product-image';
 import { useQuote } from './use-quote';
@@ -149,10 +150,16 @@ function CartLine({ line }: { line: PricedLine }) {
 export function CouponBox({ applied, requested, error, onApply }: { applied: string | null; requested: string | null; error: QuoteResult['couponError']; onApply: (code: string | null) => void }) {
   const L = useL();
   const [value, setValue] = useState('');
+  const [mine, setMine] = useState<{ code: string; value: number; min_order_amount: number }[]>([]);
+  useEffect(() => {
+    let alive = true;
+    myActiveCoupons().then((c) => { if (alive) setMine(c); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
   if (applied) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-success-soft px-4 py-3 text-sm">
-        <span className="flex items-center gap-2 font-semibold text-success"><Tag className="h-4 w-4" /> {applied} qo‘llandi</span>
+        <span className="flex items-center gap-2 font-semibold text-success"><Tag className="h-4 w-4" /> {applied} {L("qo‘llandi")}</span>
         <button className="text-success underline" onClick={() => onApply(null)}>{L("Bekor qilish")}</button>
       </div>
     );
@@ -172,7 +179,21 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
         <Input id="coupon" value={value} onChange={(e) => setValue(e.target.value)} placeholder="Masalan: XUSH10" maxLength={32} autoComplete="off" className="uppercase" />
         <Button type="submit" variant="secondary" disabled={!value.trim()}>{L("Qo‘llash")}</Button>
       </div>
-      {requested && error && <p className="mt-2 text-xs font-medium text-danger">{couponErrorText[error]}</p>}
+      {requested && error && <p className="mt-2 text-xs font-medium text-danger">{L(couponErrorText[error])}</p>}
+      {mine.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-xs font-medium text-ink-3">{L("Kuponlarim")}</p>
+          <div className="flex flex-wrap gap-2">
+            {mine.map((c) => (
+              <button key={c.code} type="button" onClick={() => onApply(c.code)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-primary/50 bg-primary-soft px-3 py-1.5 text-[13px] font-semibold text-primary transition active:scale-95">
+                <Tag className="size-3.5" />{new Intl.NumberFormat('ru-RU').format(c.value).replace(/\s/g, ' ')} {L("soʻm")}
+                {c.min_order_amount > 0 && <span className="font-normal text-ink-3">· {L("Min.")} {new Intl.NumberFormat('ru-RU').format(c.min_order_amount).replace(/\s/g, ' ')}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </form>
   );
 }
