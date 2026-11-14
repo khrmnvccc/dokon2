@@ -20,7 +20,7 @@ const ADMIN_TOUR: TourStep[] = [
   { target: 'tabs', title: 'Ochiq oynalar', icon: <FileText className="size-5" />, text: 'Ochgan sahifalaringiz tab boʻlib turadi — ular orasida bir bosishda oʻtasiz.' },
   { target: 'mobile-nav', title: 'Tezkor tugmalar', icon: <Plus className="size-5" />, text: 'Bosh sahifa, buyurtmalar, mahsulotlar va oʻrtada “+” — yangi mahsulot yoki buyurtma.' },
   { target: 'bell', title: 'Bildirishnomalar', icon: <Bell className="size-5" />, text: 'Yangi buyurtma, sharh va kam qolgan mahsulotlar shu yerda. Telegramga ham keladi.' },
-  { title: 'Telegram botlar', icon: <Send className="size-5" />, text: 'Marketing → Matnlar / Push → Ulanish. U yerda doʻkon boti (xaridorlar) va admin boti (siz) ulanadi.' },
+  { title: 'Telegram botlar', icon: <Send className="size-5" />, text: 'Yuqoridagi Telegram boʻlimi → Botlar. Doʻkon boti (xaridorlar) va admin boti (siz) shu yerda ulanadi va boshqariladi.' },
 ];
 import { logout } from '@/lib/actions/auth';
 import { markStaffNotificationsRead } from '@/lib/actions/admin/misc';

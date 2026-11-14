@@ -19,6 +19,7 @@ import type { ActionResult } from '@/lib/types';
 // brauzerga faqat "ulangan / ulanmagan", bot nomi va bir martalik kod qaytadi.
 
 const PAGE = '/admin/messages';
+const BOTS = '/admin/bots';
 const isOwner = (ctx: StaffContext) => ctx.roles.includes('super_admin');
 
 /** Telegram va sozlash xatolarini foydalanuvchiga koʻrsatiladigan matnga oʻgiradi. */
@@ -46,7 +47,7 @@ export async function connectBot(token: string): Promise<ActionResult> {
       await saveTelegram({ token: t, botName: me.username, code: newCode() });
       await audit(ctx, 'telegram_set', { bot: me.username });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Bot saqlandi. Endi botga kodni yuboring' };
   });
 }
@@ -68,7 +69,7 @@ export async function checkOwnerChat(): Promise<ActionResult> {
       await tg(config.token, 'sendMessage', { chat_id: chat.id, text: '✅ Doʻkon ulandi. Yangi buyurtmalar va kechki hisobot shu yerga keladi.' }).catch(() => undefined);
       await audit(ctx, 'telegram_connect', { chat: chatTitle(chat) });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Telegram ulandi' };
   });
 }
@@ -103,7 +104,7 @@ export async function linkGroup(): Promise<ActionResult> {
       await saveTelegram({ ...config, groupId, groupThreadId: threadId, groupName: added.chat.title || 'Guruh', groupPaused: false });
       await audit(ctx, 'telegram_group', { group: added.chat.title });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Guruh ulandi' };
   });
 }
@@ -117,7 +118,7 @@ export async function disconnectTelegram(what: 'bot' | 'group'): Promise<ActionR
       else if (config) await saveTelegram({ ...config, groupId: undefined, groupName: undefined, groupThreadId: undefined, groupPaused: false });
       await audit(ctx, what === 'bot' ? 'telegram_disconnect' : 'telegram_group_unlink');
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: what === 'bot' ? 'Bot uzildi' : 'Guruh uzildi' };
   });
 }
@@ -136,7 +137,7 @@ export async function connectShopBot(token: string): Promise<ActionResult> {
       await saveShopBot(config);
       await audit(ctx, 'shop_bot_set', { bot: config.botName });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Doʻkon boti ulandi va sozlandi' };
   });
 }
@@ -152,7 +153,7 @@ export async function refreshBots(): Promise<ActionResult> {
       if (admin?.chatId) await setupAdminMenu(admin.token);
       if (!shop && !admin?.chatId) return { ok: false, error: 'Hali bot ulanmagan' };
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Botlar qayta sozlandi' };
   });
 }
@@ -166,7 +167,7 @@ export async function disconnectShopBot(): Promise<ActionResult> {
       await saveShopBot(null);
       await audit(ctx, 'shop_bot_disconnect');
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Doʻkon boti uzildi' };
   });
 }
@@ -181,7 +182,7 @@ export async function setChatPaused(which: 'personal' | 'group', paused: boolean
       await saveTelegram(which === 'group' ? { ...config, groupPaused: paused } : { ...config, personalPaused: paused });
       await audit(ctx, `telegram_${which}_${paused ? 'pause' : 'resume'}`);
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: paused ? 'Toʻxtatildi' : 'Qayta yoqildi' };
   });
 }
@@ -206,7 +207,7 @@ export async function updateTemplate(key: string, change: { text?: string | null
       await saveTemplate(key, clean);
       await audit(ctx, clean.chats ? 'telegram_template_chats' : clean.on === undefined ? 'telegram_template' : clean.on ? 'telegram_template_on' : 'telegram_template_off', { key });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Saqlandi' };
   });
 }
@@ -230,7 +231,7 @@ export async function unlinkPerson(userId: string): Promise<ActionResult> {
       await getServiceSupabase().from('telegram_people').delete().eq('user_id', userId);
       await audit(ctx, 'telegram_person_unlink', { user: userId });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Uzildi' };
   });
 }
@@ -239,7 +240,7 @@ export async function syncCustomers(): Promise<ActionResult> {
   return withPermission('messages.manage', async () => {
     try {
       const { added } = await syncSubscribers();
-      revalidatePath(PAGE);
+      { revalidatePath(PAGE); revalidatePath(BOTS); }
       return { ok: true, message: added ? `${added} ta obunachi yangilandi` : 'Yangi obunachi yoʻq' };
     } catch (e) { return fail(e); }
   });
@@ -315,7 +316,7 @@ export async function saveBroadcast(id: number | null, input: BroadcastInput, mo
         after(() => deliver(savedId!));
       }
       await audit(ctx, `broadcast_${mode}`, { id: savedId, audience: b.audience.kind });
-      revalidatePath(PAGE);
+      { revalidatePath(PAGE); revalidatePath(BOTS); }
       return { ok: true, data: { id: savedId! }, message: mode === 'now' ? 'Yuborilmoqda…' : mode === 'schedule' ? 'Rejalashtirildi' : 'Qoralama saqlandi' };
     } catch (e) { return fail(e); }
   });
@@ -346,7 +347,7 @@ export async function removeBroadcast(id: number): Promise<ActionResult> {
       else return { ok: false, error: 'Yuborilgan xabarni oʻchirib boʻlmaydi' };
       await audit(ctx, row.status === 'scheduled' ? 'broadcast_unschedule' : 'broadcast_delete', { id });
     } catch (e) { return fail(e); }
-    revalidatePath(PAGE);
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Bajarildi' };
   });
 }

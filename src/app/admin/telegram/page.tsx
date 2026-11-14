@@ -17,7 +17,7 @@ export default async function MyTelegramPage() {
     return (
       <div>
         <PageHeader title="Mening Telegramim" />
-        <Alert tone="warn">Doʻkon boti hali ulanmagan. Ega “Xabarlar” oynasida botni ulagach, shu yerda oʻz Telegramingizni ulaysiz.</Alert>
+        <Alert tone="warn">Doʻkon boti hali ulanmagan. Ega “Telegram → Botlar” boʻlimida admin botini ulagach, shu yerda oʻz Telegramingizni ulaysiz.</Alert>
       </div>
     );
   }

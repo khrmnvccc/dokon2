@@ -36,10 +36,19 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     title: 'Marketing',
     icon: 'Megaphone',
     items: [
-      { href: '/admin/messages', label: 'Matnlar / Push', icon: 'BellRing', perm: 'messages.manage' },
       { href: '/admin/promotions', label: 'Aksiyalar', icon: 'Gift', perm: 'promotions.write' },
       { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
       { href: '/admin/banners', label: 'Bannerlar', icon: 'Image', perm: 'banners.write' },
+    ],
+  },
+  {
+    // Ikkala bot (doʻkon boti — xaridorlar, admin boti — xodimlar) bitta joyda boshqariladi.
+    title: 'Telegram',
+    icon: 'Send',
+    items: [
+      { href: '/admin/bots', label: 'Botlar', icon: 'Bot', perm: 'messages.manage' },
+      { href: '/admin/messages', label: 'Xabarlar va Push', icon: 'BellRing', perm: 'messages.manage' },
+      { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Send', perm: 'dashboard.view' },
     ],
   },
   {
@@ -50,7 +59,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
       { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
       { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
-      { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Bot', perm: 'dashboard.view' },
     ],
   },
 ];
