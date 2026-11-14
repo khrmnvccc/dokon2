@@ -27,3 +27,14 @@ describe('payment method card field', () => {
     expect(paymentMethodSchema.safeParse({ ...base, card: { number: '8600 12' } }).success).toBe(false);
   });
 });
+
+import { templateButton, TEMPLATE_BY_KEY } from '@/lib/telegram/templates';
+describe('template buttons', () => {
+  const base = { texts: {}, off: [], chats: {} };
+  it('uses default, own text, or none', () => {
+    expect(templateButton(base, 'newOrder')).toBe(TEMPLATE_BY_KEY.newOrder.button);
+    expect(templateButton({ ...base, buttons: { newOrder: 'Ochish' } }, 'newOrder')).toBe('Ochish');
+    expect(templateButton({ ...base, buttons: { newOrder: '  ' } }, 'newOrder')).toBeNull();
+    expect(templateButton(base, 'dailyReport')).toBeNull();
+  });
+});

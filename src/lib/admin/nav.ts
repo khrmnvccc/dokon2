@@ -48,6 +48,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     title: 'Telegram',
     icon: 'Send',
     items: [
+      { href: '/admin/support', label: 'Murojaatlar', icon: 'MessagesSquare', perm: 'customers.read' },
       { href: '/admin/bots', label: 'Botlar', icon: 'Bot', perm: 'messages.manage' },
       { href: '/admin/messages', label: 'Xabarlar va Push', icon: 'BellRing', perm: 'messages.manage' },
       { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Send', perm: 'dashboard.view' },
@@ -80,7 +81,7 @@ export const NAV_RU: Record<string, string> = {
   'Savdo': 'Продажи', 'Buyurtmalar': 'Заказы', 'Mijozlar': 'Клиенты', 'Sharhlar': 'Отзывы',
   'Katalog': 'Каталог', 'Mahsulotlar': 'Товары', 'Kategoriyalar': 'Категории', 'Ombor': 'Склад',
   'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры', 'Hamkorlar': 'Партнёры', 'Foydalanish': 'Использование',
-  'Telegram': 'Telegram', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
+  'Telegram': 'Telegram', 'Murojaatlar': 'Обращения', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
   'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки', 'Tarjimalar (ruscha)': 'Переводы',
   // Qobiq matnlari
   'Admin panel': 'Админ-панель', 'Menyu': 'Меню', 'Asosiy': 'Главная', 'Saytni ochish': 'Открыть сайт', 'Chiqish': 'Выйти',

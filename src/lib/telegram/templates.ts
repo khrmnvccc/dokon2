@@ -1,7 +1,7 @@
 // Telegram xabar matnlari (kassa tgTemplates.ts uslubida). Server (yuborish uchun) va brauzer
 // (qanday koʻrinishini oldindan koʻrsatish uchun) shu bitta fayldan oʻqiydi — natija bir xil boʻladi.
 
-export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
+export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
 
 /** Roʻyxatdagi oʻrni: A — buyurtma va pul, B — bekor qilish, C — hisobot. */
 export type TemplateGroup = 'kirim' | 'bekor' | 'hisobot';
@@ -18,6 +18,8 @@ export interface TemplateDef {
   groupChat?: boolean;
   /** Xodimlarga ham berish mumkin (kechki hisobot faqat Egaga) */
   staff?: boolean;
+  /** Xabar ostidagi tugma (admin ilovasini kerakli sahifada ochadi). Ega matnini oʻzgartiradi yoki oʻchiradi. */
+  button?: string;
 }
 
 const RAQAM: TemplateVar = { name: 'raqam', label: 'Buyurtma №', sample: '100245' };
@@ -39,17 +41,30 @@ export const TEMPLATES: TemplateDef[] = [
       { name: 'izoh', label: 'Izoh', sample: '' },
       HAVOLA,
     ],
-    text: '🛒 *Yangi buyurtma №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\n🚚 {{yetkazish}}\n{{mahsulotlar}}\n📍 {{manzil}}\n📝 {{izoh}}\n{{havola}}',
+    text: '🛒 *Yangi buyurtma №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\n🚚 {{yetkazish}}\n{{mahsulotlar}}\n📍 {{manzil}}\n📝 {{izoh}}',
+    button: '📦 Buyurtmani ochish',
   },
   {
     key: 'paymentReceipt', group: 'kirim', groupChat: true, staff: true, title: 'Chek yuklandi', hint: 'Mijoz kartaga oʻtkazma chekini yuklaganda (rasm bilan)',
     vars: [RAQAM, MIJOZ, TELEFON, SUMMA, TOLOV, HAVOLA],
-    text: '🧾 *Chek yuklandi · №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\nTekshirib, tasdiqlang:\n{{havola}}',
+    text: '🧾 *Chek yuklandi · №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\nChekni tekshirib, tasdiqlang 👇',
+    button: '🧾 Chekni tekshirish',
+  },
+  {
+    key: 'customerMessage', group: 'kirim', groupChat: true, staff: true, title: 'Mijoz botga yozdi', hint: 'Mijoz doʻkon botiga savol yoki xabar yozganda',
+    vars: [
+      MIJOZ, TELEFON,
+      { name: 'id', label: 'Mijoz ID', sample: '1024' },
+      { name: 'matn', label: 'Xabar', sample: 'Buyurtmam qachon keladi?' },
+    ],
+    text: '💬 *{{mijoz}}* (ID {{id}}) · {{telefon}}\n{{matn}}',
+    button: '💬 Javob yozish',
   },
   {
     key: 'paymentReceived', group: 'kirim', groupChat: true, staff: true, title: 'Toʻlov qabul qilindi', hint: 'Buyurtma “Toʻlangan” deb belgilanganda',
     vars: [RAQAM, MIJOZ, SUMMA, TOLOV, KIM],
     text: '💳 *Toʻlov · {{summa}}*\n№{{raqam}} · {{mijoz}}\n{{tolov}}\n👤 {{kim}}',
+    button: 'Buyurtmani ochish',
   },
   {
     key: 'orderStatus', group: 'kirim', groupChat: true, staff: true, title: 'Holat oʻzgardi', hint: 'Tasdiqlandi, Yigʻilmoqda, Yoʻlda, Yetkazildi',
@@ -60,21 +75,25 @@ export const TEMPLATES: TemplateDef[] = [
       KIM,
     ],
     text: '📦 №{{raqam}} · *{{holat}}*\n{{mijoz}}\n🔎 Trek: {{trek}}\n👤 {{kim}}',
+    button: 'Buyurtmani ochish',
   },
   {
     key: 'orderCancel', group: 'bekor', groupChat: true, staff: true, title: 'Buyurtma bekor qilindi', hint: 'Bekor qilinganda yoki qaytarilganda darhol',
     vars: [RAQAM, MIJOZ, SUMMA, KIM, { name: 'sabab', label: 'Sabab', sample: 'mijoz fikridan qaytdi' }],
     text: '⚠️ *Buyurtma №{{raqam}} bekor qilindi*\n{{mijoz}} · {{summa}}\nKim: {{kim}}\nSabab: {{sabab}}',
+    button: 'Buyurtmani ochish',
   },
   {
     key: 'paymentVoid', group: 'bekor', groupChat: true, staff: true, title: 'Toʻlov qaytarildi', hint: 'Toʻlov “Qaytarilgan” yoki “Xato” boʻlganda',
     vars: [RAQAM, MIJOZ, SUMMA, TOLOV, KIM],
     text: '↩️ *Toʻlov qaytarildi*\n№{{raqam}} · {{mijoz}} · {{summa}} · {{tolov}}\nKim: {{kim}}',
+    button: 'Buyurtmani ochish',
   },
   {
     key: 'lowStock', group: 'hisobot', groupChat: true, staff: true, title: 'Mahsulot tugayapti', hint: 'Buyurtmadan keyin qoldiq chegaradan tushsa',
     vars: [{ name: 'royxat', label: 'Roʻyxat', sample: '• Simsiz quloqchin — 2 dona\n• Telefon gʻilofi (qora) — 0 dona' }],
     text: '📉 *Tugayotgan mahsulotlar*\n{{royxat}}',
+    button: 'Ombor',
   },
   {
     key: 'dailyReport', group: 'hisobot', title: 'Kechki hisobot', hint: 'Har kuni 21:00 da, faqat sizga',
@@ -95,7 +114,19 @@ export const TEMPLATES: TemplateDef[] = [
 export interface TemplateChats { personal?: boolean; group?: boolean; staff?: string[] }
 
 /** Ega oʻzgartirgan narsalar: oʻz matnlari, oʻchirilgan xabarlar va har birining chatlari. */
-export interface TemplateSettings { texts: Partial<Record<TemplateKey, string>>; off: TemplateKey[]; chats: Partial<Record<TemplateKey, TemplateChats>> }
+export interface TemplateSettings {
+  texts: Partial<Record<TemplateKey, string>>; off: TemplateKey[]; chats: Partial<Record<TemplateKey, TemplateChats>>;
+  /** Tugma matni (boʻsh satr — tugmasiz). Yoʻq boʻlsa — standart. */
+  buttons?: Partial<Record<TemplateKey, string>>;
+}
+export const MAX_BUTTON_LENGTH = 30;
+/** Ega tanlagan tugma matni: null — tugma yoʻq. */
+export const templateButton = (s: TemplateSettings, key: TemplateKey): string | null => {
+  const def = TEMPLATE_BY_KEY[key].button;
+  if (!def) return null;
+  const own = s.buttons?.[key];
+  return own === undefined ? def : own.trim() || null;
+};
 
 export const TEMPLATE_BY_KEY = Object.fromEntries(TEMPLATES.map((t) => [t.key, t])) as Record<TemplateKey, TemplateDef>;
 export const isTemplateKey = (k: unknown): k is TemplateKey => typeof k === 'string' && k in TEMPLATE_BY_KEY;

@@ -4,13 +4,13 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Ban, BarChart3, Bell, Bot, CheckCircle2, ChevronLeft, CreditCard, ExternalLink, Link2, Package, PackageMinus, RefreshCw, RotateCcw, Send,
-  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, ReceiptText, BadgeCheck, XCircle, type LucideIcon } from 'lucide-react';
+  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, ReceiptText, BadgeCheck, XCircle, MessageCircle, type LucideIcon } from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
   unlinkPerson, syncCustomers, saveBroadcast, updateCustomerMessage, testCustomerMsg, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
 } from '@/lib/actions/admin/telegram';
 import {
-  BROADCAST_MAX_BUTTONS, BROADCAST_MAX_TEXT, BROADCAST_STATUS, MAX_TEMPLATE_LENGTH, TEMPLATES, TEMPLATE_BY_KEY, TEMPLATE_GROUPS,
+  BROADCAST_MAX_BUTTONS, BROADCAST_MAX_TEXT, BROADCAST_STATUS, MAX_BUTTON_LENGTH, MAX_TEMPLATE_LENGTH, TEMPLATES, TEMPLATE_BY_KEY, TEMPLATE_GROUPS,
   renderTemplate, sampleValues, type Broadcast, type BroadcastAudience, type BroadcastButton, type TemplateChats,
   type TemplateKey, type TemplateSettings,
 } from '@/lib/telegram/templates';
@@ -289,7 +289,7 @@ function ShopBotPanel({ data }: { data: MessagesData }) {
 
 // ---------- 2. Xabar matnlari: chapda roʻyxat, oʻngda tahrir ----------
 const TEMPLATE_ICONS: Record<TemplateKey, LucideIcon> = {
-  newOrder: ShoppingCart, paymentReceipt: ReceiptText, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
+  newOrder: ShoppingCart, paymentReceipt: ReceiptText, customerMessage: MessageCircle, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
   paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3,
 };
 const GROUP_TONES = ['bg-[#1d4f80]', 'bg-[#2f80c1]', 'bg-[#1f7a4d]', 'bg-[#8a5a12]'];
@@ -363,6 +363,8 @@ function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: Mes
   const ref = useRef<HTMLTextAreaElement>(null);
   const { pending, run } = useRun();
   const html = renderTemplate(text, sampleValues(k));
+  const savedButton = settings.buttons?.[k] ?? def.button ?? '';
+  const [button, setButton] = useState(savedButton);
 
   const insert = (name: string) => {
     const el = ref.current;
@@ -411,6 +413,17 @@ function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: Mes
             <Button variant="ghost" disabled={pending || text === def.text} onClick={() => { setText(def.text); run(() => updateTemplate(k, { text: null })); }}><RotateCcw className="size-4" /> Standart</Button>
           </div>
 
+          {def.button && (
+            <>
+              <SectionLabel right={<span className="text-xs text-ink-3 num">{button.length}/{MAX_BUTTON_LENGTH}</span>}>Tugma</SectionLabel>
+              <div className="flex flex-wrap gap-2">
+                <Input value={button} maxLength={MAX_BUTTON_LENGTH} onChange={(e) => setButton(e.target.value)} placeholder="Boʻsh — tugmasiz" aria-label={`${def.title}: tugma`} className="min-w-0 flex-1" />
+                <Button variant="secondary" loading={pending} disabled={button === savedButton} onClick={() => run(() => updateTemplate(k, { button }))}>Saqlash</Button>
+              </div>
+              <p className="mt-1.5 text-xs text-ink-3">Bosilganda admin panel Telegram ichida, kerakli sahifada ochiladi (guruhda — brauzerda). Boʻsh qoldirsangiz, tugma chiqmaydi.</p>
+            </>
+          )}
+
           {k !== 'dailyReport' && (
             <>
               <SectionLabel>Kimga yuboriladi</SectionLabel>
@@ -428,7 +441,7 @@ function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: Mes
         </div>
         <div>
           <SectionLabel>Telegramda koʻrinishi</SectionLabel>
-          <TelegramPreview html={html} botName={data.telegram?.botName} />
+          <TelegramPreview html={html} buttons={button.trim() ? [{ text: button.trim() }] : []} botName={data.telegram?.botName} />
         </div>
       </div>
     </div>

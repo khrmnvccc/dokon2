@@ -1,8 +1,9 @@
 import 'server-only';
 import { createHash, randomInt } from 'node:crypto';
 import { getServiceSupabase } from '@/lib/supabase/admin';
+import { ADMIN_URL } from '@/lib/env';
 import {
-  MAX_TEMPLATE_LENGTH, TEMPLATE_BY_KEY, isTemplateKey, renderTemplate, translateTelegramError,
+  MAX_BUTTON_LENGTH, MAX_TEMPLATE_LENGTH, TEMPLATE_BY_KEY, isTemplateKey, templateButton, renderTemplate, translateTelegramError,
   type TemplateChats, type TemplateKey, type TemplateSettings,
 } from './templates';
 
@@ -123,12 +124,13 @@ export async function getTemplateSettings(): Promise<TemplateSettings> {
     texts: Object.fromEntries(Object.entries(raw.texts ?? {}).filter(([k]) => isTemplateKey(k))),
     off: (raw.off ?? []).filter(isTemplateKey),
     chats: Object.fromEntries(Object.entries(raw.chats ?? {}).filter(([k]) => isTemplateKey(k))),
+    buttons: Object.fromEntries(Object.entries(raw.buttons ?? {}).filter(([k, v]) => isTemplateKey(k) && typeof v === 'string')),
   };
   templateCache = { value, until: Date.now() + 30_000 };
   return value;
 }
 
-export async function saveTemplate(key: TemplateKey, change: { text?: string | null; on?: boolean; chats?: TemplateChats }) {
+export async function saveTemplate(key: TemplateKey, change: { text?: string | null; on?: boolean; chats?: TemplateChats; button?: string | null }) {
   const current = await getTemplateSettings();
   const texts = { ...current.texts };
   let off = [...current.off];
@@ -145,7 +147,12 @@ export async function saveTemplate(key: TemplateKey, change: { text?: string | n
     if (next.staff && !next.staff.length) delete next.staff;
     chats[key] = next;
   }
-  const next: TemplateSettings = { texts, off, chats };
+  const buttons = { ...current.buttons };
+  if (change.button !== undefined) {
+    if (change.button === null) delete buttons[key];
+    else buttons[key] = change.button.trim().slice(0, MAX_BUTTON_LENGTH);
+  }
+  const next: TemplateSettings = { texts, off, chats, buttons };
   templateCache = null;
   await writeMeta('telegram_templates', next);
   return next;
@@ -190,7 +197,7 @@ async function sendPhoto(token: string, chatId: number, photo: TgPhoto, caption:
  * Bitta shablon xabarini Ega chatiga, guruhga va tanlangan xodimlarga yuboradi. Hech qachon xato tashlamaydi:
  * natija jurnalga yoziladi. Buyurtma saqlanishini sekinlashtirmaslik uchun after() ichida chaqiriladi.
  */
-export async function notify(key: TemplateKey, values: Record<string, string | number | null | undefined>, opts: { personalOnly?: boolean; photo?: TgPhoto } = {}) {
+export async function notify(key: TemplateKey, values: Record<string, string | number | null | undefined>, opts: { personalOnly?: boolean; photo?: TgPhoto; link?: string } = {}) {
   try {
     const config = await getTelegram();
     if (!config?.chatId) return;
@@ -209,14 +216,21 @@ export async function notify(key: TemplateKey, values: Record<string, string | n
         if (!targets.some((t) => t.chatId === chatId)) targets.push({ chatId, which: 'staff', name: p.chat_name ?? '' });
       }
     }
+    // Tugma: shaxsiy chatda admin ilovasi Telegram ichida ochiladi, guruhda — oddiy havola (Telegram cheklovi)
+    const label = opts.link ? templateButton(settings, key) : null;
+    const url = opts.link ? `${ADMIN_URL}${opts.link}` : '';
+    const markup = (group: boolean) => (label && url.startsWith('https://')
+      ? { reply_markup: JSON.stringify({ inline_keyboard: [[group ? { text: label, url } : { text: label, web_app: { url } }]] }) }
+      : {});
     // Rasm boʻlsa — rasm + izoh; rasm oʻtmasa ham matn baribir yetib borsin
-    const send = async (id: number, topic: Record<string, unknown>) => {
-      if (!opts.photo) return sendText(config.token, id, text, topic);
+    const send = async (id: number, topic: Record<string, unknown>, group: boolean) => {
+      const extra = { ...topic, ...markup(group) };
+      if (!opts.photo) return sendText(config.token, id, text, extra);
       try {
-        await sendPhoto(config.token, id, opts.photo, text, topic);
+        await sendPhoto(config.token, id, opts.photo, text, extra);
       } catch (e) {
         if (e instanceof ChatMoved) throw e;
-        await sendText(config.token, id, text, topic);
+        await sendText(config.token, id, text, extra);
       }
     };
     await Promise.allSettled(targets.map(async ({ chatId, which, name }) => {
@@ -224,11 +238,11 @@ export async function notify(key: TemplateKey, values: Record<string, string | n
       const logChat = which === 'staff' ? `staff:${name}` : which;
       try {
         try {
-          await send(chatId, topic);
+          await send(chatId, topic, which === 'group');
         } catch (e) {
           if (!(e instanceof ChatMoved) || which !== 'group') throw e;
           await saveTelegram({ ...config, groupId: e.chatId });
-          await send(e.chatId, topic);
+          await send(e.chatId, topic, true);
         }
         await Promise.all([which === 'staff' ? null : setTelegramError(which, null), logSend(key, logChat, text, null)]);
       } catch (e) {
