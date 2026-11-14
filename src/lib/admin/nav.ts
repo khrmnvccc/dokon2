@@ -59,6 +59,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
       { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
       { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
+      { href: '/admin/tours', label: 'Yoʻl-yoʻriq', icon: 'Lightbulb', perm: 'settings.write' },
     ],
   },
 ];
@@ -68,4 +69,19 @@ export const ROLE_LABELS: Record<string, string> = {
   manager: 'Admin',
   operator: 'Operator',
   warehouse: 'Omborchi',
+};
+
+/** Admin menyusining ruscha nomlari (til RU tanlanganda). Brend sozlamasida oʻzgartirilgan nomlar ustun turadi. */
+export const NAV_RU: Record<string, string> = {
+  'Boshqaruv paneli': 'Панель управления', 'Hisobotlar': 'Отчёты', 'Faoliyat jurnali': 'Журнал действий',
+  'Savdo': 'Продажи', 'Buyurtmalar': 'Заказы', 'Mijozlar': 'Клиенты', 'Sharhlar': 'Отзывы',
+  'Katalog': 'Каталог', 'Mahsulotlar': 'Товары', 'Kategoriyalar': 'Категории', 'Ombor': 'Склад',
+  'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры',
+  'Telegram': 'Telegram', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
+  'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки',
+  // Qobiq matnlari
+  'Admin panel': 'Админ-панель', 'Menyu': 'Меню', 'Asosiy': 'Главная', 'Saytni ochish': 'Открыть сайт', 'Chiqish': 'Выйти',
+  'Yoʻriqnoma': 'Подсказки', 'Bildirishnomalar': 'Уведомления', 'Hammasi oʻqildi': 'Прочитать все', 'Yangi bildirishnoma yoʻq': 'Новых уведомлений нет',
+  'Buyurtma №, telefon…': '№ заказа, телефон…', 'Barcha filiallar': 'Все филиалы', 'Menyuni ochish': 'Развернуть меню', 'Menyuni yigʻish': 'Свернуть меню',
+  'Yorugʻ rejim': 'Светлая тема', 'Qorongʻi rejim': 'Тёмная тема', 'Yopish': 'Закрыть', 'Vaqtincha': 'Пауза', 'Yangi mahsulot': 'Новый товар',
 };

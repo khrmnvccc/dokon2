@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Smartphone } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
+import { useApp } from '@/components/providers';
 
 // Sayt Telegram mini-ilovasi ichida ochilganda: Telegram skriptini yuklaydi, oynani toʻliq ochadi,
 // “Orqaga” tugmasini ulaydi va foydalanuvchini avtomatik kiritadi (/api/telegram/webapp).
@@ -111,6 +112,7 @@ export function TelegramBoot() {
 /** Bir bosishda roʻyxatdan oʻtish: Telegram raqamni botga yuboradi, bot uni akkauntga yozadi. */
 function PhoneSheet({ app, onDone }: { app: TgWebApp | null; onDone: (clientNo?: number | null) => void }) {
   const [waiting, setWaiting] = useState(false);
+  const ru = useApp().lang === 'ru';
   const canAsk = Boolean(app?.requestContact && app.isVersionAtLeast('6.9'));
   const send = () => {
     if (!app?.requestContact) return;
@@ -135,16 +137,16 @@ function PhoneSheet({ app, onDone }: { app: TgWebApp | null; onDone: (clientNo?:
     <div className="fixed inset-0 z-[96] flex items-end bg-black/50 anim-fade" role="dialog" aria-modal="true" aria-label="Roʻyxatdan oʻtish">
       <div className="w-full rounded-t-3xl bg-surface-solid px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-6 text-center shadow-pop anim-rise">
         <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary"><Smartphone className="size-7" /></span>
-        <h2 className="mt-3 text-lg font-bold">Bir bosishda roʻyxatdan oʻting</h2>
-        <p className="mt-1 text-sm text-ink-3">Telegram raqamingizni yuboring — parol va SMS kerak emas. Raqam faqat buyurtmani yetkazish uchun ishlatiladi.</p>
+        <h2 className="mt-3 text-lg font-bold">{ru ? 'Регистрация в одно касание' : 'Bir bosishda roʻyxatdan oʻting'}</h2>
+        <p className="mt-1 text-sm text-ink-3">{ru ? 'Отправьте номер из Telegram — без пароля и SMS. Номер нужен только для доставки.' : 'Telegram raqamingizni yuboring — parol va SMS kerak emas. Raqam faqat buyurtmani yetkazish uchun ishlatiladi.'}</p>
         {canAsk ? (
           <button type="button" onClick={send} disabled={waiting} className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[15px] font-semibold text-primary-fg disabled:opacity-70">
-            <Smartphone className="size-5" /> {waiting ? 'Saqlanmoqda…' : 'Raqamni yuborish'}
+            <Smartphone className="size-5" /> {waiting ? (ru ? 'Сохраняем…' : 'Saqlanmoqda…') : (ru ? 'Отправить номер' : 'Raqamni yuborish')}
           </button>
         ) : (
-          <p className="mt-4 rounded-xl bg-surface-2 p-3 text-sm">Botga qayting va pastdagi <b>“Raqamni yuborish”</b> tugmasini bosing.</p>
+          <p className="mt-4 rounded-xl bg-surface-2 p-3 text-sm">{ru ? <>Вернитесь в бот и нажмите <b>«Отправить номер»</b>.</> : <>Botga qayting va pastdagi <b>“Raqamni yuborish”</b> tugmasini bosing.</>}</p>
         )}
-        <button type="button" onClick={() => onDone()} className="mt-2 h-10 w-full text-sm font-medium text-ink-3">Keyinroq</button>
+        <button type="button" onClick={() => onDone()} className="mt-2 h-10 w-full text-sm font-medium text-ink-3">{ru ? 'Позже' : 'Keyinroq'}</button>
       </div>
     </div>,
     document.body,

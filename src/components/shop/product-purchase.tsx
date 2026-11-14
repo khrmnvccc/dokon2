@@ -128,7 +128,7 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
         </button>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2" data-tour="add-to-cart">
         <Button size="lg" onClick={() => add(false)} disabled={outOfStock}>
           <ShoppingCart className="h-5 w-5" /> {t('product.addToCart')}
         </Button>

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Check, Copy, Gift, X } from 'lucide-react';
 import { CouponCard, type CouponCardProps } from './coupon-card';
+import { useApp } from '@/components/providers';
 
 /** Ochiq kupon: bosilganda kod nusxalanadi va sovgʻa qutisi ochiladi; checkout'da kiritiladi. */
 export function CopyCoupon({ code, card, description }: { code: string; card: CouponCardProps; description: string | null }) {
@@ -37,6 +38,7 @@ const CONFETTI = ['#ff5a5f', '#ffb400', '#2f80c1', '#1f9d55', '#8b5cf6', '#ff7ab
 /** Sovgʻa qutisi: silkinadi, qopqogʻi ochiladi, konfetti sochiladi, kod koʻrinadi. */
 function GiftReveal({ code, value, onClose }: { code: string; value: string; onClose: () => void }) {
   const [open, setOpen] = useState(false);
+  const ru = useApp().lang === 'ru';
   useEffect(() => {
     const t = setTimeout(() => setOpen(true), 650);
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -56,10 +58,10 @@ function GiftReveal({ code, value, onClose }: { code: string; value: string; onC
           </span>
         </div>
         <div className={open ? 'anim-rise' : 'invisible'}>
-          <div className="mt-3 text-lg font-bold">Kupon sizniki! 🎉</div>
-          <p className="mt-1 text-sm text-ink-3"><b className="text-ink">{value}</b> chegirma. Kod nusxalandi — savatda “Promo-kod”ga qoʻying.</p>
+          <div className="mt-3 text-lg font-bold">{ru ? 'Купон ваш! 🎉' : 'Kupon sizniki! 🎉'}</div>
+          <p className="mt-1 text-sm text-ink-3"><b className="text-ink">{value}</b> {ru ? 'скидка. Код скопирован — вставьте его в корзине в поле «Промокод».' : 'chegirma. Kod nusxalandi — savatda “Promo-kod”ga qoʻying.'}</p>
           <div className="mt-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary-soft py-2.5 font-mono text-xl font-bold tracking-wider text-primary">{code}</div>
-          <Link href="/catalog" onClick={onClose} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-fg">Xaridni boshlash</Link>
+          <Link href="/catalog" onClick={onClose} className="mt-4 flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-fg">{ru ? 'За покупками' : 'Xaridni boshlash'}</Link>
         </div>
       </div>
     </div>,

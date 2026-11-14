@@ -293,7 +293,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
             )}
             {quote?.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
             {quote?.hasErrors && <p className="mt-3 text-xs font-medium text-danger">Savatchadagi xatolarni tuzating. <Link href="/cart" className="underline">Savatchaga qaytish</Link></p>}
-            <Button type="submit" size="lg" className="mt-4 w-full" loading={submitting} disabled={blocked || submitting}>
+            <Button type="submit" data-tour="place-order" size="lg" className="mt-4 w-full" loading={submitting} disabled={blocked || submitting}>
               {t('checkout.place')}
             </Button>
             {orderNote && <p className="mt-3 flex gap-1.5 text-xs text-ink-3"><Info className="h-4 w-4 shrink-0" />{orderNote}</p>}
