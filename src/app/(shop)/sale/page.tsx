@@ -24,7 +24,7 @@ export default async function SalePage({ searchParams }: { searchParams: Promise
     <>
       <Breadcrumbs items={[{ name: 'Chegirmalar' }]} />
       <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">{L("Chegirmalar va aksiyalar")}</h1>
-      {banners[0] && <div className="mb-6 aspect-[16/6] overflow-hidden rounded-2xl sm:aspect-[16/5]"><BannerSlide banner={banners[0]} priority /></div>}
+      {banners[0] && <div className="mb-6 aspect-[16/9] overflow-hidden rounded-[28px] shadow-[0_18px_40px_-24px_rgba(15,23,42,.55)] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[32px]"><BannerSlide banner={banners[0]} priority /></div>}
       {coupons.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-[15px] font-semibold tracking-tight">{L("Kuponlar")}</h2>

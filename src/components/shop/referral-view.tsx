@@ -12,6 +12,7 @@ import { cn } from '@/components/ui/cn';
 import { CouponCard } from '@/components/coupon/coupon-card';
 import { CopyCoupon } from '@/components/coupon/copy-coupon';
 import { Modal } from '@/components/ui/dialog';
+import { copyText } from '@/lib/client/copy';
 
 import { couponCardProps } from '@/lib/coupon-design';
 import { applyPartner, requestPayout, trackReferral } from '@/lib/actions/referral';
@@ -66,7 +67,7 @@ export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyRe
     : `${shopName}: ${L('shu havola orqali roʻyxatdan oʻting')} 🎁`;
 
   const copy = async () => {
-    try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 1800); }
+    try { if (await copyText(link)) { setCopied(true); setTimeout(() => setCopied(false), 1800); } }
     catch { toast(L('Nusxalab boʻlmadi — havolani qoʻlda belgilang'), 'error'); }
     void trackReferral('copy');
   };
@@ -284,7 +285,7 @@ function MyCoupon({ c }: { c: MyReferral['coupons'][number] }) {
   const off = c.used || expired;
   const card = couponCardProps({ discount_type: c.discount_type, value: c.value, ends_at: c.ends_at, min_order_amount: c.min_order_amount, design: c.design }, L('Kupon'), L);
   const copy = async () => {
-    try { await navigator.clipboard.writeText(c.code); } catch { /* kod koʻrinib turadi */ }
+    await copyText(c.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };

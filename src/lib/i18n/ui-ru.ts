@@ -244,6 +244,9 @@ export const UI_RU: Record<string, string> = {
   "Doʻkon javobi": "Ответ магазина",
   "Kuponlarim — bosing, oʻzi qoʻllanadi": "Мои купоны — нажмите, чтобы применить",
   "dan": "с",
+  "Oldingi": "Предыдущий",
+  "Keyingi": "Следующий",
+  "Hammasi oʻqildi": "Все прочитаны",
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

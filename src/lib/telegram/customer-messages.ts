@@ -31,8 +31,8 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
   },
   {
     key: 'awaitPayment', title: 'Toʻlov kutilmoqda (karta)', hint: 'Kartaga toʻlov bilan buyurtma berilganda — “Buyurtma qabul qilindi” oʻrniga',
-    vars: [RAQAM, MIJOZ, SUMMA, SONI, DOKON],
-    text: '💳 *Buyurtma №{{raqam}} — toʻlovni kutyapmiz*\n\n💰 Summa: *{{summa}}*\n\nKartaga oʻtkazing va chek rasmini yuklang. Toʻlov tasdiqlangach, buyurtmangiz qabul qilinadi.',
+    vars: [RAQAM, MIJOZ, SUMMA, SONI, { name: 'karta', label: 'Karta raqami', sample: '8600 1234 5678 9012' }, { name: 'egasi', label: 'Karta egasi', sample: 'ALIYEV ALI' }, DOKON],
+    text: '💳 *Buyurtma №{{raqam}} — toʻlovni kutyapmiz*\n\n💰 Summa: *{{summa}}*\n💳 Karta: `{{karta}}`\n👤 {{egasi}}\n\nKartaga oʻtkazing va chek rasmini yuklang. Toʻlov tasdiqlangach, buyurtmangiz qabul qilinadi.',
     button: 'Toʻlash',
     art: { title: 'TOʻLOVNI\nKUTYAPMIZ', subtitle: 'Kartaga oʻtkazib, chekni yuklang', from: '#f59e0b', to: '#b45309', icon: 'card' },
   },

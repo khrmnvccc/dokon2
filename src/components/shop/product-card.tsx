@@ -25,8 +25,8 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
   // Kassa 1.13: Card uslubi (rounded-xl, shisha, shadow-soft), rasm tepada (aspect-square, rounded-lg),
   // nom 15px, narx katta .num, "Savatga" primary tugma.
   return (
-    <article className="group relative flex flex-col rounded-xl border border-line bg-surface p-2 shadow-soft anim-rise sm:p-2.5">
-      <Link href={href} className="relative block aspect-square overflow-hidden rounded-lg bg-surface-2" tabIndex={-1} aria-hidden>
+    <article className="group relative flex flex-col rounded-[22px] border border-line/70 bg-surface p-1.5 shadow-soft anim-rise transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lg)] sm:p-2">
+      <Link href={href} className="relative block aspect-square overflow-hidden rounded-[18px] bg-surface-2" tabIndex={-1} aria-hidden>
         <ProductImage
           src={product.image_url}
           alt={product.name}
@@ -36,18 +36,18 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
         />
         {/* Koʻpi bilan 2 ta belgi, bir qatorda: chegirma + (Xit yoki Yangi) — rasm ustida tartibsizlik boʻlmasin */}
         <div className="absolute left-1.5 right-10 top-1.5 flex flex-wrap items-start gap-1">
-          {discount > 0 && <span className="rounded-full bg-danger px-1.5 py-0.5 text-[11px] font-semibold text-white num sm:text-xs">−{discount}%</span>}
+          {discount > 0 && <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold text-white shadow-sm num sm:text-xs">−{discount}%</span>}
           {product.is_bestseller ? (
-            <span className="rounded-full bg-ink px-1.5 py-0.5 text-[11px] font-semibold text-bg sm:text-xs">{t('product.hit')}</span>
+            <span className="rounded-full bg-ink/85 px-2 py-0.5 text-[11px] font-semibold text-bg backdrop-blur sm:text-xs">{t('product.hit')}</span>
           ) : product.is_new ? (
-            <span className="rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-semibold text-primary-fg sm:text-xs">{t('product.new')}</span>
+            <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-fg shadow-sm sm:text-xs">{t('product.new')}</span>
           ) : null}
         </div>
       </Link>
       <button
         type="button"
         onClick={() => wishlist.toggle(product.id)}
-        className="absolute right-3.5 top-3.5 flex size-8 items-center justify-center rounded-full border border-line bg-surface glass transition-transform active:scale-95"
+        className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-white/85 shadow-sm backdrop-blur transition-transform active:scale-90 dark:bg-black/45 sm:right-3.5 sm:top-3.5"
         aria-label={liked ? L("Sevimlilardan olib tashlash") : L("Sevimlilarga qoʻshish")}
         aria-pressed={liked}
       >
@@ -67,12 +67,12 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
           ) : null}
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2">
-          <span className="text-base font-semibold tracking-tight text-ink num sm:text-lg">{price(product.price)}</span>
+          <span className="text-[17px] font-bold tracking-tight text-ink num sm:text-lg">{price(product.price)}</span>
           {discount > 0 && <span className="text-xs text-ink-3 line-through num">{price(product.compare_at_price)}</span>}
         </div>
         <div className="mt-auto pt-2.5">
           {product.has_variants ? (
-            <Link href={href} className="flex h-9 w-full items-center justify-center rounded-lg border border-line bg-surface text-sm font-medium text-ink shadow-soft transition-all hover:bg-surface-2 active:scale-[0.98]">
+            <Link href={href} className="flex h-9 w-full items-center justify-center rounded-full bg-surface-2 text-[13px] font-semibold text-ink transition-all hover:bg-surface-3 active:scale-[0.97] sm:text-sm">
               {t('product.choose')}
             </Link>
           ) : (
@@ -84,8 +84,8 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
                 toast(`${product.name.slice(0, 40)} — savatga qoʻshildi`);
               }}
               className={cn(
-                'flex h-9 w-full items-center justify-center gap-1.5 rounded-lg text-sm font-medium shadow-soft transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
-                inCart ? 'bg-success-soft text-success' : 'bg-primary text-primary-fg hover:opacity-90',
+                'flex h-9 w-full items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-all active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 sm:text-sm',
+                inCart ? 'bg-success-soft text-success' : 'bg-primary text-primary-fg shadow-[0_6px_16px_-8px_var(--primary)] hover:opacity-90',
               )}
             >
               {inCart ? <Check className="size-4" /> : <ShoppingCart className="size-4" />}
@@ -124,12 +124,12 @@ export function ProductGridSkeleton({ count = 10 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-xl border border-line bg-surface p-2 shadow-soft sm:p-2.5">
-          <div className="skeleton aspect-square !rounded-lg" />
+        <div key={i} className="rounded-[22px] border border-line/70 bg-surface p-1.5 shadow-soft sm:p-2">
+          <div className="skeleton aspect-square !rounded-[18px]" />
           <div className="space-y-2 px-1 pt-3">
             <div className="skeleton h-4 w-full" />
             <div className="skeleton h-5 w-2/3" />
-            <div className="skeleton h-9 w-full !rounded-lg" />
+            <div className="skeleton h-9 w-full !rounded-full" />
           </div>
         </div>
       ))}

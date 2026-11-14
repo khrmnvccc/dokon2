@@ -88,10 +88,11 @@ export function CardHeader({ title, subtitle, action }: { title: ReactNode; subt
 export function SectionHeader({ title, href, linkText }: { title: string; href?: string; linkText?: string }) {
   return (
     <div className="mb-3 flex items-end justify-between gap-3 sm:mb-4">
-      <h2 className="text-[19px] font-semibold tracking-tight text-ink sm:text-[22px]">{title}</h2>
+      <h2 className="text-[20px] font-bold tracking-tight text-ink sm:text-[24px]">{title}</h2>
       {href && (
-        <Link href={href} className="shrink-0 text-sm font-medium text-primary hover:underline">
-          {linkText ?? 'Barchasi'} →
+        <Link href={href} className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-primary-soft pl-3 pr-2 text-[13px] font-semibold text-primary transition hover:bg-primary hover:text-primary-fg">
+          {linkText ?? 'Barchasi'}
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden className="size-4"><path fillRule="evenodd" d="M7.2 14.8a.75.75 0 0 1 0-1.06L10.94 10 7.2 6.26a.75.75 0 1 1 1.06-1.06l4.27 4.27a.75.75 0 0 1 0 1.06L8.26 14.8a.75.75 0 0 1-1.06 0Z" clipRule="evenodd" /></svg>
         </Link>
       )}
     </div>

@@ -421,7 +421,7 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
         {unread > 0 && <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger px-1 text-center text-[10px] font-semibold leading-[18px] text-white num">{unread > 99 ? '99+' : unread}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 text-ink max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-pop anim-pop">
+        <div className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+64px)] z-40 overflow-hidden rounded-xl border border-line bg-surface text-ink shadow-pop anim-pop sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="text-[15px] font-semibold tracking-tight">{tr('Bildirishnomalar')}</span>
             {unread > 0 && <button className="text-xs font-medium text-primary" onClick={async () => { await markStaffNotificationsRead(); router.refresh(); setOpen(false); }}>{tr('Hammasi oʻqildi')}</button>}
@@ -429,7 +429,7 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
           {items.length === 0 ? (
             <p className="px-4 py-8 text-center text-[13px] text-ink-3">{tr('Yangi bildirishnoma yoʻq')}</p>
           ) : (
-            <ul className="max-h-96 divide-y divide-line overflow-y-auto">
+            <ul className="max-h-[min(24rem,calc(100dvh-160px))] divide-y divide-line overflow-y-auto">
               {items.map((n) => (
                 <li key={n.id}>
                   <Link href={n.link?.startsWith('/') ? n.link : '#'} onClick={() => setOpen(false)} className="block px-4 py-3 hover:bg-surface-2">

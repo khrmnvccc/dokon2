@@ -35,11 +35,11 @@ export default async function HomePage() {
     promo: promo.length > 0 && (
       <div className="grid gap-3 sm:grid-cols-2">
         {promo.slice(0, 2).map((b) => (
-          <div key={b.id} className="aspect-[16/7] overflow-hidden rounded-xl border border-line shadow-soft"><BannerSlide banner={b} /></div>
+          <div key={b.id} className="aspect-[16/8] overflow-hidden rounded-[24px] shadow-[0_14px_32px_-22px_rgba(15,23,42,.55)] ring-1 ring-black/5"><BannerSlide banner={b} compact /></div>
         ))}
       </div>
     ),
-    middle_banner: middle[0] && <div className="aspect-[16/7] overflow-hidden rounded-2xl border border-line shadow-soft sm:aspect-[16/5]"><BannerSlide banner={middle[0]} /></div>,
+    middle_banner: middle[0] && <div className="aspect-[16/9] overflow-hidden rounded-[28px] shadow-[0_18px_40px_-24px_rgba(15,23,42,.55)] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[32px]"><BannerSlide banner={middle[0]} /></div>,
     reviews: reviews && reviewStats && <ReviewsSection title={title('reviews', L("Mijozlar fikri"))} reviews={reviews.items} stats={reviewStats} />,
     advantages: <Advantages items={settings.advantages} title={title('advantages', 'Afzalliklar')} />,
   };
