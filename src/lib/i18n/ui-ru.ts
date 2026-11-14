@@ -218,6 +218,8 @@ export const UI_RU: Record<string, string> = {
   "Min. buyurtma": "Мин. заказ",
   "Hozircha kupon yoʻq. Doʻstingizni taklif qiling — birinchi kupon 1 ta doʻstdan keyin!": "Купонов пока нет. Пригласите друга — первый купон уже после 1 друга!",
   "Xarid qilgan mahsulotingizga baho bering — fikringiz boshqalarga yordam beradi": "Оцените купленный товар — ваш отзыв поможет другим",
+  "dan amal qiladi": "— начнёт действовать",
+  "Bahoyingiz": "Ваша оценка",
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

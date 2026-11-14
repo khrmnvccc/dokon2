@@ -366,6 +366,8 @@ export async function sendCouponToCustomers(couponId: string, clientNo: number |
     try {
       await sendRich(config.token, Number(s.chat_id), msg);
       delivered++;
+      // Mijozning “Kuponlarim” roʻyxatida koʻrinishi uchun (kupon ochiq boʻlmasa ham)
+      if (s.user_id) await db().from('coupon_sends').upsert({ coupon_id: couponId, user_id: s.user_id, sent_at: new Date().toISOString() }, { onConflict: 'coupon_id,user_id' });
       await logSend('customer:coupon', `mijoz:${s.name ?? s.chat_id}`, msg.html, null);
     } catch (e) {
       failed++;

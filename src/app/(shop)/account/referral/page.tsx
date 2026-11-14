@@ -1,11 +1,11 @@
 import { getL } from '@/lib/i18n/server';
 import { requireUser } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { getPublicCoupons, getSettings } from '@/lib/data/public';
+import { getSettings } from '@/lib/data/public';
 import { getShopBot } from '@/lib/telegram/shop-bot';
 import { shareLinks } from '@/lib/referral';
 import { SITE_URL } from '@/lib/env';
-import { ReferralView, type MyReferral } from '@/components/shop/referral-view';
+import { ReferralView, type MyReferral, type WalletCoupon } from '@/components/shop/referral-view';
 
 export const metadata = { title: 'Doʻstni taklif qilish', robots: { index: false } };
 export const dynamic = 'force-dynamic';
@@ -14,11 +14,11 @@ export default async function ReferralPage() {
   const L = await getL();
   await requireUser('/account/referral');
   const supabase = await getServerSupabase();
-  const [{ data, error }, settings, bot, publicCoupons] = await Promise.all([
+  const [{ data, error }, settings, bot, { data: wallet }] = await Promise.all([
     supabase.rpc('my_referral'),
     getSettings(),
     getShopBot().catch(() => null),
-    getPublicCoupons(),
+    supabase.rpc('my_coupon_wallet'),
   ]);
   if (error || !data) {
     if (error) console.error('my_referral', error.message);
@@ -29,7 +29,7 @@ export default async function ReferralPage() {
   return (
     <div>
       <h1 className="sr-only">{L('Doʻstni taklif qilish')}</h1>
-      <ReferralView data={r} link={links.main} shopName={settings.brand.name || settings.store?.name || 'Doʻkon'} publicCoupons={publicCoupons} />
+      <ReferralView data={r} link={links.main} shopName={settings.brand.name || settings.store?.name || 'Doʻkon'} wallet={(Array.isArray(wallet) ? wallet : []) as WalletCoupon[]} />
     </div>
   );
 }

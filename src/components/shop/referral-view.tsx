@@ -12,7 +12,7 @@ import { cn } from '@/components/ui/cn';
 import { CouponCard } from '@/components/coupon/coupon-card';
 import { CopyCoupon } from '@/components/coupon/copy-coupon';
 import { Modal } from '@/components/ui/dialog';
-import type { PublicCoupon } from '@/lib/data/public';
+
 import { couponCardProps } from '@/lib/coupon-design';
 import { applyPartner, requestPayout, trackReferral } from '@/lib/actions/referral';
 import { PAYOUT_STATUS, REFERRAL_STATUS, type ReferralStep } from '@/lib/referral';
@@ -43,7 +43,13 @@ type TgWebApp = { openTelegramLink?: (url: string) => void; initData?: string };
 const tgApp = () => (typeof window !== 'undefined' ? (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp : undefined);
 
 /** Doʻstni taklif qilish: havola, bosqichlar, kuponlar, doʻstlar va (hamkor boʻlsa) balans. */
-export function ReferralView({ data, link, shopName, publicCoupons = [] }: { data: MyReferral; link: string; shopName: string; publicCoupons?: PublicCoupon[] }) {
+/** Mijozga tegishli umumiy kuponlar: hammaga ochiq (hali boshlanmagani ham) va botda unga yuborilganlar. */
+export interface WalletCoupon {
+  id: string; code: string; description: string | null; discount_type: string; value: number; max_discount: number | null;
+  min_order_amount: number; starts_at: string | null; ends_at: string | null; design: unknown; sent: boolean; used: boolean;
+}
+
+export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyReferral; link: string; shopName: string; wallet?: WalletCoupon[] }) {
   const L = useL();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -80,7 +86,9 @@ export function ReferralView({ data, link, shopName, publicCoupons = [] }: { dat
   }
 
   const coupons = [...data.coupons].sort((a, b) => Number(isOff(a)) - Number(isOff(b)));
-  const activeCount = coupons.filter((c) => !isOff(c)).length + publicCoupons.length;
+  const walletOn = wallet.filter((c) => !c.used);
+  const walletUsed = wallet.filter((c) => c.used);
+  const activeCount = coupons.filter((c) => !isOff(c)).length + walletOn.length;
 
   return (
     <div className="space-y-5">
@@ -148,15 +156,14 @@ export function ReferralView({ data, link, shopName, publicCoupons = [] }: { dat
           <span>{L('Kuponlarim')}</span>
           {activeCount > 0 && <span className="text-sm font-normal text-ink-3 num">{activeCount}</span>}
         </h2>
-        {coupons.length + publicCoupons.length === 0 ? (
+        {coupons.length + wallet.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">{L('Hozircha kupon yoʻq. Doʻstingizni taklif qiling — birinchi kupon 1 ta doʻstdan keyin!')}</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {coupons.filter((c) => !isOff(c)).map((c) => <MyCoupon key={c.id} c={c} />)}
-            {publicCoupons.map((c) => (
-              <CopyCoupon key={c.id} code={c.code} description={c.description} card={{ ...couponCardProps({ ...c, scope: undefined }, L('Kupon'), L), cutout: 'var(--bg)' }} />
-            ))}
+            {walletOn.map((c) => <WalletCard key={c.id} c={c} />)}
             {coupons.filter(isOff).map((c) => <MyCoupon key={c.id} c={c} />)}
+            {walletUsed.map((c) => <WalletCard key={c.id} c={c} />)}
           </div>
         )}
       </section>
@@ -184,6 +191,17 @@ export function ReferralView({ data, link, shopName, publicCoupons = [] }: { dat
           </ul>
         )}
       </Modal>
+    </div>
+  );
+}
+
+function WalletCard({ c }: { c: WalletCoupon }) {
+  const L = useL();
+  const upcoming = Boolean(c.starts_at && new Date(c.starts_at).getTime() > Date.now());
+  const note = c.used ? L('Ishlatilgan') : upcoming ? `${date(c.starts_at!)} ${L('dan amal qiladi')}` : c.description;
+  return (
+    <div className={cn(c.used && 'pointer-events-none opacity-50 grayscale')}>
+      <CopyCoupon code={c.code} description={note} card={{ ...couponCardProps({ ...c, scope: undefined }, L('Kupon'), L), cutout: 'var(--bg)' }} />
     </div>
   );
 }

@@ -42,13 +42,17 @@ export async function requestPayout(input: unknown): Promise<ActionResult> {
 }
 
 /** Savat va rasmiylashtirishda “Kuponlarim”: mijozning ishlatilmagan shaxsiy kuponlari. */
-export async function myActiveCoupons(): Promise<{ code: string; value: number; min_order_amount: number; ends_at: string | null }[]> {
+export async function myActiveCoupons(): Promise<{ code: string; value: number; percent: boolean; min_order_amount: number; ends_at: string | null }[]> {
   if (!(await getCurrentUser())) return [];
   const supabase = await getServerSupabase();
-  const { data } = await supabase.rpc('my_referral');
-  const list = ((data as { coupons?: { code: string; value: number; min_order_amount: number; ends_at: string | null; used: boolean }[] } | null)?.coupons ?? []);
+  type C = { code: string; value: number; discount_type?: string; min_order_amount: number; starts_at?: string | null; ends_at: string | null; used: boolean };
+  // Shaxsiy kuponlar (doʻst taklifi, sovgʻa) + mijozga tegishli umumiy kuponlar (botda yuborilgan, hammaga ochiq)
+  const [{ data }, { data: wallet }] = await Promise.all([supabase.rpc('my_referral'), supabase.rpc('my_coupon_wallet')]);
+  const own = ((data as { coupons?: C[] } | null)?.coupons ?? []);
+  const shared = (Array.isArray(wallet) ? wallet : []) as C[];
   const now = Date.now();
-  return list.filter((c) => !c.used && (!c.ends_at || new Date(c.ends_at).getTime() > now))
-    .map(({ code, value, min_order_amount, ends_at }) => ({ code, value: Number(value), min_order_amount: Number(min_order_amount), ends_at }))
+  return [...own, ...shared]
+    .filter((c) => !c.used && (!c.ends_at || new Date(c.ends_at).getTime() > now) && (!c.starts_at || new Date(c.starts_at).getTime() <= now))
+    .map(({ code, value, discount_type, min_order_amount, ends_at }) => ({ code, value: Number(value), percent: discount_type === 'percent', min_order_amount: Number(min_order_amount), ends_at }))
     .slice(0, 6);
 }

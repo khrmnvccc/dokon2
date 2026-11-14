@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Modal } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { submitReview } from '@/lib/actions/shop';
@@ -10,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/field';
 import { cn } from '@/components/ui/cn';
 
-export function ReviewForm({ productId, slug }: { productId: string; slug: string }) {
+export function ReviewForm({ productId, slug, onDone }: { productId: string; slug: string; onDone?: () => void }) {
   const L = useL();
   const { user } = useApp();
   const toast = useToast();
@@ -43,6 +45,7 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
           if (res.ok) {
             setDone(true);
             toast(res.message ?? L("Saqlandi"));
+            onDone?.();
           } else toast(res.error, 'error');
         });
       }}
@@ -59,5 +62,22 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
       <Textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={2000} placeholder={L("Mahsulot haqida fikringiz (ixtiyoriy)")} aria-label={L("Sharh matni")} />
       <Button type="submit" loading={pending}>{L("Sharhni yuborish")}</Button>
     </form>
+  );
+}
+
+/** Buyurtma sahifasida: “Baho berish” — shu joyning oʻzida oyna ochiladi (mahsulot sahifasiga oʻtmasdan). */
+export function RateItemButton({ productId, slug, name }: { productId: string; slug: string; name: string }) {
+  const L = useL();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-lg bg-warn-soft px-2.5 text-xs font-semibold text-warn hover:opacity-90">
+        <Star className="size-3.5" aria-hidden /> {L("Baho berish")}
+      </button>
+      <Modal open={open} onClose={() => setOpen(false)} title={L("Baho berish")} description={name}>
+        <ReviewForm productId={productId} slug={slug} onDone={() => { router.refresh(); setTimeout(() => setOpen(false), 900); }} />
+      </Modal>
+    </>
   );
 }

@@ -150,7 +150,7 @@ function CartLine({ line }: { line: PricedLine }) {
 export function CouponBox({ applied, requested, error, onApply }: { applied: string | null; requested: string | null; error: QuoteResult['couponError']; onApply: (code: string | null) => void }) {
   const L = useL();
   const [value, setValue] = useState('');
-  const [mine, setMine] = useState<{ code: string; value: number; min_order_amount: number }[]>([]);
+  const [mine, setMine] = useState<{ code: string; value: number; percent?: boolean; min_order_amount: number }[]>([]);
   useEffect(() => {
     let alive = true;
     myActiveCoupons().then((c) => { if (alive) setMine(c); }).catch(() => {});
@@ -187,7 +187,7 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
             {mine.map((c) => (
               <button key={c.code} type="button" onClick={() => onApply(c.code)}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-primary/50 bg-primary-soft px-3 py-1.5 text-[13px] font-semibold text-primary transition active:scale-95">
-                <Tag className="size-3.5" />{new Intl.NumberFormat('ru-RU').format(c.value).replace(/\s/g, ' ')} {L("soʻm")}
+                <Tag className="size-3.5" />{c.percent ? `${c.value}%` : `${new Intl.NumberFormat('ru-RU').format(c.value).replace(/\s/g, ' ')} ${L("soʻm")}`}
                 {c.min_order_amount > 0 && <span className="font-normal text-ink-3">· {L("Min.")} {new Intl.NumberFormat('ru-RU').format(c.min_order_amount).replace(/\s/g, ' ')}</span>}
               </button>
             ))}

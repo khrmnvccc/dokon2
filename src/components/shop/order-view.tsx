@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { tr } from '@/lib/i18n/ui-ru';
 import type { Lang } from '@/lib/i18n/dict';
-import { Check, Star, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { RateItemButton } from './reviews';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { ORDER_STEPS, orderStatusLabel, orderStatusTone } from '@/lib/order-status';
-import { Badge } from '@/components/ui/misc';
+import { Badge, Stars } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import type { OrderAddress, OrderStatus } from '@/lib/types';
 import { ProductImage } from './product-image';
@@ -30,7 +31,7 @@ export interface PublicOrder {
   tracking_number: string | null;
   cancelled_reason: string | null;
   created_at: string;
-  items: { id: string; product_name: string; variant_name: string | null; image_url: string | null; unit_price: number; quantity: number; line_total: number; slug: string | null }[];
+  items: { id: string; product_name: string; variant_name: string | null; image_url: string | null; unit_price: number; quantity: number; line_total: number; slug: string | null; product_id?: string | null; my_rating?: number | null }[];
   history: { status: OrderStatus; note?: string | null; created_at: string }[];
 }
 
@@ -117,10 +118,10 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
               <div className="min-w-0 flex-1">
                 {i.slug ? <Link href={`/product/${i.slug}`} className="line-clamp-2 hover:text-primary">{i.product_name}</Link> : <p>{i.product_name}</p>}
                 <p className="text-xs text-ink-3">{i.variant_name ? `${i.variant_name} · ` : ''}{p(i.unit_price)} × {i.quantity}</p>
-                {order.status === 'delivered' && i.slug && (
-                  <Link href={`/product/${i.slug}#reviews`} className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-lg bg-warn-soft px-2.5 text-xs font-semibold text-warn hover:opacity-90">
-                    <Star className="size-3.5" aria-hidden /> {L("Baho berish")}
-                  </Link>
+                {order.status === 'delivered' && i.slug && i.product_id && (
+                  i.my_rating ? (
+                    <span className="mt-1.5 inline-flex items-center gap-1 text-xs text-ink-3">{L("Bahoyingiz")}: <Stars value={i.my_rating} className="[&_svg]:size-3.5" /></span>
+                  ) : <RateItemButton productId={i.product_id} slug={i.slug} name={i.product_name} />
                 )}
               </div>
               <span className="font-semibold">{p(i.unit_price * i.quantity)}</span>
