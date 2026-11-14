@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Banner } from '@/lib/types';
+import type { SectionSize } from '@/lib/settings-schema';
 import { cn } from '@/components/ui/cn';
 import { isUnoptimizable } from './product-image';
 
@@ -28,29 +29,29 @@ export function BannerSlide({ banner, priority, className, compact }: { banner: 
         fill
         priority={priority}
         sizes="(max-width: 640px) 92vw, (max-width: 1280px) 100vw, 1280px"
-        className="object-cover object-[78%_50%] transition-transform duration-700 ease-out group-hover/banner:scale-[1.03] sm:object-center"
+        className="object-cover object-right transition-transform duration-700 ease-out group-hover/banner:scale-[1.02]"
         unoptimized={isUnoptimizable(banner.image_url)}
       />
       {hasText && (
         <div
           className={cn(
-            'absolute inset-0 flex flex-col justify-end gap-1.5 bg-gradient-to-r from-black/45 via-black/15 to-transparent p-4 sm:justify-center sm:gap-2.5 sm:p-10 md:p-12',
-            compact && 'sm:p-7 md:p-8',
+            'absolute inset-0 flex flex-col justify-center gap-1 bg-gradient-to-r from-black/20 to-transparent p-5 sm:gap-2 sm:p-10 md:p-12',
+            compact && 'p-4 sm:p-7 md:p-8',
           )}
           style={{ color: banner.text_color ?? '#fff' }}
         >
           {banner.title && (
-            <h2 className={cn('max-w-[78%] text-[22px] font-bold leading-[1.1] tracking-tight drop-shadow-sm sm:max-w-[60%] sm:text-4xl md:text-[44px]', compact && 'sm:text-3xl md:text-3xl')}>
+            <h2 className={cn('max-w-[62%] text-[20px] font-extrabold leading-[1.08] tracking-tight sm:max-w-[60%] sm:text-[34px] md:text-[40px]', compact && 'text-[18px] sm:text-[26px] md:text-[28px]')}>
               {banner.title}
             </h2>
           )}
           {banner.subtitle && (
-            <p className={cn('line-clamp-2 max-w-[72%] text-[13px] leading-snug opacity-90 sm:max-w-[50%] sm:text-base md:text-lg', compact && 'md:text-base')}>{banner.subtitle}</p>
+            <p className={cn('line-clamp-2 max-w-[60%] text-[12.5px] leading-snug opacity-85 sm:max-w-[50%] sm:text-base md:text-lg', compact && 'md:text-base')}>{banner.subtitle}</p>
           )}
           {banner.button_text && banner.link_url && (
-            <span className="mt-1.5 inline-flex h-9 w-fit items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold text-neutral-900 shadow-[0_6px_20px_-6px_rgba(0,0,0,.45)] transition group-hover/banner:gap-2.5 sm:mt-2 sm:h-11 sm:px-5 sm:text-[15px]">
+            <span className="mt-2 inline-flex h-8 w-fit items-center gap-1.5 rounded-full bg-white/95 px-3.5 text-[12.5px] font-semibold text-neutral-900 transition group-hover/banner:gap-2.5 sm:mt-3 sm:h-10 sm:px-5 sm:text-[15px]">
               {banner.button_text}
-              <ArrowRight className="size-4" />
+              <ArrowRight className="size-3.5 sm:size-4" />
             </span>
           )}
         </div>
@@ -71,7 +72,7 @@ export function BannerSlide({ banner, priority, className, compact }: { banner: 
  * scroll-snap, so swiping feels like iOS); on larger screens one card fills the row.
  * Autoplays with a progress bar on the active indicator, pauses on hover/touch/hidden tab.
  */
-export function HeroSlider({ banners }: { banners: Banner[] }) {
+export function HeroSlider({ banners, size = 'md' }: { banners: Banner[]; size?: SectionSize }) {
   const L = useL();
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
@@ -155,7 +156,8 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
             aria-roledescription="slide"
             aria-label={`${i + 1} / ${count}`}
             className={cn(
-              'relative aspect-[4/3] shrink-0 snap-center overflow-hidden rounded-[28px] shadow-[0_18px_40px_-24px_rgba(15,23,42,.55)] ring-1 ring-black/5 transition-[transform,opacity] duration-500 sm:aspect-[16/6] sm:w-full sm:rounded-[32px] min-[420px]:aspect-[16/10]',
+              'relative shrink-0 snap-center overflow-hidden rounded-[24px] ring-1 ring-black/5 transition-[transform,opacity] duration-500 sm:w-full sm:rounded-[28px]',
+              size === 'sm' ? 'aspect-[21/9] sm:aspect-[16/4]' : size === 'lg' ? 'aspect-[4/3] sm:aspect-[16/6]' : 'aspect-[16/9] sm:aspect-[16/5]',
               count > 1 ? 'w-[88%]' : 'w-full',
               count > 1 && i !== index && 'scale-[0.97] opacity-80 sm:scale-100 sm:opacity-100',
             )}

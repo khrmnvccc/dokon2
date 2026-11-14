@@ -11,7 +11,7 @@ describe('parseSettings home_sections', () => {
     const s = parseSettings([{ key: 'home_sections', value: saved }]);
     const keys = s.home_sections.map((x) => x.key);
     expect(keys.slice(0, 3)).toEqual(['hero', 'reviews', 'sale']);
-    expect(s.home_sections.find((x) => x.key === 'sale')).toEqual({ key: 'sale', title: 'Arzon', enabled: false });
+    expect(s.home_sections.find((x) => x.key === 'sale')).toEqual({ key: 'sale', title: 'Arzon', enabled: false, size: 'md' });
     expect(new Set(keys).size).toBe(keys.length);
   });
 
@@ -22,6 +22,13 @@ describe('parseSettings home_sections', () => {
 
   it('“reviews” allaqachon boʻlsa (oʻchirilgan) — tegilmaydi', () => {
     const s = parseSettings([{ key: 'home_sections', value: [{ key: 'reviews', title: '', enabled: false }] }]);
-    expect(s.home_sections.filter((x) => x.key === 'reviews')).toEqual([{ key: 'reviews', title: '', enabled: false }]);
+    expect(s.home_sections.filter((x) => x.key === 'reviews')).toEqual([{ key: 'reviews', title: '', enabled: false, size: 'md' }]);
+  });
+
+  it('blok oʻlchami saqlanadi, notoʻgʻri oʻlcham — butun roʻyxat standartga qaytadi', () => {
+    const ok = parseSettings([{ key: 'home_sections', value: [{ key: 'hero', title: '', enabled: true, size: 'sm' }] }]);
+    expect(ok.home_sections.find((x) => x.key === 'hero')?.size).toBe('sm');
+    const bad = parseSettings([{ key: 'home_sections', value: [{ key: 'hero', title: '', enabled: true, size: 'xl' }] }]);
+    expect(bad.home_sections.every((x) => x.size === 'md')).toBe(true);
   });
 });

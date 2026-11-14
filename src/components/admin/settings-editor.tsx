@@ -163,6 +163,9 @@ function HomeTab({ sections, advantages, announcement }: { sections: SiteSetting
               </div>
               <span className="w-40 shrink-0 text-sm font-medium">{SECTION_LABELS[sec.key]}</span>
               <Input value={sec.title} placeholder="Sarlavha (bo‘sh — standart)" onChange={(e) => hs.setValue(hs.value.map((x, k) => (k === i ? { ...x, title: e.target.value } : x)))} className="h-9" />
+              <Select value={sec.size ?? 'md'} onChange={(e) => hs.setValue(hs.value.map((x, k) => (k === i ? { ...x, size: e.target.value as 'sm' | 'md' | 'lg' } : x)))} aria-label="Oʻlcham" className="h-9 w-28 shrink-0">
+                <option value="sm">Ixcham</option><option value="md">Oddiy</option><option value="lg">Katta</option>
+              </Select>
               <Checkbox label="Ko‘rinadi" checked={sec.enabled} onChange={(e) => hs.setValue(hs.value.map((x, k) => (k === i ? { ...x, enabled: e.target.checked } : x)))} />
             </li>
           ))}
