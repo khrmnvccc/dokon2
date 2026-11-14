@@ -36,7 +36,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       )}
       <Header settings={settings} tree={tree} />
       <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-5 sm:py-7">{children}</main>
-      <Footer settings={settings} t={t} />
+      <Footer settings={settings} t={t} reviewsLabel={L("Mijozlar fikri")} />
       <MobileBottomNav />
       <ShopTour tours={tours} />
     </>

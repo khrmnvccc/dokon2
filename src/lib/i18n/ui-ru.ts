@@ -193,6 +193,15 @@ export const UI_RU: Record<string, string> = {
   "Bajarib boʻlmadi. Birozdan keyin qayta urinib koʻring": "Не получилось. Попробуйте чуть позже",
   "Summani yozing": "Введите сумму",
   "Karta raqamini toʻliq yozing": "Введите номер карты полностью",
+  // Sharhlar va pastki menyu
+  "Mijozlar fikri": "Отзывы покупателей",
+  "Hali sharhlar yoʻq": "Отзывов пока нет",
+  "Xarid qilgan mahsulotingiz sahifasida baho qoldiring — birinchi boʻling!": "Оцените купленный товар на его странице — будьте первым!",
+  "ta sharh": "отзывов",
+  "Sharhlarni mahsulotni sotib olgan xaridorlar yozadi. Oʻz fikringizni mahsulot sahifasida qoldiring.": "Отзывы оставляют покупатели. Свой отзыв можно написать на странице товара.",
+  "Baho berish": "Оценить",
+  "Doʻstlar": "Друзья",
+  "Xaridor": "Покупатель",
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

@@ -5,17 +5,20 @@ import { Logo } from '@/components/brand';
 
 const socialLabels: Record<string, string> = { telegram: 'Telegram', instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok' };
 
-export function Footer({ settings, t }: { settings: SiteSettings; t: (k: 'footer.contacts' | 'footer.social' | 'footer.hours' | 'footer.help') => string }) {
+export function Footer({ settings, t, reviewsLabel }: { settings: SiteSettings; t: (k: 'footer.contacts' | 'footer.social' | 'footer.hours' | 'footer.help') => string; reviewsLabel: string }) {
   const { contact, social, footer } = settings;
   const socials = Object.entries(social).filter(([, url]) => url) as [string, string][];
   const link = 'text-ink-2 transition-colors hover:text-ink';
   return (
     <footer className="no-print mt-12 border-t border-line bg-surface glass pb-24 lg:pb-0">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="lg:col-span-2">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-7 px-4 py-8 sm:py-10 lg:grid-cols-5 lg:gap-8">
+        <div className="col-span-2">
           <Logo />
           {footer.about_text && <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-ink-3">{footer.about_text}</p>}
-          <Link href="/help" className="mt-3 inline-flex h-8 items-center rounded-lg bg-primary-soft px-3 text-[13px] font-semibold text-primary">{t('footer.help')}</Link>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/help" className="inline-flex h-8 items-center rounded-lg bg-primary-soft px-3 text-[13px] font-semibold text-primary">{t('footer.help')}</Link>
+            <Link href="/reviews" className="inline-flex h-8 items-center rounded-lg bg-surface-2 px-3 text-[13px] font-semibold text-ink-2 hover:text-ink">{reviewsLabel}</Link>
+          </div>
           {socials.length > 0 && (
             <div className="mt-5">
               <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{t('footer.social')}</div>
@@ -39,7 +42,7 @@ export function Footer({ settings, t }: { settings: SiteSettings; t: (k: 'footer
             </ul>
           </div>
         ))}
-        <div>
+        <div className="col-span-2 lg:col-span-1">
           <div className="mb-3 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{t('footer.contacts')}</div>
           <ul className="space-y-2.5 text-sm text-ink-2">
             {contact.phone && <li className="flex gap-2"><Phone className="mt-0.5 size-4 shrink-0 text-ink-3" aria-hidden /><a href={`tel:${contact.phone.replace(/[^\d+]/g, '')}`} className={`${link} num`}>{contact.phone}</a></li>}

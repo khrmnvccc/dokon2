@@ -5,7 +5,7 @@ const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Rang #RRGGBB formatida bo‘l
 const optUrl = z.string().trim().max(500).nullable().optional().transform((v) => (v ? v : null));
 const link = z.object({ label: z.string().trim().min(1).max(60), href: z.string().trim().min(1).max(300) });
 
-export const HOME_SECTION_KEYS = ['hero', 'categories', 'bestsellers', 'promo', 'new', 'sale', 'middle_banner', 'featured', 'advantages'] as const;
+export const HOME_SECTION_KEYS = ['hero', 'categories', 'bestsellers', 'promo', 'new', 'sale', 'middle_banner', 'featured', 'reviews', 'advantages'] as const;
 
 export const settingsSchemas = {
   // Brend va dizayn (kassa app_meta 'brand'): bitta JSON, server va brauzer bir xil cleanBrand() bilan tekshiradi.
@@ -106,6 +106,17 @@ export function parseSettings(rows: { key: string; value: unknown }[]): SiteSett
     const key = row.key as SettingsKey;
     const parsed = settingsSchemas[key].safeParse(row.value);
     if (parsed.success) result[key] = parsed.data;
+  }
+  // Yangi qoʻshilgan bosh sahifa bloklari (masalan “Mijozlar fikri”) eski saqlangan roʻyxatda boʻlmasa — oxiridan qoʻshiladi.
+  const sections = result.home_sections as SiteSettings['home_sections'];
+  const missing = HOME_SECTION_KEYS.filter((k) => !sections.some((s) => s.key === k));
+  if (missing.length) {
+    const next = [...sections];
+    for (const key of missing) {
+      const at = key === 'reviews' ? next.findIndex((s) => s.key === 'advantages') : -1;
+      next.splice(at >= 0 ? at : next.length, 0, { key, title: '', enabled: true });
+    }
+    result.home_sections = next;
   }
   // Brend hali saqlanmagan eski do'kon: nom va shior "Do'kon" sozlamasidan olinadi.
   if (!rows.some((r) => r.key === 'brand')) {

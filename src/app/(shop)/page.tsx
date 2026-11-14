@@ -1,8 +1,8 @@
 import { getL } from '@/lib/i18n/server';
 import { SITE_URL } from '@/lib/env';
-import { getBanners, getCatalog, getCategories, getSettings } from '@/lib/data/public';
+import { getBanners, getCatalog, getCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
 import { HeroSlider, BannerSlide } from '@/components/shop/hero-slider';
-import { Advantages, CategoryGrid, ProductSection } from '@/components/shop/home-blocks';
+import { Advantages, CategoryGrid, ProductSection, ReviewsSection } from '@/components/shop/home-blocks';
 
 export default async function HomePage() {
   const L = await getL();
@@ -12,7 +12,7 @@ export default async function HomePage() {
   const title = (key: string, fallback: string) => enabled.find((s) => s.key === key)?.title || fallback;
 
   // Faqat yoqilgan bloklar uchun ma'lumot so'raladi
-  const [hero, middle, promo, categories, bestsellers, fresh, sale, featured] = await Promise.all([
+  const [hero, middle, promo, categories, bestsellers, fresh, sale, featured, reviews, reviewStats] = await Promise.all([
     has('hero') ? getBanners('home_hero') : [],
     has('middle_banner') ? getBanners('home_middle') : [],
     has('promo') ? getBanners('home_promo') : [],
@@ -21,6 +21,8 @@ export default async function HomePage() {
     has('new') ? getCatalog({ new: true, sort: 'new', limit: 10 }) : null,
     has('sale') ? getCatalog({ discount: true, sort: 'discount', limit: 10 }) : null,
     has('featured') ? getCatalog({ featured: true, limit: 10 }) : null,
+    has('reviews') ? getReviewsPage(1, 6, true) : null,
+    has('reviews') ? getReviewStats() : null,
   ]);
 
   const blocks: Record<string, React.ReactNode> = {
@@ -38,6 +40,7 @@ export default async function HomePage() {
       </div>
     ),
     middle_banner: middle[0] && <div className="aspect-[16/7] overflow-hidden rounded-2xl border border-line shadow-soft sm:aspect-[16/5]"><BannerSlide banner={middle[0]} /></div>,
+    reviews: reviews && reviewStats && <ReviewsSection title={title('reviews', L("Mijozlar fikri"))} reviews={reviews.items} stats={reviewStats} />,
     advantages: <Advantages items={settings.advantages} title={title('advantages', 'Afzalliklar')} />,
   };
 

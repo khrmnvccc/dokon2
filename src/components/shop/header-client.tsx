@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronRight, Grid2x2, Heart, Home, LayoutGrid, Package, Search, ShoppingCart, User, X } from 'lucide-react';
+import { ChevronRight, Gift, Grid2x2, Heart, Home, LayoutGrid, Package, Search, ShoppingCart, User, X } from 'lucide-react';
 import type { CategoryNode } from '@/lib/types';
 import { useApp, useCart, useWishlist, useL } from '@/components/providers';
 import { cn } from '@/components/ui/cn';
@@ -43,20 +43,27 @@ export function SearchBox({ className, autoFocus }: { className?: string; autoFo
 }
 
 export function HeaderActions() {
-  const { t, user } = useApp();
+  const { t, user, lang } = useApp();
+  const L = useL();
   const cart = useCart();
   const wishlist = useWishlist();
+  // Telefonda: savat pastki menyuda, shuning uchun tepada faqat Profil. Kompyuterda: sevimlilar, doʻstlar, profil, savat.
   const items = [
-    { href: '/wishlist', label: t('nav.wishlist'), icon: Heart, badge: wishlist.ids.size, desktopOnly: true },
-    { href: user ? '/account' : '/login', label: user ? t('nav.profile') : t('nav.login'), icon: User, desktopOnly: true },
-    { href: '/cart', label: t('nav.cart'), icon: ShoppingCart, badge: cart.count, desktopOnly: false },
+    { href: '/wishlist', label: t('nav.wishlist'), icon: Heart, badge: wishlist.ids.size, cls: 'hidden md:inline-flex', tour: undefined },
+    { href: user ? '/account/referral' : '/login?next=/account/referral', label: lang === 'ru' ? 'Пригласить друга' : L('Doʻstni taklif qilish'), icon: Gift, badge: 0, cls: 'hidden lg:inline-flex', tour: undefined },
+    { href: user ? '/account' : '/login', label: user ? t('nav.profile') : t('nav.login'), icon: User, badge: 0, cls: 'inline-flex', tour: 'profile' },
+    { href: '/cart', label: t('nav.cart'), icon: ShoppingCart, badge: cart.count, cls: 'hidden lg:inline-flex', tour: 'cart' },
   ];
   return (
     <nav className="flex items-center gap-1" aria-label="Foydalanuvchi">
-      {items.map(({ href, label, icon: Icon, badge, desktopOnly }) => (
-        <Link key={href} href={href} aria-label={label} title={label} data-tour={href === '/cart' ? 'cart' : undefined}
-          className={cn('relative size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink', desktopOnly ? 'hidden md:inline-flex' : 'inline-flex')}>
-          <Icon className="size-[18px]" strokeWidth={1.9} aria-hidden />
+      {items.map(({ href, label, icon: Icon, badge, cls, tour }) => (
+        <Link key={href} href={href} aria-label={label} title={label} data-tour={tour}
+          className={cn('relative size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink', cls)}>
+          {tour === 'profile' && user ? (
+            <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary">{(user.name || user.email || '?').trim().charAt(0).toUpperCase()}</span>
+          ) : (
+            <Icon className="size-[18px]" strokeWidth={1.9} aria-hidden />
+          )}
           {!!badge && (
             <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] font-semibold leading-[18px] text-primary-fg num">{badge > 99 ? '99+' : badge}</span>
           )}
@@ -148,7 +155,7 @@ export function CatalogButton({ tree }: { tree: CategoryNode[] }) {
   );
 }
 
-/** Telefonda pastki tab-bar (kassa 1.9/1.13): Bosh sahifa, Katalog, o'rtada katta "Savat", Buyurtmalarim, Profil. */
+/** Telefonda pastki tab-bar: Bosh sahifa, Katalog, o'rtada katta "Savat", Buyurtmalar, Doʻstlar (taklif). Profil — tepada. */
 export function MobileBottomNav() {
   const L = useL();
   const { t, user, lang } = useApp();
@@ -159,13 +166,14 @@ export function MobileBottomNav() {
     { href: '/catalog', label: t('nav.catalog'), icon: Grid2x2 },
     { href: '/cart', label: t('nav.cart'), icon: ShoppingCart, center: true },
     { href: user ? '/account/orders' : '/track', label: lang === 'ru' ? 'Заказы' : L("Buyurtmalar"), icon: Package },
-    { href: user ? '/account' : '/login', label: t('nav.profile'), icon: User },
+    { href: user ? '/account/referral' : '/login?next=/account/referral', label: lang === 'ru' ? 'Друзья' : L('Doʻstlar'), icon: Gift },
   ];
   return (
     <nav className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface glass pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label={L("Asosiy navigatsiya")}>
       <ul className="mx-auto grid h-16 max-w-md grid-cols-5">
         {items.map(({ href, label, icon: Icon, center }) => {
-          const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
+          const path = href.split('?')[0];
+          const active = path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/') || (path === '/login' && pathname === '/login');
           if (center) {
             return (
               <li key={label} className="flex items-center justify-center">
@@ -180,7 +188,7 @@ export function MobileBottomNav() {
           }
           return (
             <li key={label}>
-              <Link href={href} data-tour={href === '/catalog' ? 'catalog' : href === '/account/orders' || href === '/track' ? 'orders' : href === '/account' || href === '/login' ? 'profile' : undefined} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium tracking-tight', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
+              <Link href={href} data-tour={href === '/catalog' ? 'catalog' : href === '/account/orders' || href === '/track' ? 'orders' : href.includes('/account/referral') ? 'referral' : undefined} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium tracking-tight', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} aria-hidden />
                 <span className="max-w-full truncate px-0.5">{label}</span>
               </Link>
