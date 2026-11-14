@@ -3,6 +3,9 @@ import { SITE_URL } from '@/lib/env';
 import { getBanners, getCatalog, getCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
 import { HeroSlider, BannerSlide } from '@/components/shop/hero-slider';
 import { Advantages, CategoryGrid, ProductSection, ReviewsSection } from '@/components/shop/home-blocks';
+import { HomeLayout } from '@/components/shop/site-editor';
+import { cn } from '@/components/ui/cn';
+import type { SectionSize } from '@/lib/settings-schema';
 
 export default async function HomePage() {
   const L = await getL();
@@ -10,6 +13,9 @@ export default async function HomePage() {
   const enabled = settings.home_sections.filter((s) => s.enabled);
   const has = (key: string) => enabled.some((s) => s.key === key);
   const title = (key: string, fallback: string) => enabled.find((s) => s.key === key)?.title || fallback;
+  const size = (key: string): SectionSize => enabled.find((s) => s.key === key)?.size ?? 'md';
+  const bannerBox = (z: SectionSize) =>
+    z === 'sm' ? 'aspect-[21/8] sm:aspect-[16/4]' : z === 'lg' ? 'aspect-[4/3] sm:aspect-[16/6]' : 'aspect-[16/9] sm:aspect-[16/5]';
 
   // Faqat yoqilgan bloklar uchun ma'lumot so'raladi
   const [hero, middle, promo, categories, bestsellers, fresh, sale, featured, reviews, reviewStats] = await Promise.all([
@@ -26,22 +32,22 @@ export default async function HomePage() {
   ]);
 
   const blocks: Record<string, React.ReactNode> = {
-    hero: <HeroSlider banners={hero} />,
-    categories: <CategoryGrid categories={categories.filter((c) => !c.parent_id && c.show_on_home)} title={title('categories', L("Kategoriyalar"))} />,
-    bestsellers: bestsellers && <ProductSection title={title('bestsellers', L("Eng ko‘p sotilayotganlar"))} products={bestsellers.items} href="/catalog?sort=popular" />,
-    new: fresh && <ProductSection title={title('new', L("Yangi kelganlar"))} products={fresh.items} href="/catalog?new=1&sort=new" />,
-    sale: sale && <ProductSection title={title('sale', 'Chegirmalar')} products={sale.items} href="/sale" />,
-    featured: featured && <ProductSection title={title('featured', L("Tavsiya etamiz"))} products={featured.items} href="/catalog?featured=1" />,
+    hero: <HeroSlider banners={hero} size={size('hero')} />,
+    categories: <CategoryGrid categories={categories.filter((c) => !c.parent_id && c.show_on_home)} title={title('categories', L("Kategoriyalar"))} size={size('categories')} />,
+    bestsellers: bestsellers && <ProductSection title={title('bestsellers', L("Eng ko‘p sotilayotganlar"))} products={bestsellers.items} href="/catalog?sort=popular" size={size('bestsellers')} />,
+    new: fresh && <ProductSection title={title('new', L("Yangi kelganlar"))} products={fresh.items} href="/catalog?new=1&sort=new" size={size('new')} />,
+    sale: sale && <ProductSection title={title('sale', 'Chegirmalar')} products={sale.items} href="/sale" size={size('sale')} />,
+    featured: featured && <ProductSection title={title('featured', L("Tavsiya etamiz"))} products={featured.items} href="/catalog?featured=1" size={size('featured')} />,
     promo: promo.length > 0 && (
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={cn('grid gap-3', size('promo') !== 'lg' && 'sm:grid-cols-2')}>
         {promo.slice(0, 2).map((b) => (
-          <div key={b.id} className="aspect-[16/8] overflow-hidden rounded-[24px] shadow-[0_14px_32px_-22px_rgba(15,23,42,.55)] ring-1 ring-black/5"><BannerSlide banner={b} compact /></div>
+          <div key={b.id} className={cn('overflow-hidden rounded-[24px] ring-1 ring-black/5', size('promo') === 'sm' ? 'aspect-[21/8]' : size('promo') === 'lg' ? 'aspect-[16/9] sm:aspect-[16/5]' : 'aspect-[16/8]')}><BannerSlide banner={b} compact /></div>
         ))}
       </div>
     ),
-    middle_banner: middle[0] && <div className="aspect-[16/9] overflow-hidden rounded-[28px] shadow-[0_18px_40px_-24px_rgba(15,23,42,.55)] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[32px]"><BannerSlide banner={middle[0]} /></div>,
-    reviews: reviews && reviewStats && <ReviewsSection title={title('reviews', L("Mijozlar fikri"))} reviews={reviews.items} stats={reviewStats} />,
-    advantages: <Advantages items={settings.advantages} title={title('advantages', 'Afzalliklar')} />,
+    middle_banner: middle[0] && <div className={cn('overflow-hidden rounded-[24px] ring-1 ring-black/5 sm:rounded-[28px]', bannerBox(size('middle_banner')))}><BannerSlide banner={middle[0]} compact={size('middle_banner') === 'sm'} /></div>,
+    reviews: reviews && reviewStats && <ReviewsSection title={title('reviews', L("Mijozlar fikri"))} reviews={reviews.items} stats={reviewStats} size={size('reviews')} />,
+    advantages: <Advantages items={settings.advantages} title={title('advantages', 'Afzalliklar')} size={size('advantages')} />,
   };
 
   return (
@@ -70,7 +76,7 @@ export default async function HomePage() {
           ]).replace(/</g, '\\u003c'),
         }}
       />
-      {enabled.map((s) => blocks[s.key] ? <div key={s.key}>{blocks[s.key]}</div> : null)}
+      <HomeLayout sections={settings.home_sections} blocks={blocks} />
     </div>
   );
 }

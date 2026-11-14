@@ -108,11 +108,13 @@ export function ProductGrid({ products, priorityCount = 0 }: { products: Product
   );
 }
 
-export function ProductRail({ products }: { products: ProductCardType[] }) {
+export function ProductRail({ products, size = 'md' }: { products: ProductCardType[]; size?: 'sm' | 'md' | 'lg' }) {
+  const grid = size === 'sm' ? 'sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : size === 'lg' ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+  const width = size === 'sm' ? 'w-[36%]' : size === 'lg' ? 'w-[62%]' : 'w-[46%]';
   return (
-    <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4 xl:grid-cols-5">
+    <div className={cn('no-scrollbar -mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:gap-4 sm:overflow-visible sm:px-0', grid)}>
       {products.map((p) => (
-        <div key={p.id} className="w-[46%] shrink-0 snap-start sm:w-auto">
+        <div key={p.id} className={cn(width, 'shrink-0 snap-start sm:w-auto')}>
           <ProductCard product={p} />
         </div>
       ))}

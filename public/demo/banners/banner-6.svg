@@ -1,23 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" width="1600" height="600" preserveAspectRatio="xMidYMid slice">
-<defs>
-<linearGradient id="bg6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b0a40"/><stop offset=".55" stop-color="#9f1239"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
-<radialGradient id="glow6" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7ab6" stop-opacity=".85"/><stop offset="1" stop-color="#ff7ab6" stop-opacity="0"/></radialGradient>
-<radialGradient id="glow26" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffffff" stop-opacity=".35"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
-<filter id="blur6" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="40"/></filter>
-<filter id="shadow6" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="30" stdDeviation="28" flood-color="#000" flood-opacity=".35"/></filter>
-<pattern id="dots6" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#fff" opacity=".12"/></pattern>
-<linearGradient id="glass6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></linearGradient>
-</defs>
-<rect width="1600" height="600" fill="url(#bg6)"/>
-<circle cx="1260" cy="300" r="380" fill="url(#glow6)" filter="url(#blur6)"/>
-<circle cx="300" cy="-40" r="300" fill="url(#glow26)"/>
-<rect x="900" y="0" width="700" height="600" fill="url(#dots6)"/>
-<circle cx="1270" cy="300" r="250" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="2"/>
-<circle cx="1270" cy="300" r="330" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="2" stroke-dasharray="6 14"/>
-<g filter="url(#shadow6)">
-<g transform="rotate(12 1300 260)"><path d="M1180 180h200l70 80-70 80h-200a20 20 0 0 1-20-20V200a20 20 0 0 1 20-20z" fill="#fff"/><circle cx="1395" cy="260" r="14" fill="#7c3aed"/>
-<text x="1270" y="290" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="84" fill="#7c3aed">SALE</text></g>
-<g transform="rotate(-10 1200 400)"><path d="M1080 350h170l60 60-60 60h-170a18 18 0 0 1-18-18v-84a18 18 0 0 1 18-18z" fill="#ffd34d"/>
-<text x="1170" y="432" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="64" fill="#9f1239">−50%</text></g>
-</g><path transform="translate(1080 150) scale(1.5)" d="M0-20C2-6 6-2 20 0 6 2 2 6 0 20-2 6-6 2-20 0-6-2-2-6 0-20Z" fill="#fff" opacity="0.9"/><path transform="translate(1490 470) scale(1.1)" d="M0-20C2-6 6-2 20 0 6 2 2 6 0 20-2 6-6 2-20 0-6-2-2-6 0-20Z" fill="#fff" opacity="0.9"/>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e11d48"/><stop offset="1" stop-color="#9f1239"/></linearGradient></defs>
+<rect width="1600" height="600" fill="url(#g)"/>
+<circle cx="1480" cy="-60" r="360" fill="#fff" fill-opacity=".08"/>
+<circle cx="1040" cy="750" r="280" fill="#fff" fill-opacity=".06"/>
+<rect x="1160" y="130" width="340" height="340" rx="100" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+<g transform="translate(1234.0 204.0) scale(8)" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19"/><path d="M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/><path d="M17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></g>
 </svg>

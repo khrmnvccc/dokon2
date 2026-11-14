@@ -8,32 +8,32 @@ import { cn } from '@/components/ui/cn';
 import { isUnoptimizable } from './product-image';
 
 /** Bitta sharh kartasi: muallif, yulduzlar, matn va qaysi mahsulotga yozilgani. */
-export function ReviewCard({ review, buyerLabel, replyLabel = 'Doʻkon javobi', className, clamp }: { review: PublicReview; buyerLabel: string; replyLabel?: string; className?: string; clamp?: boolean }) {
+export function ReviewCard({ review, buyerLabel, replyLabel = 'Doʻkon javobi', className, clamp, compact }: { review: PublicReview; buyerLabel: string; replyLabel?: string; className?: string; clamp?: boolean; compact?: boolean }) {
   const name = review.author_name?.trim() || buyerLabel;
   return (
-    <article className={cn('flex h-full flex-col rounded-xl border border-line bg-surface p-4 shadow-soft', className)}>
+    <article className={cn('flex h-full flex-col rounded-[22px] border border-line/70 bg-surface shadow-soft', compact ? 'p-3' : 'p-4', className)}>
       <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">{name.charAt(0).toUpperCase()}</span>
+        <span className={cn('flex shrink-0 items-center justify-center rounded-full bg-primary-soft font-semibold text-primary', compact ? 'size-7 text-xs' : 'size-9 text-sm')}>{name.charAt(0).toUpperCase()}</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-ink">{name}</p>
-          <time className="text-xs text-ink-3" dateTime={review.created_at}>{formatDate(review.created_at)}</time>
+          <p className={cn('truncate font-semibold text-ink', compact ? 'text-[13px]' : 'text-sm')}>{name}</p>
+          <time className={cn('text-ink-3', compact ? 'text-[11px]' : 'text-xs')} dateTime={review.created_at}>{formatDate(review.created_at)}</time>
         </div>
-        <Stars value={review.rating} className="shrink-0 [&_svg]:size-3.5" />
+        <Stars value={review.rating} className={cn('shrink-0', compact ? '[&_svg]:size-3' : '[&_svg]:size-3.5')} />
       </div>
       {review.body ? (
-        <p className={cn('mb-3 mt-3 whitespace-pre-line text-sm leading-relaxed text-ink-2', clamp && 'line-clamp-4')}>
+        <p className={cn('whitespace-pre-line leading-relaxed text-ink-2', compact ? 'mb-2 mt-2 text-[13px]' : 'mb-3 mt-3 text-sm', clamp && (compact ? 'line-clamp-2' : 'line-clamp-4'))}>
           <Quote className="mr-1 inline size-3.5 -translate-y-0.5 text-ink-3" aria-hidden />{review.body}
         </p>
-      ) : <div className="h-3" />}
-      {review.reply && (
+      ) : <div className={compact ? 'h-2' : 'h-3'} />}
+      {review.reply && !compact && (
         <div className="mb-3 rounded-lg border-l-2 border-primary bg-primary-soft/40 px-3 py-2 text-[13px]">
           <p className="text-[11px] font-semibold text-primary">{replyLabel}</p>
           <p className={cn('whitespace-pre-line text-ink-2', clamp && 'line-clamp-3')}>{review.reply}</p>
         </div>
       )}
       {review.product && (
-        <Link href={`/product/${review.product.slug}`} className="mt-auto flex items-center gap-2.5 border-t border-line pt-3 text-[13px] text-ink-2 hover:text-primary">
-          <span className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-surface-2">
+        <Link href={`/product/${review.product.slug}`} className={cn('mt-auto flex items-center gap-2.5 border-t border-line text-ink-2 hover:text-primary', compact ? 'pt-2 text-[12px]' : 'pt-3 text-[13px]')}>
+          <span className={cn('relative shrink-0 overflow-hidden rounded-lg bg-surface-2', compact ? 'size-6' : 'size-9')}>
             {review.product.image_url && <Image src={review.product.image_url} alt="" fill sizes="36px" className="object-cover" unoptimized={isUnoptimizable(review.product.image_url)} />}
           </span>
           <span className="line-clamp-1 font-medium">{review.product.name}</span>

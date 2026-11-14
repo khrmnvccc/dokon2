@@ -7,6 +7,7 @@ import { Header } from '@/components/shop/header';
 import { Footer } from '@/components/shop/footer';
 import { MobileBottomNav } from '@/components/shop/header-client';
 import { ShopTour } from '@/components/shop/shop-tour';
+import { EditPencil } from '@/components/shop/site-editor';
 import { getTours } from '@/lib/data/tours';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <Footer settings={settings} t={t} reviewsLabel={L("Mijozlar fikri")} />
       <MobileBottomNav />
       <ShopTour tours={tours} />
+      <EditPencil />
     </>
   );
 }

@@ -6,6 +6,14 @@ const optUrl = z.string().trim().max(500).nullable().optional().transform((v) =>
 const link = z.object({ label: z.string().trim().min(1).max(60), href: z.string().trim().min(1).max(300) });
 
 export const HOME_SECTION_KEYS = ['hero', 'categories', 'reviews', 'bestsellers', 'promo', 'new', 'sale', 'middle_banner', 'featured', 'advantages'] as const;
+export type HomeSectionKey = (typeof HOME_SECTION_KEYS)[number];
+/** Bosh sahifa bloki oʻlchami: sm — ixcham, md — oddiy, lg — katta. */
+export const SECTION_SIZES = ['sm', 'md', 'lg'] as const;
+export type SectionSize = (typeof SECTION_SIZES)[number];
+export const HOME_SECTION_LABELS: Record<HomeSectionKey, string> = {
+  hero: 'Asosiy slayder', categories: 'Kategoriyalar', bestsellers: 'Xit mahsulotlar', promo: 'Aksiya bannerlari', new: 'Yangi mahsulotlar',
+  sale: 'Chegirmadagilar', middle_banner: 'Oʻrta banner', featured: 'Tavsiya etilganlar', reviews: 'Mijozlar fikri (sharhlar)', advantages: 'Afzalliklar',
+};
 
 export const settingsSchemas = {
   // Brend va dizayn (kassa app_meta 'brand'): bitta JSON, server va brauzer bir xil cleanBrand() bilan tekshiradi.
@@ -43,7 +51,7 @@ export const settingsSchemas = {
     tiktok: optUrl,
   }),
   home_sections: z
-    .array(z.object({ key: z.enum(HOME_SECTION_KEYS), title: z.string().trim().max(80), enabled: z.boolean() }))
+    .array(z.object({ key: z.enum(HOME_SECTION_KEYS), title: z.string().trim().max(80), enabled: z.boolean(), size: z.enum(SECTION_SIZES).default('md') }))
     .max(20),
   header_menu: z.array(link).max(12),
   footer: z.object({
@@ -86,7 +94,7 @@ export const defaultSettings: SiteSettings = {
   store: { name: DEFAULT_BRAND.name, tagline: DEFAULT_BRAND.tagline, logo_url: null, favicon_url: null, primary_color: DEFAULT_BRAND.color, accent_color: '#ff9f0a' },
   contact: { phone: '', phone2: null, email: '', address: '', working_hours: '', map_url: null },
   social: { telegram: null, instagram: null, facebook: null, youtube: null, tiktok: null },
-  home_sections: HOME_SECTION_KEYS.map((key) => ({ key, title: '', enabled: true })),
+  home_sections: HOME_SECTION_KEYS.map((key) => ({ key, title: '', enabled: true, size: 'md' as const })),
   header_menu: [],
   footer: { about_text: '', copyright: '', columns: [] },
   checkout: { min_order_amount: 0, free_shipping_threshold: 0, allow_guest_checkout: true, order_note: '' },
@@ -115,7 +123,7 @@ export function parseSettings(rows: { key: string; value: unknown }[]): SiteSett
     for (const key of missing) {
       // “Mijozlar fikri” koʻzga koʻrinadigan joyda: kategoriyalardan keyin (boʻlmasa — boshidagi bannerdan keyin).
       const after = key === 'reviews' ? Math.max(next.findIndex((s) => s.key === 'categories'), next.findIndex((s) => s.key === 'hero')) : -2;
-      next.splice(after === -2 ? next.length : after + 1, 0, { key, title: '', enabled: true });
+      next.splice(after === -2 ? next.length : after + 1, 0, { key, title: '', enabled: true, size: 'md' });
     }
     result.home_sections = next;
   }
