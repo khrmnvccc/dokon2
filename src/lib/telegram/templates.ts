@@ -126,7 +126,7 @@ export const BROADCAST_MAX_BUTTONS = 2;
 export type BroadcastAudience = { kind: 'staff' | 'customers' | 'all'; users?: string[] };
 export type BroadcastStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
 export interface Broadcast {
-  id: number; title: string; text: string; buttons: BroadcastButton[]; audience: BroadcastAudience;
+  id: number; title: string; text: string; image?: string | null; buttons: BroadcastButton[]; audience: BroadcastAudience;
   silent: boolean; send_at: string | null; status: BroadcastStatus; delivered: number; failed: number;
   created_at: string; sent_at: string | null;
 }

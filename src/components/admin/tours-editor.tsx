@@ -62,7 +62,7 @@ export function ToursEditor({ initial, siteUrl }: { initial: Tours; siteUrl: str
 
   return (
     <div className="space-y-4">
-      <Alert>
+      <Alert tone="info">
         Yoʻl-yoʻriq — xaridor yoki xodim sahifaga <b>birinchi marta</b> kirganda chiqadigan tushuntirish oynalari. Har bir qadam uchun sahifani,
         yoritiladigan joyni va matnni (oʻzbekcha va ruscha) tanlaysiz. Rus tilini tanlagan foydalanuvchi ruscha matnni koʻradi.
       </Alert>
@@ -92,7 +92,7 @@ export function ToursEditor({ initial, siteUrl }: { initial: Tours; siteUrl: str
                         <p className="line-clamp-2 text-sm text-ink-3">{step.text}</p>
                         <p className="mt-1 text-xs text-ink-3">📍 {placeLabel(scope, step.target)}{!step.title_ru && !step.text_ru && <span className="ml-2 text-warn">· ruscha yoʻq</span>}</p>
                       </div>
-                      <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                      <div className="grid shrink-0 grid-cols-2 gap-1 sm:flex">
                         <IconBtn label="Yuqoriga" onClick={() => move(index, -1)} disabled={index === 0}><ArrowUp className="size-4" /></IconBtn>
                         <IconBtn label="Pastga" onClick={() => move(index, 1)} disabled={index === steps.length - 1}><ArrowDown className="size-4" /></IconBtn>
                         <IconBtn label="Tahrirlash" onClick={() => setEditing(editing === step.id ? null : step.id)}><Pencil className="size-4" /></IconBtn>

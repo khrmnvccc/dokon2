@@ -57,7 +57,7 @@ export function FilterBar({ children, resetHref }: { children: ReactNode; resetH
 
 export function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="flex min-w-36 flex-col gap-1 text-xs font-medium text-ink-3">
+    <label className="flex min-w-36 flex-1 flex-col gap-1 text-xs font-medium text-ink-3 sm:flex-none [&_input]:w-full sm:[&_input]:w-auto [&_select]:w-full sm:[&_select]:w-auto">
       {label}
       {children}
     </label>

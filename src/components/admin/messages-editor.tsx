@@ -4,17 +4,22 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Ban, BarChart3, Bell, Bot, CheckCircle2, ChevronLeft, CreditCard, ExternalLink, Link2, Package, PackageMinus, RefreshCw, RotateCcw, Send,
-  ShoppingCart, Trash2, Undo2, Users, Zap, type LucideIcon,
+  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, type LucideIcon,
 } from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
-  unlinkPerson, syncCustomers, saveBroadcast, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
+  unlinkPerson, syncCustomers, saveBroadcast, updateCustomerMessage, testCustomerMsg, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
 } from '@/lib/actions/admin/telegram';
 import {
   BROADCAST_MAX_BUTTONS, BROADCAST_MAX_TEXT, BROADCAST_STATUS, MAX_TEMPLATE_LENGTH, TEMPLATES, TEMPLATE_BY_KEY, TEMPLATE_GROUPS,
   renderTemplate, sampleValues, type Broadcast, type BroadcastAudience, type BroadcastButton, type TemplateChats,
   type TemplateKey, type TemplateSettings,
 } from '@/lib/telegram/templates';
+import {
+  CAPTION_MAX, CUSTOMER_BUTTON_MAX, CUSTOMER_MESSAGES, CUSTOMER_MSG_BY_KEY, CUSTOMER_TEXT_MAX, customerSample,
+  type CustomerMsgKey, type CustomerMsgSettings,
+} from '@/lib/telegram/customer-messages';
+import { SingleImageField } from './upload';
 import { formatDateTime } from '@/lib/format';
 import type { ActionResult } from '@/lib/types';
 import { useToast } from '@/components/ui/toast';
@@ -33,6 +38,7 @@ export interface MessagesData {
     groupPaused: boolean; personalPaused: boolean; errors: { chat: 'personal' | 'group'; message: string; at: string }[];
   } | null;
   templates: TemplateSettings;
+  customerMessages: CustomerMsgSettings;
   people: { id: string; name: string; linked: boolean; chatName: string | null }[];
   log: { id: number; at: string; template: string; chat: string; ok: boolean; text: string | null; error: string | null }[];
   logTotal: number;
@@ -43,7 +49,7 @@ export interface MessagesData {
   adminUrl: string;
 }
 
-type Tab = 'templates' | 'broadcast' | 'log';
+type Tab = 'customer' | 'templates' | 'broadcast' | 'log';
 
 /** Amal + toast + sahifani yangilash. */
 function useRun() {
@@ -59,7 +65,7 @@ function useRun() {
 }
 
 export function MessagesEditor({ data }: { data: MessagesData }) {
-  const [tab, setTab] = useState<Tab>('templates');
+  const [tab, setTab] = useState<Tab>('customer');
   return (
     <div className="space-y-4">
       {!data.telegram?.connected && (
@@ -67,10 +73,12 @@ export function MessagesEditor({ data }: { data: MessagesData }) {
       )}
       <Segmented<Tab> label="Boʻlim" value={tab} onChange={setTab} className="no-scrollbar max-w-full overflow-x-auto"
         options={[
-          { value: 'templates', label: 'Xabar matnlari' },
+          { value: 'customer', label: 'Mijozga' },
+          { value: 'templates', label: 'Adminga' },
           { value: 'broadcast', label: 'Ommaviy xabar' },
           { value: 'log', label: `Yuborilganlar${data.logTotal ? ` · ${data.logTotal}` : ''}` },
         ]} />
+      {tab === 'customer' && <CustomerTab data={data} />}
       {tab === 'templates' && <TemplatesTab data={data} />}
       {tab === 'broadcast' && <BroadcastTab data={data} />}
       {tab === 'log' && <LogTab data={data} />}
@@ -80,14 +88,16 @@ export function MessagesEditor({ data }: { data: MessagesData }) {
 
 // ---------- Telegram koʻrinishi (oldindan koʻrish) ----------
 /** Telegram chatidagi xabar pufakchasi. HTML renderTemplate'dan keladi: hamma matn escape qilingan, faqat <b> qoʻshilgan. */
-export function TelegramPreview({ html, buttons = [], botName, time = '12:00' }: { html: string; buttons?: BroadcastButton[]; botName?: string; time?: string }) {
+export function TelegramPreview({ html, buttons = [], botName, time = '12:00', image }: { html: string; buttons?: { text: string }[]; botName?: string; time?: string; image?: string | null }) {
   return (
     <div className="rounded-[var(--r-lg)] bg-[#dfe7ee] p-3 dark:bg-[#0e1621]" aria-label="Telegramda koʻrinishi">
       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#5b6b79] dark:text-[#7d8b99]">
         <Bot className="size-3.5" /> {botName ? `@${botName}` : 'Doʻkon boti'}
       </div>
       <div className="max-w-[340px]">
-        <div className="relative rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-snug text-[#0f1419] shadow-sm dark:bg-[#182533] dark:text-[#e9edf0]">
+        <div className="relative overflow-hidden rounded-2xl rounded-tl-md bg-white px-3 py-2 text-[14px] leading-snug text-[#0f1419] shadow-sm dark:bg-[#182533] dark:text-[#e9edf0]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {image && <img src={image} alt="" className="-mx-3 -mt-2 mb-2 block aspect-[1200/750] w-[calc(100%+1.5rem)] max-w-none bg-[#c9d6e2] object-cover" />}
           {html
             ? <div className="whitespace-pre-wrap break-words [&_b]:font-semibold [&_i]:italic" dangerouslySetInnerHTML={{ __html: html }} />
             : <div className="italic text-[#8a98a5]">Matn boʻsh</div>}
@@ -435,9 +445,144 @@ function ChatRow({ label, checked, disabled, onChange }: { label: string; checke
   );
 }
 
+// ---------- Mijozga xabarlar (doʻkon boti) ----------
+const CUSTOMER_ICONS: Record<CustomerMsgKey, LucideIcon> = {
+  orderNew: ShoppingCart, confirmed: CheckCircle2, processing: Package, shipped: Truck, delivered: Gift, cancelled: Ban, returned: Undo2, coupon: Ticket,
+};
+
+function CustomerTab({ data }: { data: MessagesData }) {
+  const [selected, setSelected] = useState<CustomerMsgKey | null>(null);
+  const current = selected ?? CUSTOMER_MESSAGES[0].key;
+  const { pending, run } = useRun();
+  return (
+    <div className="space-y-4">
+      {!data.shopBot
+        ? <Alert tone="warn">Doʻkon boti hali ulanmagan — xabarlar xaridorlarga ketmaydi. <a href="/admin/bots" className="font-semibold underline">Telegram → Botlar</a> boʻlimida ulang. Matn va rasmlarni hozir sozlab qoʻyish mumkin.</Alert>
+        : <Alert tone="info">Bu xabarlar xaridorga <b>@{data.shopBot.botName}</b> orqali keladi: rasm, matn va tugma. Har birini oʻzingiz yozasiz, rasmni almashtirasiz yoki oʻchirib qoʻyasiz.</Alert>}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(260px,340px)_1fr]">
+        <div className={cn('space-y-2 lg:sticky lg:top-[120px]', selected && 'hidden lg:block')}>
+          {CUSTOMER_MESSAGES.map((m) => {
+            const Icon = CUSTOMER_ICONS[m.key];
+            const st = data.customerMessages[m.key];
+            const on = !st?.off;
+            const active = current === m.key;
+            return (
+              <div key={m.key} className={cn('flex items-center gap-3 rounded-2xl border bg-surface-solid px-3.5 py-3 transition-colors',
+                active ? 'border-[#9fc0e3] bg-[#eef4fb] dark:border-white/25 dark:bg-white/5' : 'border-line hover:border-line-strong')}>
+                <button type="button" onClick={() => setSelected(m.key)} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-current={active ? 'true' : undefined}>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: `linear-gradient(135deg, ${m.art.from}, ${m.art.to})` }}><Icon className="size-[18px]" /></span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15px] font-semibold text-ink">{m.title}</span>
+                    <span className="block truncate text-xs text-ink-3">{st?.text || st?.button || st?.image ? 'oʻzgartirilgan · ' : ''}{m.hint}</span>
+                  </span>
+                </button>
+                <Toggle label={`${m.title}: yoqilgan`} checked={on} disabled={pending} onChange={(v) => run(() => updateCustomerMessage(m.key, { on: v }))} />
+              </div>
+            );
+          })}
+        </div>
+        <div className={cn(!selected && 'hidden lg:block')}>
+          <CustomerEditor key={current} k={current} data={data} onBack={() => setSelected(null)} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type ImageMode = 'default' | 'custom' | 'none';
+
+function CustomerEditor({ k, data, onBack }: { k: CustomerMsgKey; data: MessagesData; onBack: () => void }) {
+  const def = CUSTOMER_MSG_BY_KEY[k];
+  const st = data.customerMessages[k] ?? {};
+  const on = !st.off;
+  const savedText = st.text ?? def.text;
+  const savedButton = st.button ?? def.button;
+  const savedMode: ImageMode = st.image === 'none' ? 'none' : st.image ? 'custom' : 'default';
+  const [text, setText] = useState(savedText);
+  const [button, setButton] = useState(savedButton);
+  const [mode, setMode] = useState<ImageMode>(savedMode);
+  const [custom, setCustom] = useState<string | null>(savedMode === 'custom' ? st.image! : null);
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const { pending, run } = useRun();
+  const html = renderTemplate(text, customerSample(k));
+  const previewSrc = mode === 'default' ? `${data.siteUrl}/api/tg-card/${k}` : mode === 'custom' ? custom : null;
+  const dirty = text !== savedText || button !== savedButton || mode !== savedMode || (mode === 'custom' && custom !== st.image);
+  const tooLong = mode !== 'none' && html.length > CAPTION_MAX;
+
+  const insert = (name: string) => {
+    const el = ref.current;
+    const token = `{{${name}}}`;
+    if (!el) return setText((v) => v + token);
+    const [a, b] = [el.selectionStart, el.selectionEnd];
+    setText(text.slice(0, a) + token + text.slice(b));
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + token.length, a + token.length); });
+  };
+  const save = () => run(() => updateCustomerMessage(k, {
+    text: text === def.text ? null : text,
+    button: button === def.button ? null : button,
+    image: mode === 'default' ? null : mode === 'none' ? 'none' : custom,
+  }));
+
+  return (
+    <div className="rounded-2xl border border-line bg-surface-solid p-4 sm:p-5">
+      <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-2 lg:hidden"><ChevronLeft className="size-4" /> Roʻyxat</button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[22px] font-bold tracking-tight text-ink">{def.title}</h2>
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1 text-xs font-medium text-ink-2"><Zap className="size-3.5" /> {def.hint}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-ink-3">
+          {on ? 'Yoqilgan' : 'Oʻchirilgan'}
+          <Toggle label={`${def.title}: yoqilgan`} checked={on} disabled={pending} onChange={(v) => run(() => updateCustomerMessage(k, { on: v }))} />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-5 2xl:grid-cols-[1fr_340px]">
+        <div className="min-w-0">
+          <SectionLabel>Rasm</SectionLabel>
+          <Segmented<ImageMode> label="Rasm" value={mode} onChange={setMode} className="no-scrollbar max-w-full overflow-x-auto"
+            options={[{ value: 'default', label: 'Standart rasm' }, { value: 'custom', label: 'Oʻz rasmim' }, { value: 'none', label: 'Rasmsiz' }]} />
+          {mode === 'default' && <p className="mt-2 text-xs text-ink-3">Doʻkon nomi bilan tayyor kartochka.{k === 'coupon' ? ' Kuponning rangi va yozuvi (masalan “11.11”) olinadi.' : ''}</p>}
+          {mode === 'custom' && <div className="mt-3"><SingleImageField label="Rasm yuklang (yotiq, masalan 1200×750)" folder="telegram" aspect="aspect-[1200/750]" value={custom} onChange={setCustom} /></div>}
+
+          <SectionLabel right={<span className={cn('text-xs num', tooLong ? 'text-danger' : 'text-ink-3')}>{text.length}/{mode === 'none' ? CUSTOMER_TEXT_MAX : CAPTION_MAX}</span>}>Matn</SectionLabel>
+          <Textarea ref={ref} rows={8} value={text} maxLength={CUSTOMER_TEXT_MAX} onChange={(e) => setText(e.target.value)} aria-label={`${def.title}: matn`} className="rounded-2xl text-[15px] leading-relaxed" />
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-xs text-ink-3">Oʻzgaruvchi qoʻshish:</span>
+            {def.vars.map((v) => (
+              <button key={v.name} type="button" onClick={() => insert(v.name)} title={v.label}
+                className="rounded-lg border border-[#c9d9ea] bg-[#eef4fb] px-2 py-1 font-mono text-xs text-[#1d4f80] hover:border-[#1d4f80] dark:border-white/15 dark:bg-white/5 dark:text-white/85">
+                {`{{${v.name}}}`}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin. Qiymati boʻsh qator chiqmaydi.{tooLong ? ' Rasmli xabarda matn 1024 belgidan oshsa, rasmsiz yuboriladi.' : ''}</p>
+
+          <SectionLabel>Tugma</SectionLabel>
+          <Input value={button} maxLength={CUSTOMER_BUTTON_MAX} onChange={(e) => setButton(e.target.value)} aria-label="Tugma nomi" placeholder="Boʻsh qoldirsangiz tugma chiqmaydi" className="max-w-sm" />
+          <p className="mt-1.5 text-xs text-ink-3">Bosilganda {k === 'coupon' ? 'Chegirmalar sahifasi' : 'buyurtma sahifasi'} Telegram ichida ochiladi.</p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button loading={pending} disabled={!dirty || !text.trim() || (mode === 'custom' && !custom)} onClick={save}>Saqlash</Button>
+            <Button variant="secondary" disabled={pending || !data.shopBot} onClick={() => run(() => testCustomerMsg(k, text, button))}><Send className="size-4" /> Oʻzimga namuna</Button>
+            <Button variant="ghost" disabled={pending || (!st.text && !st.button && !st.image)} onClick={() => {
+              setText(def.text); setButton(def.button); setMode('default'); setCustom(null);
+              run(() => updateCustomerMessage(k, { text: null, button: null, image: null }));
+            }}><RotateCcw className="size-4" /> Standart</Button>
+          </div>
+        </div>
+        <div>
+          <SectionLabel>Telegramda koʻrinishi</SectionLabel>
+          <div className="max-w-[380px]"><TelegramPreview html={html} buttons={button.trim() ? [{ text: button.trim() }] : []} botName={data.shopBot?.botName} image={mode === 'none' ? null : previewSrc} /></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------- 3. Ommaviy xabar ----------
-interface Draft { id: number | null; title: string; text: string; buttons: BroadcastButton[]; audience: BroadcastAudience; silent: boolean; when: 'now' | 'later'; sendAt: string }
-const EMPTY: Draft = { id: null, title: '', text: '', buttons: [], audience: { kind: 'all' }, silent: false, when: 'now', sendAt: '' };
+interface Draft { id: number | null; title: string; text: string; image: string | null; buttons: BroadcastButton[]; audience: BroadcastAudience; silent: boolean; when: 'now' | 'later'; sendAt: string }
+const EMPTY: Draft = { id: null, title: '', text: '', image: null, buttons: [], audience: { kind: 'all' }, silent: false, when: 'now', sendAt: '' };
 
 /** datetime-local qiymati (Toshkent emas, brauzer vaqti). */
 const toLocalInput = (iso: string | null) => {
@@ -473,12 +618,12 @@ function BroadcastTab({ data }: { data: MessagesData }) {
                 </div>
                 {(b.status === 'draft' || b.status === 'scheduled') && (
                   <Button size="sm" variant="secondary" onClick={() => setDraft({
-                    id: b.id, title: b.title, text: b.text, buttons: b.buttons, audience: b.audience, silent: b.silent,
+                    id: b.id, title: b.title, text: b.text, image: b.image ?? null, buttons: b.buttons, audience: b.audience, silent: b.silent,
                     when: b.status === 'scheduled' ? 'later' : 'now', sendAt: toLocalInput(b.send_at),
                   })}>Tahrirlash</Button>
                 )}
                 {(b.status === 'sent' || b.status === 'failed') && (
-                  <Button size="sm" variant="ghost" onClick={() => setDraft({ ...EMPTY, title: b.title, text: b.text, buttons: b.buttons, audience: b.audience, silent: b.silent })}>Nusxa</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDraft({ ...EMPTY, title: b.title, text: b.text, image: b.image ?? null, buttons: b.buttons, audience: b.audience, silent: b.silent })}>Nusxa</Button>
                 )}
                 {b.status !== 'sending' && b.status !== 'sent' && (
                   <Button size="sm" variant="ghost" disabled={pending} aria-label={b.status === 'scheduled' ? 'Rejani bekor qilish' : 'Oʻchirish'}
@@ -512,7 +657,7 @@ function BroadcastEditor({ data, initial, onClose }: { data: MessagesData; initi
   const linked = data.people.filter((p) => p.linked);
   const staffCount = d.audience.users?.length ?? linked.length;
   const reach = d.audience.kind === 'staff' ? staffCount : d.audience.kind === 'customers' ? data.subscribers : linked.length + data.subscribers;
-  const input = () => ({ title: d.title, text: d.text, buttons: d.buttons, audience: d.audience, silent: d.silent, sendAt: d.when === 'later' && d.sendAt ? new Date(d.sendAt).toISOString() : null });
+  const input = () => ({ title: d.title, text: d.text, image: d.image, buttons: d.buttons, audience: d.audience, silent: d.silent, sendAt: d.when === 'later' && d.sendAt ? new Date(d.sendAt).toISOString() : null });
   const html = renderTemplate(d.text, {});
 
   const send = async () => {
@@ -527,8 +672,9 @@ function BroadcastEditor({ data, initial, onClose }: { data: MessagesData; initi
         <div className="space-y-6">
           <Step n={1} title="Matn">
             <Field label="Sarlavha (faqat roʻyxat uchun)"><Input maxLength={80} value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder="Masalan: Qora juma aksiyasi" /></Field>
-            <Field label="Xabar" hint={`*yulduzcha orasida* — qalin · ${d.text.length}/${BROADCAST_MAX_TEXT}`}>
-              <Textarea rows={7} maxLength={BROADCAST_MAX_TEXT} value={d.text} onChange={(e) => set({ text: e.target.value })} />
+            <SingleImageField label="Rasm (ixtiyoriy)" folder="telegram" aspect="aspect-[1200/750]" value={d.image} onChange={(image) => set({ image })} />
+            <Field label="Xabar" hint={`*yulduzcha orasida* — qalin · ${d.text.length}/${d.image ? CAPTION_MAX : BROADCAST_MAX_TEXT}`}>
+              <Textarea rows={7} maxLength={d.image ? CAPTION_MAX : BROADCAST_MAX_TEXT} value={d.text} onChange={(e) => set({ text: e.target.value })} />
             </Field>
             {d.buttons.map((b, i) => (
               <div key={i} className="grid gap-2 sm:grid-cols-[160px_1fr_auto]">
@@ -572,7 +718,7 @@ function BroadcastEditor({ data, initial, onClose }: { data: MessagesData; initi
           </Step>
         </div>
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <TelegramPreview html={html} buttons={d.buttons} botName={data.telegram?.botName} />
+          <TelegramPreview html={html} buttons={d.buttons} botName={data.telegram?.botName} image={d.image} />
         </div>
       </div>
     </Panel>
@@ -581,7 +727,7 @@ function BroadcastEditor({ data, initial, onClose }: { data: MessagesData; initi
 
 // ---------- 4. Yuborilganlar ----------
 const chatLabel = (c: string) => (c === 'personal' ? 'Mening chatim' : c === 'group' ? 'Guruh' : c.startsWith('staff:') ? c.slice(6) || 'Xodim' : c.startsWith('mijoz:') ? `Xaridor ${c.slice(6)}` : c);
-const templateLabel = (k: string) => (k in TEMPLATE_BY_KEY ? TEMPLATE_BY_KEY[k as TemplateKey].title : k === 'broadcast' ? 'Ommaviy xabar' : k === 'test' ? 'Namuna' : k);
+const templateLabel = (k: string) => (k in TEMPLATE_BY_KEY ? TEMPLATE_BY_KEY[k as TemplateKey].title : k.startsWith('customer:') ? `Mijozga: ${CUSTOMER_MSG_BY_KEY[(({ new: 'orderNew' } as Record<string, string>)[k.slice(9)] ?? k.slice(9)) as CustomerMsgKey]?.title ?? k.slice(9)}` : k === 'broadcast' ? 'Ommaviy xabar' : k === 'test' ? 'Namuna' : k);
 
 function LogTab({ data }: { data: MessagesData }) {
   return (

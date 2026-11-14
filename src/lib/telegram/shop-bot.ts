@@ -8,6 +8,11 @@ import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import { chatTitle, getTelegram, logSend, tg, TelegramFail } from './server';
 import type { OrderStatus } from '@/lib/types';
 import { ensureShopUser, profileOf, savePhone, tgDisplay } from './tg-users';
+import { renderTemplate } from './templates';
+import {
+  CAPTION_MAX, CUSTOMER_MSG_BY_KEY, customerImage, customerSample,
+  type CustomerMsgKey, type CustomerMsgSetting, type CustomerMsgSettings,
+} from './customer-messages';
 
 // Doʻkon boti — xaridorlar uchun alohida bot. Admin botidan farqi: webhook bilan ishlaydi (javob darhol),
 // menyu tugmasi doʻkonni Telegram ichida mini-ilova qilib ochadi, buyurtma holati xaridorning oʻziga keladi.
@@ -217,41 +222,163 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
   );
 }
 
-// ---------- Xaridorga buyurtma xabari ----------
-const CUSTOMER_TEXT: Partial<Record<OrderStatus, string>> = {
-  confirmed: 'tasdiqlandi ✅ Tez orada tayyorlaymiz.',
-  processing: 'tayyorlanmoqda 📦',
-  shipped: 'yoʻlga chiqdi 🚚',
-  delivered: 'yetkazildi 🎉 Xaridingiz uchun rahmat!',
-  cancelled: 'bekor qilindi ❌',
-  returned: 'qaytarildi ↩️',
+// ---------- Xaridorga xabarlar: rasm + matn + tugma (Ega boshqaradi) ----------
+const META_KEY = 'customer_messages';
+let msgCache: { value: CustomerMsgSettings; until: number } | null = null;
+
+export async function getCustomerMsgSettings(): Promise<CustomerMsgSettings> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return {};
+  if (msgCache && msgCache.until > Date.now()) return msgCache.value;
+  const { data } = await db().from('app_meta').select('value').eq('key', META_KEY).maybeSingle();
+  const value = (data?.value && typeof data.value === 'object' ? data.value : {}) as CustomerMsgSettings;
+  msgCache = { value, until: Date.now() + 30_000 };
+  return value;
+}
+
+/** Bitta xabar sozlamasini yangilaydi. null — standartga qaytarish. */
+export async function saveCustomerMsgSetting(key: CustomerMsgKey, patch: { text?: string | null; button?: string | null; image?: string | null; on?: boolean }) {
+  const all = { ...(await getCustomerMsgSettings()) };
+  const cur: CustomerMsgSetting = { ...(all[key] ?? {}) };
+  if (patch.text !== undefined) { if (patch.text === null) delete cur.text; else cur.text = patch.text; }
+  if (patch.button !== undefined) { if (patch.button === null) delete cur.button; else cur.button = patch.button; }
+  if (patch.image !== undefined) { if (patch.image === null) delete cur.image; else cur.image = patch.image; }
+  if (patch.on !== undefined) { if (patch.on) delete cur.off; else cur.off = true; }
+  if (Object.keys(cur).length) all[key] = cur; else delete all[key];
+  const { error } = await db().from('app_meta').upsert({ key: META_KEY, value: all, updated_at: new Date().toISOString() });
+  msgCache = null;
+  if (error) throw error;
+}
+
+export interface RichMessage { html: string; image: string | null; buttons: unknown[][] }
+
+/** Shablondan tayyor xabar (oʻchirilgan boʻlsa null). */
+export async function customerMessage(key: CustomerMsgKey, values: Record<string, string | number | null | undefined>, link: { path: string }, imageExtra = '', override?: { text?: string; button?: string }): Promise<RichMessage | null> {
+  const def = CUSTOMER_MSG_BY_KEY[key];
+  const s = (await getCustomerMsgSettings())[key];
+  if (s?.off && !override) return null;
+  const html = renderTemplate(override?.text ?? s?.text ?? def.text, values);
+  const label = (override?.button ?? s?.button ?? def.button).trim();
+  return {
+    html,
+    image: customerImage(SITE_URL, key, s, imageExtra),
+    buttons: label ? [[openButton(label, link.path)]] : [],
+  };
+}
+
+/** Rasm boʻlsa — rasm ostida yozuv bilan, boʻlmasa oddiy matn. Rasm yuklanmasa matn baribir yetadi. */
+export async function sendRich(token: string, chatId: number, msg: RichMessage) {
+  const markup = msg.buttons.length ? { reply_markup: { inline_keyboard: msg.buttons } } : {};
+  if (msg.image && msg.html.length <= CAPTION_MAX) {
+    try {
+      await tg(token, 'sendPhoto', { chat_id: chatId, photo: msg.image, caption: msg.html, parse_mode: 'HTML', ...markup }, 20_000);
+      return;
+    } catch (e) {
+      // Foydalanuvchi botni bloklagan boʻlsa matnni ham urinmaymiz.
+      if (e instanceof Error && /bloklagan|oʻchirilgan|topilmadi|tokeni/.test(e.message)) throw e;
+    }
+  }
+  await tg(token, 'sendMessage', { chat_id: chatId, text: msg.html, parse_mode: 'HTML', disable_web_page_preview: true, ...markup });
+}
+
+const STATUS_MSG: Partial<Record<'new' | OrderStatus, CustomerMsgKey>> = {
+  new: 'orderNew', confirmed: 'confirmed', processing: 'processing', shipped: 'shipped', delivered: 'delivered', cancelled: 'cancelled', returned: 'returned',
 };
 
 /** Buyurtma egasining Telegramiga (doʻkon boti orqali) xabar. Hech qachon xato tashlamaydi. */
 export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus) {
   try {
+    const key = STATUS_MSG[kind];
+    if (!key) return;
     const config = await getShopBot();
     if (!config) return;
-    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number').eq('id', orderId).maybeSingle();
+    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count').eq('id', orderId).maybeSingle();
     if (!o?.user_id) return;
     const { data: subs } = await db().from('telegram_subscribers').select('chat_id').eq('user_id', o.user_id).eq('via', 'shop');
     if (!subs?.length) return;
-    const head = `<b>Buyurtma #${o.number}</b>`;
-    let text: string;
-    if (kind === 'new') text = `${head} qabul qilindi 🙌\nSumma: <b>${formatPrice(Number(o.total), 'soʻm')}</b>\n\nTez orada operator bogʻlanadi. Holati shu yerga keladi.`;
-    else if (CUSTOMER_TEXT[kind]) text = `${head} ${CUSTOMER_TEXT[kind]}${kind === 'shipped' && o.tracking_number ? `\nTrek raqami: <code>${esc(o.tracking_number)}</code>` : ''}`;
-    else return;
+    const { brand } = await getSettings();
+    const msg = await customerMessage(key, {
+      raqam: o.number, mijoz: String(o.customer_name ?? '').split(' ')[0], summa: formatPrice(Number(o.total), 'soʻm'),
+      soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon',
+    }, { path: `/account/orders/${o.id}` });
+    if (!msg) return;
     for (const s of subs) {
       try {
-        await send(config, Number(s.chat_id), text, [[openButton('📦 Buyurtmani koʻrish', `/account/orders/${o.id}`)]]);
-        await logSend(`customer:${kind}`, `mijoz:${o.number}`, text, null);
+        await sendRich(config.token, Number(s.chat_id), msg);
+        await logSend(`customer:${kind}`, `mijoz:${o.number}`, msg.html, null);
       } catch (e) {
-        await logSend(`customer:${kind}`, `mijoz:${o.number}`, text, e);
+        await logSend(`customer:${kind}`, `mijoz:${o.number}`, msg.html, e);
       }
     }
   } catch (e) {
     console.error('notify customer', e);
   }
+}
+
+const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`; };
+
+/** Kupon xabari uchun qiymatlar (kod — xaridorga beriladigan narsa, rasmda chiqmaydi). */
+async function couponMessage(couponId: string, name: string) {
+  const { data: c } = await db().from('coupons').select('id, code, description, discount_type, value, max_discount, min_order_amount, ends_at, is_active, design').eq('id', couponId).maybeSingle();
+  if (!c) throw new TelegramFail('Kupon topilmadi');
+  if (!c.is_active) throw new TelegramFail('Kupon oʻchirilgan — avval yoqing');
+  if (c.ends_at && new Date(c.ends_at).getTime() < Date.now()) throw new TelegramFail('Kupon muddati tugagan');
+  const { brand } = await getSettings();
+  const qiymat = c.discount_type === 'percent'
+    ? `${c.value}%${c.max_discount ? ` (koʻpi bilan ${formatPrice(Number(c.max_discount), 'soʻm')})` : ''}`
+    : formatPrice(Number(c.value), 'soʻm');
+  const v = { mijoz: name, kupon: c.description || c.code, qiymat, kod: c.code, muddat: c.ends_at ? fmtDate(c.ends_at) : '', min: c.min_order_amount ? formatPrice(Number(c.min_order_amount), 'soʻm') : '', dokon: brand.name || 'Doʻkon' };
+  return { values: v, extra: `?c=${c.id}&v=${Date.parse(String(c.ends_at ?? '')) || 0}` };
+}
+
+/**
+ * Kuponni doʻkon boti orqali yuboradi: hamma obunachilarga yoki bitta mijozga (ID raqami boʻyicha).
+ * Bitta chatga bir marta; botni bloklaganlar obunadan chiqariladi.
+ */
+export async function sendCouponToCustomers(couponId: string, clientNo: number | null) {
+  const config = await getShopBot();
+  if (!config) throw new TelegramFail('Doʻkon boti ulanmagan. Telegram → Botlar boʻlimida ulang');
+  let q = db().from('telegram_subscribers').select('chat_id, name, user_id').eq('via', 'shop');
+  if (clientNo !== null) {
+    const { data: p } = await db().from('profiles').select('id').eq('client_no', clientNo).maybeSingle();
+    if (!p) throw new TelegramFail(`ID ${clientNo} boʻlgan mijoz topilmadi`);
+    q = q.eq('user_id', p.id);
+  } else {
+    q = q.eq('subscribed', true);
+  }
+  const { data: subs } = await q.limit(5000);
+  if (!subs?.length) throw new TelegramFail(clientNo !== null ? 'Bu mijoz doʻkon botiga ulanmagan' : 'Doʻkon botida hali obunachi yoʻq');
+  let delivered = 0;
+  let failed = 0;
+  const base = await couponMessage(couponId, '');
+  for (const s of subs) {
+    const first = String(s.name ?? '').split(' ')[0];
+    const msg = await customerMessage('coupon', { ...base.values, mijoz: first }, { path: '/sale' }, base.extra);
+    if (!msg) throw new TelegramFail('“Sizga kupon berildi” xabari oʻchirilgan. Xabarlar va Push → Mijozga boʻlimida yoqing');
+    try {
+      await sendRich(config.token, Number(s.chat_id), msg);
+      delivered++;
+      await logSend('customer:coupon', `mijoz:${s.name ?? s.chat_id}`, msg.html, null);
+    } catch (e) {
+      failed++;
+      await logSend('customer:coupon', `mijoz:${s.name ?? s.chat_id}`, msg.html, e);
+      if (e instanceof Error && /bloklagan|oʻchirilgan|topilmadi/.test(e.message)) {
+        await db().from('telegram_subscribers').update({ subscribed: false }).eq('chat_id', s.chat_id);
+      }
+    }
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return { delivered, failed };
+}
+
+/** Admin “Namuna yuborish”: Eganing oʻz Telegramiga (doʻkon boti orqali, u /start bosgan boʻlsa). */
+export async function testCustomerMessage(key: CustomerMsgKey, ownerId: string, override: { text?: string; button?: string }) {
+  const config = await getShopBot();
+  if (!config) throw new TelegramFail('Doʻkon boti ulanmagan');
+  const { data: subs } = await db().from('telegram_subscribers').select('chat_id').eq('user_id', ownerId).eq('via', 'shop').limit(1);
+  if (!subs?.length) throw new TelegramFail('Namuna uchun doʻkon botiga oʻzingiz /start bosing (shu akkaunt bilan)');
+  const msg = await customerMessage(key, customerSample(key), { path: key === 'coupon' ? '/sale' : '/account/orders' }, '', override);
+  if (!msg) return;
+  await sendRich(config.token, Number(subs[0].chat_id), msg);
 }
 
 /** Ommaviy xabar uchun: xaridor qaysi bot orqali kelgan boʻlsa, oʻsha botning tokeni. */

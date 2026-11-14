@@ -156,7 +156,7 @@ export function MobileBottomNav() {
     { href: '/', label: t('nav.home'), icon: Home },
     { href: '/catalog', label: t('nav.catalog'), icon: Grid2x2 },
     { href: '/cart', label: t('nav.cart'), icon: ShoppingCart, center: true },
-    { href: user ? '/account/orders' : '/track', label: lang === 'ru' ? 'Мои заказы' : 'Buyurtmalarim', icon: Package },
+    { href: user ? '/account/orders' : '/track', label: lang === 'ru' ? 'Заказы' : 'Buyurtmalar', icon: Package },
     { href: user ? '/account' : '/login', label: t('nav.profile'), icon: User },
   ];
   return (
@@ -178,7 +178,7 @@ export function MobileBottomNav() {
           }
           return (
             <li key={label}>
-              <Link href={href} data-tour={href === '/catalog' ? 'catalog' : href === '/account/orders' || href === '/track' ? 'orders' : href === '/account' || href === '/login' ? 'profile' : undefined} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
+              <Link href={href} data-tour={href === '/catalog' ? 'catalog' : href === '/account/orders' || href === '/track' ? 'orders' : href === '/account' || href === '/login' ? 'profile' : undefined} className={cn('flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium tracking-tight', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} aria-hidden />
                 <span className="max-w-full truncate px-0.5">{label}</span>
               </Link>

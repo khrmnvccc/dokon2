@@ -30,7 +30,7 @@ export function DashboardView({ d, perms }: { d: Dashboard; perms: string[] }) {
         <StatCard label="Bugungi savdo" accent="var(--cash)" value={Number(d.today_sales)} previous={Number(d.yesterday_sales)} format="money" hint="kechagiga nisbatan" href={can('reports.view') ? '/admin/reports' : undefined} />
         {can('orders.read') && <StatCard label="Buyurtmalar (bugun)" accent="var(--card)" value={Number(d.today_orders)} previous={Number(d.yesterday_orders)} href="/admin/orders" />}
         {can('orders.read') && <StatCard label="Yangi buyurtmalar" accent="var(--yandex)" value={Number(d.new_orders)} tone={d.new_orders > 0 ? 'warn' : undefined} hint="tasdiqlash kutilmoqda" href="/admin/orders?status=new" />}
-        {can('orders.read') && <StatCard label="Yetkazilmaganlar" accent="var(--pochta)" value={Number(d.undelivered)} hint="tasdiqlangan, yigʻilmoqda, yoʻlda" href="/admin/orders?status=shipped" />}
+        {can('orders.read') && <StatCard label="Yetkazilmagan" accent="var(--pochta)" value={Number(d.undelivered)} hint="tasdiqlangan, yigʻilmoqda, yoʻlda" href="/admin/orders?status=shipped" />}
         {can('products.read') && <StatCard label="Kam qolgan mahsulotlar" accent="var(--danger)" value={Number(d.low_stock)} tone={d.low_stock > 0 ? 'bad' : undefined} hint="qoldiq chegaradan past" href={can('inventory.write') ? '/admin/inventory?low=1' : '/admin/products'} />}
       </div>
 
