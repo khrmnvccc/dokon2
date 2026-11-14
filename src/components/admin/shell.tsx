@@ -5,23 +5,21 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  BarChart3, Bell, HelpCircle, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
+  BarChart3, Bell, HelpCircle, Lightbulb, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
   Menu, MessageSquare, Moon, Package, PanelLeftClose, PanelLeftOpen, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, Sun,
   TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
 } from 'lucide-react';
-import type { AdminNavGroup, AdminNavItem } from '@/lib/admin/nav';
-import { Tour, openTour, type TourStep } from '@/components/tour';
+import { NAV_RU, type AdminNavGroup, type AdminNavItem } from '@/lib/admin/nav';
+import { useApp } from '@/components/providers';
 
-const ADMIN_TOUR: TourStep[] = [
-  { title: 'Admin panelga xush kelibsiz 👋', icon: <LayoutDashboard className="size-5" />, text: 'Bir daqiqada asosiy joylarni koʻrsatamiz. Keyin ham yuqoridagi “?” tugmasi bilan qayta ochasiz.' },
-  { target: 'modules', title: 'Boʻlimlar', icon: <Package className="size-5" />, text: 'Savdo, Katalog, Marketing va Sozlamalar. Boʻlimni tanlang — chapda uning sahifalari chiqadi.' },
-  { target: 'side', title: 'Boʻlim sahifalari', icon: <Menu className="size-5" />, text: 'Masalan, Savdo → Buyurtmalar. Menyuni yigʻib, joyni kengaytirish mumkin.' },
-  { target: 'menu', title: 'Menyu', icon: <Menu className="size-5" />, text: 'Telefonda barcha boʻlimlar shu tugmada.' },
-  { target: 'tabs', title: 'Ochiq oynalar', icon: <FileText className="size-5" />, text: 'Ochgan sahifalaringiz tab boʻlib turadi — ular orasida bir bosishda oʻtasiz.' },
-  { target: 'mobile-nav', title: 'Tezkor tugmalar', icon: <Plus className="size-5" />, text: 'Bosh sahifa, buyurtmalar, mahsulotlar va oʻrtada “+” — yangi mahsulot yoki buyurtma.' },
-  { target: 'bell', title: 'Bildirishnomalar', icon: <Bell className="size-5" />, text: 'Yangi buyurtma, sharh va kam qolgan mahsulotlar shu yerda. Telegramga ham keladi.' },
-  { title: 'Telegram botlar', icon: <Send className="size-5" />, text: 'Yuqoridagi Telegram boʻlimi → Botlar. Doʻkon boti (xaridorlar) va admin boti (siz) shu yerda ulanadi va boshqariladi.' },
-];
+/** Menyu matni joriy tilda (RU — NAV_RU dan, boʻlmasa oʻzbekcha). */
+function useTr() {
+  const { lang } = useApp();
+  return (s: string) => (lang === 'ru' ? NAV_RU[s] ?? s : s);
+}
+import { GuidedTour, startTour } from '@/components/tour';
+import type { Tours } from '@/lib/tours';
+
 import { logout } from '@/lib/actions/auth';
 import { markStaffNotificationsRead } from '@/lib/actions/admin/misc';
 import { formatDateTime } from '@/lib/format';
@@ -29,14 +27,14 @@ import { cn } from '@/components/ui/cn';
 import { IconButton } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/kit';
 import { BrandMark, Logo } from '@/components/brand';
-import { groupLabel, useBrand } from '@/lib/brand/store';
+import { useBrand } from '@/lib/brand/store';
 import { useTheme } from '@/lib/theme';
 import { LangSwitch } from '@/components/shop/header-client';
 import type { Notification } from '@/lib/types';
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, ShoppingBag, Users, BarChart3, Package, FolderTree, Warehouse, MessageSquare, Image, Percent,
-  TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot, Megaphone, BellRing, Gift,
+  TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot, Megaphone, BellRing, Gift, Lightbulb,
 };
 
 const isActive = (pathname: string, href: string) => (href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(href + '/'));
@@ -118,26 +116,28 @@ function useTableLabels() {
 const barBtn = 'inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-white/75 transition-colors hover:bg-white/10 hover:text-white';
 
 function TopBrand() {
+  const tr = useTr();
   const brand = useBrand();
   return (
     <Link href="/admin" className="flex min-w-0 items-center gap-2.5 pr-2">
       <BrandMark brand={brand} className="h-9 max-w-[72px] shrink-0 rounded-xl" />
       <span className="hidden min-w-0 leading-tight sm:block">
         <span className="block truncate text-[15px] font-bold uppercase tracking-wide text-white">{brand.name}</span>
-        <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">Admin panel</span>
+        <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-white/55">{tr('Admin panel')}</span>
       </span>
     </Link>
   );
 }
 
 function ModuleBar({ nav, active }: { nav: AdminNavGroup[]; active: AdminNavGroup | null }) {
+  const tr = useTr();
   const brand = useBrand();
   return (
     <nav className="hidden items-center gap-1 md:flex" aria-label="Boʻlimlar" data-tour="modules">
       {nav.map((g) => {
         const Icon = NAV_ICONS[g.icon] ?? Circle;
         const on = active?.title === g.title;
-        const label = groupLabel(brand, g.title);
+        const label = brand.groups[g.title as keyof typeof brand.groups] || tr(g.title);
         return (
           <Link key={g.title} href={g.items[0].href} title={label} aria-current={on ? 'true' : undefined}
             className={cn('inline-flex h-10 items-center gap-2 rounded-xl text-sm font-semibold transition-colors',
@@ -152,9 +152,10 @@ function ModuleBar({ nav, active }: { nav: AdminNavGroup[]; active: AdminNavGrou
 }
 
 function TopTheme() {
+  const tr = useTr();
   const theme = useTheme();
   return (
-    <button type="button" onClick={theme.toggle} className={cn(barBtn, 'border border-white/15')} aria-label={theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim'} title={theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim'}>
+    <button type="button" onClick={theme.toggle} className={cn(barBtn, 'border border-white/15')} aria-label={tr(theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim')} title={tr(theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim')}>
       {theme.isDark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
     </button>
   );
@@ -167,20 +168,21 @@ function initials(name: string) {
 /* ───────────── Chap menyu ───────────── */
 
 function SideItems({ group, pathname, collapsed, onNavigate }: { group: AdminNavGroup; pathname: string; collapsed: boolean; onNavigate?: () => void }) {
+  const tr = useTr();
   return (
     <div className="space-y-1">
       {group.items.map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = NAV_ICONS[item.icon] ?? Circle;
         return (
-          <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={collapsed ? item.label : undefined}
+          <Link key={item.href} href={item.href} onClick={onNavigate} aria-current={active ? 'page' : undefined} title={collapsed ? tr(item.label) : undefined}
             className={cn('relative flex h-11 items-center gap-3 rounded-xl text-[15px] font-medium transition-colors',
               collapsed ? 'justify-center' : 'px-3',
               active ? 'bg-[#e3edf8] text-[#1d4f80] dark:bg-white/10 dark:text-white' : 'text-ink-2 hover:bg-surface-2 hover:text-ink')}>
             {active && <span className="absolute -left-2 top-2 h-7 w-[3px] rounded-r bg-[#1d4f80] dark:bg-white" aria-hidden />}
             <Icon className="size-[19px] shrink-0" strokeWidth={1.9} aria-hidden />
-            {!collapsed && <span className="truncate">{item.label}</span>}
-            {!collapsed && item.paused && <span className="ml-auto rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-semibold text-warn">Vaqtincha</span>}
+            {!collapsed && <span className="truncate">{tr(item.label)}</span>}
+            {!collapsed && item.paused && <span className="ml-auto rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-semibold text-warn">{tr('Vaqtincha')}</span>}
           </Link>
         );
       })}
@@ -190,12 +192,13 @@ function SideItems({ group, pathname, collapsed, onNavigate }: { group: AdminNav
 
 /** Telefondagi drawer: barcha boʻlimlar ketma-ket. */
 function DrawerNav({ nav, pathname, onNavigate }: { nav: AdminNavGroup[]; pathname: string; onNavigate: () => void }) {
+  const tr = useTr();
   const brand = useBrand();
   return (
     <nav className="space-y-5" aria-label="Admin menyu">
       {nav.map((g) => (
         <div key={g.title}>
-          <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">{groupLabel(brand, g.title)}</div>
+          <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">{brand.groups[g.title as keyof typeof brand.groups] || tr(g.title)}</div>
           <SideItems group={g} pathname={pathname} collapsed={false} onNavigate={onNavigate} />
         </div>
       ))}
@@ -227,6 +230,7 @@ function useTabs(current: AdminNavItem | null) {
 }
 
 function TabsBar({ tabs, activeHref, onClose }: { tabs: Tab[]; activeHref: string | null; onClose: (href: string) => void }) {
+  const tr = useTr();
   const router = useRouter();
   if (!tabs.length) return null;
   return (
@@ -239,7 +243,7 @@ function TabsBar({ tabs, activeHref, onClose }: { tabs: Tab[]; activeHref: strin
               on ? 'border-line bg-surface-solid text-ink' : 'border-transparent text-ink-3 hover:bg-white/50 hover:text-ink-2 dark:hover:bg-white/5')}>
               <Link href={t.href} className="flex h-full items-center gap-2 pl-4 pr-1">
                 {on && <span className="size-1.5 rounded-full bg-[#1d4f80] dark:bg-white" aria-hidden />}
-                <span className="max-w-[180px] truncate">{t.label}</span>
+                <span className="max-w-[180px] truncate">{tr(t.label)}</span>
               </Link>
               <button type="button" aria-label={`${t.label} yopish`} title="Yopish"
                 onClick={() => {
@@ -261,10 +265,11 @@ function TabsBar({ tabs, activeHref, onClose }: { tabs: Tab[]; activeHref: strin
 
 export interface BranchProps { mine: Array<{ id: number; name: string }>; current: number; total: number }
 
-export function AdminShell({ nav, email, name, roleName, notifications, unread, canSearch, languages, primaryAction, branches, children }: {
+export function AdminShell({ nav, email, name, roleName, notifications, unread, canSearch, languages, primaryAction, branches, tours, children }: {
   nav: AdminNavGroup[]; email: string | null; name: string | null; roles: string[]; roleName: string; notifications: Notification[]; unread: number; canSearch: boolean;
-  languages: string[]; primaryAction: { href: string; label: string } | null; branches: BranchProps; children: React.ReactNode;
+  languages: string[]; primaryAction: { href: string; label: string } | null; branches: BranchProps; tours: Tours; children: React.ReactNode;
 }) {
+  const tr = useTr();
   const pathname = usePathname();
   const brand = useBrand();
   const [drawer, setDrawer] = useState(false);
@@ -287,7 +292,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
 
   return (
     <div className="admin-ui min-h-screen bg-[var(--admin-bg)]">
-      <Tour id="admin" steps={ADMIN_TOUR} />
+      <GuidedTour scope="admin" tours={tours} />
       {/* Yuqori toʻq panel */}
       <header className="no-print fixed inset-x-0 top-0 z-40 h-14 bg-[var(--admin-bar)] text-white">
         <div className="flex h-full items-center gap-2 px-3 sm:px-4">
@@ -298,11 +303,11 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
           {canSearch && <AdminSearch />}
           <BranchSwitch branches={branches} className="hidden sm:inline-flex" />
           <span data-tour="bell" className="inline-flex"><NotificationsBell items={notifications} unread={unread} /></span>
-          <button type="button" className={cn(barBtn, 'hidden sm:inline-flex')} onClick={() => openTour('admin')} aria-label="Yoʻriqnoma" title="Yoʻriqnoma"><HelpCircle className="size-[18px]" /></button>
+          <button type="button" className={cn(barBtn, 'hidden sm:inline-flex')} onClick={() => startTour('admin', '/admin')} aria-label={tr('Yoʻriqnoma')} title={tr('Yoʻriqnoma')}><HelpCircle className="size-[18px]" /></button>
           <TopTheme />
           <span title={`${who} · ${roleName}`} className="hidden size-10 items-center justify-center rounded-full bg-[#2a5a8c] text-[13px] font-bold text-white sm:inline-flex">{initials(who)}</span>
           <form action={logout} className="hidden sm:block">
-            <button type="submit" className={cn(barBtn, 'border border-white/15')} aria-label="Chiqish" title="Chiqish"><LogOut className="size-[18px]" /></button>
+            <button type="submit" className={cn(barBtn, 'border border-white/15')} aria-label={tr('Chiqish')} title={tr('Chiqish')}><LogOut className="size-[18px]" /></button>
           </form>
         </div>
       </header>
@@ -310,8 +315,8 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
       {/* Kompyuter: chap menyu (tanlangan boʻlim sahifalari) */}
       <aside data-tour="side" className={cn('no-print fixed bottom-0 left-0 top-14 z-30 hidden flex-col border-r border-line bg-surface-solid transition-[width] duration-200 lg:flex', sideW)}>
         <div className={cn('flex h-14 items-center border-b border-line', collapsed ? 'justify-center' : 'justify-between pl-4 pr-3')}>
-          {!collapsed && <span className="truncate text-[15px] font-bold tracking-tight text-ink">{group ? groupLabel(brand, group.title) : 'Menyu'}</span>}
-          <IconButton label={collapsed ? 'Menyuni ochish' : 'Menyuni yigʻish'} onClick={toggleSide} className="border border-line">
+          {!collapsed && <span className="truncate text-[15px] font-bold tracking-tight text-ink">{group ? brand.groups[group.title as keyof typeof brand.groups] || tr(group.title) : tr('Menyu')}</span>}
+          <IconButton label={collapsed ? tr('Menyuni ochish') : tr('Menyuni yigʻish')} onClick={toggleSide} className="border border-line">
             {collapsed ? <PanelLeftOpen className="size-[18px]" /> : <PanelLeftClose className="size-[18px]" />}
           </IconButton>
         </div>
@@ -320,7 +325,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
         </div>
         <div className={cn('border-t border-line p-2', collapsed && 'flex justify-center')}>
           <Link href={SITE_URL} target="_blank" title="Saytni ochish" className={cn('flex h-10 items-center gap-3 rounded-xl text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink', collapsed ? 'w-10 justify-center' : 'px-3')}>
-            <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} />{!collapsed && 'Saytni ochish'}
+            <ExternalLink className="size-[18px] text-ink-3" strokeWidth={1.9} />{!collapsed && tr('Saytni ochish')}
           </Link>
           {!collapsed && languages.length > 1 && <LangSwitch languages={languages} className="mt-1 flex [&>button]:flex-1" />}
         </div>
@@ -371,7 +376,7 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
             return (
               <Link key={tab.href} href={tab.href} className={cn('flex flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-ink' : 'text-ink-3')} aria-current={active ? 'page' : undefined}>
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} />
-                <span className="max-w-full truncate px-0.5">{tab.href === '/admin' ? 'Asosiy' : tab.label}</span>
+                <span className="max-w-full truncate px-0.5">{tab.href === '/admin' ? tr('Asosiy') : tr(tab.label)}</span>
               </Link>
             );
           })}
@@ -386,18 +391,20 @@ export function AdminShell({ nav, email, name, roleName, notifications, unread, 
 }
 
 function AdminSearch() {
+  const tr = useTr();
   const router = useRouter();
   const [q, setQ] = useState('');
   return (
-    <form role="search" className="relative hidden w-full max-w-[240px] xl:block" onSubmit={(e) => { e.preventDefault(); if (q.trim()) router.push(`/admin/search?q=${encodeURIComponent(q.trim())}`); }}>
+    <form role="search" data-tour="admin-search" className="relative hidden w-full max-w-[240px] xl:block" onSubmit={(e) => { e.preventDefault(); if (q.trim()) router.push(`/admin/search?q=${encodeURIComponent(q.trim())}`); }}>
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/55" />
-      <input value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder="Buyurtma №, telefon…" aria-label="Admin qidiruv"
+      <input value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder={tr('Buyurtma №, telefon…')} aria-label="Admin qidiruv"
         className="h-10 w-full rounded-xl border border-white/10 bg-white/10 pl-9 pr-3 text-sm text-white placeholder:text-white/50 outline-none focus:border-white/30 focus:bg-white/15" />
     </form>
   );
 }
 
 function NotificationsBell({ items, unread }: { items: Notification[]; unread: number }) {
+  const tr = useTr();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -416,11 +423,11 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-80 text-ink max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-surface shadow-pop anim-pop">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <span className="text-[15px] font-semibold tracking-tight">Bildirishnomalar</span>
-            {unread > 0 && <button className="text-xs font-medium text-primary" onClick={async () => { await markStaffNotificationsRead(); router.refresh(); setOpen(false); }}>Hammasi oʻqildi</button>}
+            <span className="text-[15px] font-semibold tracking-tight">{tr('Bildirishnomalar')}</span>
+            {unread > 0 && <button className="text-xs font-medium text-primary" onClick={async () => { await markStaffNotificationsRead(); router.refresh(); setOpen(false); }}>{tr('Hammasi oʻqildi')}</button>}
           </div>
           {items.length === 0 ? (
-            <p className="px-4 py-8 text-center text-[13px] text-ink-3">Yangi bildirishnoma yoʻq</p>
+            <p className="px-4 py-8 text-center text-[13px] text-ink-3">{tr('Yangi bildirishnoma yoʻq')}</p>
           ) : (
             <ul className="max-h-96 divide-y divide-line overflow-y-auto">
               {items.map((n) => (
@@ -442,6 +449,7 @@ function NotificationsBell({ items, unread }: { items: Notification[]; unread: n
 
 /** Qaysi filial ko'rsatiladi. Faqat bir nechta filialni ko'radigan xodimda tanlagich; bittasida oddiy yozuv. */
 function BranchSwitch({ branches, className }: { branches: BranchProps; className?: string }) {
+  const tr = useTr();
   const router = useRouter();
   if (branches.total < 2 || !branches.mine.length) return null;
   if (branches.mine.length === 1) {
@@ -455,13 +463,13 @@ function BranchSwitch({ branches, className }: { branches: BranchProps; classNam
   return (
     <label className={cn('relative h-10 min-w-0 max-w-[200px] items-center gap-1.5 rounded-xl border border-white/15 pl-2.5 pr-2 text-sm font-medium text-white hover:bg-white/10', className)}>
       <Building2 className="size-4 shrink-0 text-white/55" />
-      <span className="flex-1 truncate">{value ? branches.mine.find((b) => b.id === value)?.name : 'Barcha filiallar'}</span>
+      <span className="flex-1 truncate">{value ? branches.mine.find((b) => b.id === value)?.name : tr('Barcha filiallar')}</span>
       <svg viewBox="0 0 20 20" className="size-4 shrink-0 text-white/55" aria-hidden><path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
       <select aria-label="Filial" value={value} onChange={(e) => {
         document.cookie = `dk_branch=${Number(e.target.value)}; path=/; max-age=31536000; samesite=lax`;
         router.refresh();
       }} className="absolute inset-0 cursor-pointer opacity-0">
-        <option value={0}>Barcha filiallar</option>
+        <option value={0}>{tr('Barcha filiallar')}</option>
         {branches.mine.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
       </select>
     </label>

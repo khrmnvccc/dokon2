@@ -157,6 +157,7 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
   }
   return (
     <form
+      data-tour="coupon"
       className="rounded-xl border border-line bg-surface p-4 shadow-soft"
       onSubmit={(e) => {
         e.preventDefault();
@@ -201,6 +202,7 @@ function Summary({ quote, loading }: { quote: QuoteResult; loading: boolean }) {
       {quote.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}
       {quote.hasErrors && <p className="mt-3 text-xs font-medium text-danger">Davom etish uchun belgilangan mahsulotlarni to‘g‘rilang yoki olib tashlang</p>}
       <Link
+        data-tour="checkout"
         href={blocked ? '#' : '/checkout'}
         aria-disabled={blocked}
         onClick={(e) => blocked && e.preventDefault()}

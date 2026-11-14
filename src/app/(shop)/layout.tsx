@@ -7,9 +7,10 @@ import { Header } from '@/components/shop/header';
 import { Footer } from '@/components/shop/footer';
 import { MobileBottomNav } from '@/components/shop/header-client';
 import { ShopTour } from '@/components/shop/shop-tour';
+import { getTours } from '@/lib/data/tours';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  const [settings, tree, t] = await Promise.all([getSettings(), getCategoryTree(), getT()]);
+  const [settings, tree, t, tours] = await Promise.all([getSettings(), getCategoryTree(), getT(), getTours()]);
 
   // Texnik xizmat rejimi: xodimlar saytni ko'ra oladi, mijozlar xabarni ko'radi
   if (settings.maintenance.enabled && !(await getStaffContext())) {
@@ -36,7 +37,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <Footer settings={settings} t={t} />
       <MobileBottomNav />
-      <ShopTour />
+      <ShopTour tours={tours} />
     </>
   );
 }

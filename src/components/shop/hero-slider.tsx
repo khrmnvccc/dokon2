@@ -41,7 +41,7 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
 
   if (!count) return null;
   return (
-    <section
+    <section data-tour="banner"
       aria-roledescription="carousel"
       aria-label="Aksiya bannerlari"
       className="group relative aspect-[16/9] overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-soft sm:aspect-[16/6]"

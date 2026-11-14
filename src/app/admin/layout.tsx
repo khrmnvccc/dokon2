@@ -9,6 +9,7 @@ import { ADMIN_NAV } from '@/lib/admin/nav';
 import { canSee, pageAccess, pageConfig, pageLabel } from '@/lib/admin/pages';
 import { getBranchState } from '@/lib/admin/branch';
 import { roleLabel } from '@/lib/perms';
+import { getTours } from '@/lib/data/tours';
 import { AdminShell } from '@/components/admin/shell';
 import type { Notification } from '@/lib/types';
 
@@ -63,8 +64,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {children}
     </>
   );
+  const tours = await getTours();
   return (
     <AdminShell
+      tours={tours}
       nav={nav}
       email={ctx.email}
       name={profile?.full_name ?? null}
