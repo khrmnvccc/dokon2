@@ -161,6 +161,9 @@ function ConnectTab({ data }: { data: MessagesData }) {
             </div>
             {t.personalPaused && <Alert tone="warn">Shaxsiy chat vaqtincha toʻxtatilgan. Kechki hisobot baribir keladi.</Alert>}
             {data.isOwner && (
+              <Button variant="secondary" size="sm" loading={pending} onClick={() => run(refreshBots)}><RefreshCw className="size-4" /> Menyu tugmasini sozlash</Button>
+            )}
+            {data.isOwner && (
               <Button variant="ghost" size="sm" onClick={async () => {
                 if (await confirm({ title: 'Botni butunlay uzish?', text: 'Guruh va xodimlar ham xabar olmay qoladi. Matnlar saqlanib qoladi.', danger: true, confirmText: 'Uzish' })) run(() => disconnectTelegram('bot'));
               }}>Botni uzish</Button>
