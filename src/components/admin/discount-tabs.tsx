@@ -4,6 +4,7 @@ import { cn } from '@/components/ui/cn';
 const TABS = [
   { href: '/admin/promotions', label: 'Aksiyalar' },
   { href: '/admin/coupons', label: 'Promo-kodlar' },
+  { href: '/admin/coupons/issued', label: 'Berilgan kuponlar' },
   { href: '/admin/coupons/used', label: 'Ishlatilganlar' },
 ] as const;
 

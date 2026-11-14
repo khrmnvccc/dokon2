@@ -5,7 +5,7 @@ import { formatUzPhone } from '@/lib/phone';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify } from './server';
-import { notifyCustomer } from './shop-bot';
+import { notifyCustomer, notifyReferralRewards } from './shop-bot';
 import type { OrderStatus } from '@/lib/types';
 
 // Doʻkon hodisalari → Telegram. Hammasi after() ichida chaqiriladi: xaridor va xodim kutmaydi,
@@ -60,6 +60,8 @@ async function checkLowStock(productIds: string[]) {
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {
   if (change.status) await notifyCustomer(orderId, change.status);
+  // Doʻst taklifi: holat oʻzgarishi bilan bazada yaratilgan bosqich kuponlarini egasiga yuborish
+  if (change.status) await notifyReferralRewards();
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;

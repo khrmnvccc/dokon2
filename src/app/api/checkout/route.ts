@@ -12,6 +12,7 @@ import { couponErrorText, lineErrorText } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
 import { TAGS } from '@/lib/cache-tags';
 import { onNewOrder } from '@/lib/telegram/events';
+import { attachFromCookie } from '@/lib/referral-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,11 +40,15 @@ export async function POST(request: Request) {
   const ip = await getClientIp();
   if (!(await rateLimit(`checkout:${user?.id ?? ip}`, 5, 600))) return fail('Juda ko‘p buyurtma urinishi. Birozdan so‘ng qayta urinib ko‘ring', 429);
 
+  // Sayt havolasi (/r/<ID>) orqali kelgan yangi mijoz — birinchi buyurtmadan oldin bogʻlanadi
+  if (user) await attachFromCookie(user.id);
+
   const { quote, shippingMethod } = await buildQuote({
     items: input.items,
     couponCode: input.couponCode,
     shippingMethodId: input.shippingMethodId,
     withCost: true,
+    userId: user?.id ?? null,
   });
 
   if (!shippingMethod) return fail('Yetkazib berish usulini tanlang', 400, { fieldErrors: { shippingMethodId: 'Yetkazib berish usulini tanlang' } });

@@ -3,13 +3,14 @@
 import { useL } from '@/components/providers';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Heart, LayoutDashboard, LogOut, MapPin, Package, User } from 'lucide-react';
+import { Bell, Heart, LayoutDashboard, LogOut, MapPin, Package, User, UsersRound } from 'lucide-react';
 import { logout } from '@/lib/actions/auth';
 import { cn } from '@/components/ui/cn';
 
 const links = [
   { href: '/account', label: "Profil", icon: User },
   { href: '/account/orders', label: "Buyurtmalarim", icon: Package },
+  { href: '/account/referral', label: "Doʻstni taklif qilish", icon: UsersRound },
   { href: '/account/addresses', label: "Manzillar", icon: MapPin },
   { href: '/account/notifications', label: "Bildirishnomalar", icon: Bell },
   { href: '/wishlist', label: "Sevimlilar", icon: Heart },

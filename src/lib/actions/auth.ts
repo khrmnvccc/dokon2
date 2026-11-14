@@ -1,5 +1,6 @@
 'use server';
 
+import { attachFromCookie } from '@/lib/referral-server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -58,6 +59,8 @@ export async function register(input: unknown, next?: string): Promise<ActionRes
     console.error('signUp', error.message);
     return { ok: false, error: 'Ro‘yxatdan o‘tib bo‘lmadi. Keyinroq urinib ko‘ring' };
   }
+  // Doʻst havolasi (/r/<ID>) orqali kelgan boʻlsa — taklif qilgan odamga bogʻlanadi
+  if (data.user) await attachFromCookie(data.user.id);
   if (!data.session) return { ok: true, data: { needsConfirmation: true }, message: 'Pochtangizga tasdiqlash havolasi yuborildi' };
   return { ok: true, data: { redirectTo: safeNext(next) } };
 }

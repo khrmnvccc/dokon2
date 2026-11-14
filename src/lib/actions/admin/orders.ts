@@ -28,6 +28,10 @@ export async function updateOrder(input: z.input<typeof schema>): Promise<Action
   const d = parsed.data;
   if (d.status === 'cancelled' && !d.note) return { ok: false, error: 'Bekor qilish sababini yozing', fieldErrors: { note: 'Sababni yozing' } };
   const supabase = await getServerSupabase();
+  if (d.status) {
+    const { data: cur } = await supabase.from('orders').select('status').eq('id', d.orderId).maybeSingle();
+    if (cur?.status === d.status) return { ok: false, error: 'Buyurtma allaqachon shu holatda. Sahifani yangilang.' };
+  }
   const { error } = await supabase.rpc('admin_update_order', {
     p_order_id: d.orderId,
     p_status: d.status ?? null,

@@ -31,6 +31,7 @@ export const PERM_GROUPS: PermGroup[] = [
       { key: 'payments.write', label: 'Yetkazish va toʻlov usullari', hint: 'Narxlar, usullarni yoqish/oʻchirish' },
       { key: 'coupons.write', label: 'Promo-kodlar', hint: 'Foiz yoki summa, muddat va limit' },
       { key: 'promotions.write', label: 'Aksiyalar', hint: 'Chegirma aksiyalari' },
+      { key: 'partners.manage', label: 'Hamkorlar va doʻst taklifi', hint: 'Taklif qoidalari, shaxsiy kuponlar, hamkor toʻlovlari' },
     ],
   },
   {

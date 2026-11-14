@@ -144,6 +144,9 @@ export interface Coupon {
   is_active: boolean;
   design?: unknown;
   is_public?: boolean;
+  /** Shaxsiy kupon egasi (doʻst taklifi, sovgʻa) — faqat u ishlata oladi */
+  owner_id?: string | null;
+  source?: 'manual' | 'referral' | 'welcome' | 'gift';
 }
 
 export interface ShippingMethod {

@@ -19,6 +19,8 @@ export async function buildQuote(opts: {
   shippingMethodId?: string | null;
   /** true — tannarxni ham o'qiydi (faqat buyurtma yaratishda, service role bilan) */
   withCost?: boolean;
+  /** Shaxsiy kupon faqat egasiga ishlaydi */
+  userId?: string | null;
 }): Promise<{ quote: QuoteResult; shippingMethod: ShippingMethod | null }> {
   const service = hasServiceKey() ? getServiceSupabase() : null;
   const db = service ?? getPublicSupabase();
@@ -63,6 +65,7 @@ export async function buildQuote(opts: {
     chain: buildCategoryChain(categories),
     coupon,
     couponRequested: Boolean(code),
+    userId: opts.userId ?? null,
     shippingMethod,
     freeShippingThreshold: settings.checkout.free_shipping_threshold,
     minOrderAmount: settings.checkout.min_order_amount,
