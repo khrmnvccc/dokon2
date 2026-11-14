@@ -254,6 +254,7 @@ export interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
+  client_no?: number | null;
   email: string | null;
   is_blocked: boolean;
   blocked_reason: string | null;

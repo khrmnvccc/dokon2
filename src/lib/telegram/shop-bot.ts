@@ -7,6 +7,7 @@ import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import { chatTitle, getTelegram, logSend, tg, TelegramFail } from './server';
 import type { OrderStatus } from '@/lib/types';
+import { ensureShopUser, profileOf, savePhone, tgDisplay } from './tg-users';
 
 // Doʻkon boti — xaridorlar uchun alohida bot. Admin botidan farqi: webhook bilan ishlaydi (javob darhol),
 // menyu tugmasi doʻkonni Telegram ichida mini-ilova qilib ochadi, buyurtma holati xaridorning oʻziga keladi.
@@ -103,6 +104,7 @@ export interface ShopUpdate {
   update_id: number;
   message?: {
     message_id: number; text?: string;
+    contact?: { phone_number: string; first_name?: string; last_name?: string; user_id?: number };
     chat: { id: number; type: string; first_name?: string; last_name?: string; username?: string };
     from?: { id: number; first_name?: string; last_name?: string; username?: string; language_code?: string };
   };
@@ -110,11 +112,18 @@ export interface ShopUpdate {
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-async function send(config: ShopBotConfig, chatId: number, text: string, keyboard?: unknown[][]) {
+async function send(config: ShopBotConfig, chatId: number, text: string, keyboard?: unknown[][], markup?: Record<string, unknown>) {
   await tg(config.token, 'sendMessage', {
     chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true,
-    ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : {}),
+    ...(keyboard ? { reply_markup: { inline_keyboard: keyboard } } : markup ? { reply_markup: markup } : {}),
   });
+}
+
+/** Pastdagi katta tugma: bosilsa Telegram raqamni botga yuboradi (Laylakdagidek bir bosishda roʻyxatdan oʻtish). */
+const PHONE_KEYBOARD = { keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true, input_field_placeholder: 'Pastdagi tugmani bosing' };
+
+async function askPhone(config: ShopBotConfig, chatId: number) {
+  await send(config, chatId, '📱 <b>Roʻyxatdan oʻtish</b> — bir bosishda.\nPastdagi <b>“Raqamni yuborish”</b> tugmasini bosing. Raqamingiz faqat buyurtmani yetkazish uchun kerak.', undefined, PHONE_KEYBOARD);
 }
 
 async function upsertSubscriber(chat: NonNullable<ShopUpdate['message']>['chat'], subscribed: boolean) {
@@ -136,7 +145,28 @@ const STATUS_ICON: Partial<Record<OrderStatus, string>> = {
 
 export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate) {
   const m = update.message;
-  if (!m || m.chat.type !== 'private' || typeof m.text !== 'string') return;
+  if (!m || m.chat.type !== 'private') return;
+  const { brand: b0 } = await getSettings();
+
+  // Raqam yuborildi: faqat oʻz raqami (boshqa odamning kontaktini ulashsa — qabul qilinmaydi).
+  if (m.contact) {
+    const from = m.from;
+    if (!from || m.contact.user_id !== from.id) {
+      await send(config, m.chat.id, 'Iltimos, oʻzingizning raqamingizni pastdagi tugma orqali yuboring.', undefined, PHONE_KEYBOARD);
+      return;
+    }
+    const userId = await ensureShopUser(from);
+    const phone = userId ? await savePhone(userId, m.contact.phone_number, tgDisplay(from)) : null;
+    if (!userId || !phone) {
+      await send(config, m.chat.id, 'Raqamni saqlab boʻlmadi. Birozdan keyin qayta urinib koʻring.', undefined, PHONE_KEYBOARD);
+      return;
+    }
+    const p = await profileOf(userId);
+    await send(config, m.chat.id, `✅ Roʻyxatdan oʻtdingiz!${p?.client_no ? `\nSizning ID: <b>${p.client_no}</b>` : ''}\nTelefon: ${esc(phone)}`, undefined, { remove_keyboard: true });
+    await send(config, m.chat.id, `Endi <b>${esc(b0.name || 'doʻkon')}</b>dan xarid qilishingiz mumkin 👇`, [[openButton('🛍 Doʻkonni ochish')]]);
+    return;
+  }
+  if (typeof m.text !== 'string') return;
   const text = m.text.trim();
   const cmd = text.split(/[\s@]/)[0].toLowerCase();
   const { brand, contact } = await getSettings();
@@ -144,6 +174,9 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
 
   if (cmd === '/start') {
     await upsertSubscriber(m.chat, true);
+    // Akkaunt darhol ochiladi; raqami yoʻq boʻlsa — salomdan keyin bir bosishda roʻyxatdan oʻtish taklif qilinadi.
+    const startUser = m.from ? await ensureShopUser(m.from) : null;
+    const startProfile = startUser ? await profileOf(startUser) : null;
     const first = esc(m.from?.first_name || m.chat.first_name || '');
     await send(config, m.chat.id,
       `Assalomu alaykum${first ? `, <b>${first}</b>` : ''}! 👋\n\n<b>${name}</b> botiga xush kelibsiz.\n\n` +
@@ -152,6 +185,7 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
       `Xabarlar kerak boʻlmasa — /stop`,
       [[openButton('🛍 Doʻkonni ochish')], [openButton('🎁 Aksiyalar', '/sale'), openButton('📦 Buyurtmalarim', '/account/orders')]],
     );
+    if (startUser && !startProfile?.phone) await askPhone(config, m.chat.id);
     return;
   }
   if (cmd === '/stop') {
