@@ -98,7 +98,7 @@ export function TelegramPreview({ html, buttons = [], botName, time = '12:00', i
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {image && <img src={image} alt="" className="-mx-3 -mt-2 mb-2 block aspect-[1200/750] w-[calc(100%+1.5rem)] max-w-none bg-[#c9d6e2] object-cover" />}
           {html
-            ? <div className="whitespace-pre-wrap break-words [&_b]:font-semibold [&_i]:italic" dangerouslySetInnerHTML={{ __html: html }} />
+            ? <div className="whitespace-pre-wrap break-words [&_b]:font-semibold [&_i]:italic [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-1 [&_code]:font-mono [&_code]:text-[#2b7bc0]" dangerouslySetInnerHTML={{ __html: html }} />
             : <div className="italic text-[#8a98a5]">Matn boʻsh</div>}
           <div className="mt-0.5 text-right text-[11px] text-[#8a98a5]">{time}</div>
         </div>
@@ -406,7 +406,7 @@ function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: Mes
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin. Qiymati boʻsh qator chiqmaydi.</p>
+          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin, `teskari tirnoq orasida` — bosilsa nusxalanadi. Qiymati boʻsh qator chiqmaydi.</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button loading={pending} disabled={text === saved} onClick={() => run(() => updateTemplate(k, { text }))}>Saqlash</Button>
             <Button variant="secondary" disabled={pending || !data.telegram?.connected} onClick={() => run(() => testTemplate(k, text))}><Send className="size-4" /> Namuna yuborish</Button>
@@ -568,7 +568,7 @@ function CustomerEditor({ k, data, onBack }: { k: CustomerMsgKey; data: Messages
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin. Qiymati boʻsh qator chiqmaydi.{tooLong ? ' Rasmli xabarda matn 1024 belgidan oshsa, rasmsiz yuboriladi.' : ''}</p>
+          <p className="mt-2 text-xs text-ink-3">*yulduzcha orasida* — qalin, `teskari tirnoq orasida` — bosilsa nusxalanadi. Qiymati boʻsh qator chiqmaydi.{tooLong ? ' Rasmli xabarda matn 1024 belgidan oshsa, rasmsiz yuboriladi.' : ''}</p>
 
           <SectionLabel>Tugma</SectionLabel>
           <Input value={button} maxLength={CUSTOMER_BUTTON_MAX} onChange={(e) => setButton(e.target.value)} aria-label="Tugma nomi" placeholder="Boʻsh qoldirsangiz tugma chiqmaydi" className="max-w-sm" />

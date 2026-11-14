@@ -6,6 +6,7 @@ import { formatPrice } from '@/lib/format';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import { methodCard } from '@/lib/payments/receipts';
+import { formatCardNumber } from '@/lib/payment-card';
 import { chatTitle, getTelegram, logSend, notify, tg, TelegramFail, type TgPhoto } from './server';
 import { formatUzPhone } from '@/lib/phone';
 import type { OrderStatus } from '@/lib/types';
@@ -376,15 +377,19 @@ export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus 
     const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count, payment_method_id').eq('id', orderId).maybeSingle();
     if (!o?.user_id) return;
     // Kartaga toʻlov: “qabul qilindi” oʻrniga “toʻlovni kutyapmiz”
-    if (kind === 'new' && (await methodCard(o.payment_method_id as string | null))) key = 'awaitPayment';
+    const card = kind === 'new' ? await methodCard(o.payment_method_id as string | null) : null;
+    if (card) key = 'awaitPayment';
     const { data: subs } = await db().from('telegram_subscribers').select('chat_id').eq('user_id', o.user_id).eq('via', 'shop');
     if (!subs?.length) return;
     const { brand } = await getSettings();
     const msg = await customerMessage(key, {
       raqam: o.number, mijoz: String(o.customer_name ?? '').split(' ')[0], summa: formatPrice(Number(o.total), 'soʻm'),
       soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon', sabab: extra.sabab ?? '',
+      karta: card ? formatCardNumber(card.number) : '', egasi: card?.holder ?? '',
     }, { path: `/account/orders/${o.id}` });
     if (!msg) return;
+    // Karta raqamini bir bosishda nusxalash (Telegram tugmasi)
+    if (card) msg.buttons.unshift([{ text: '📋 Karta raqamini nusxalash', copy_text: { text: card.number } }]);
     for (const s of subs) {
       try {
         await sendRich(config.token, Number(s.chat_id), msg);

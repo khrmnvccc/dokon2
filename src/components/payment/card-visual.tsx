@@ -4,14 +4,18 @@ import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { CARD_THEMES, formatCardNumber, type PaymentCard } from '@/lib/payment-card';
 import { cn } from '@/components/ui/cn';
+import { copyText } from '@/lib/client/copy';
 
 /** Bank kartasi koʻrinishi: raqam katta harflarda, nusxalash tugmasi bilan. Admin oldindan koʻrish va saytda bir xil. */
 export function CardVisual({ card, copyLabel = 'Nusxalash', copiedLabel = 'Nusxalandi', className }: { card: PaymentCard; copyLabel?: string; copiedLabel?: string; className?: string }) {
   const t = CARD_THEMES[card.theme] ?? CARD_THEMES.dark;
   const [copied, setCopied] = useState(false);
   const copy = async () => {
-    try { await navigator.clipboard.writeText(card.number); setCopied(true); setTimeout(() => setCopied(false), 1800); }
-    catch { /* raqam koʻrinib turadi */ }
+    if (await copyText(card.number)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+      try { (window as { Telegram?: { WebApp?: { HapticFeedback?: { notificationOccurred: (t: string) => void } } } }).Telegram?.WebApp?.HapticFeedback?.notificationOccurred('success'); } catch { /* Telegram emas */ }
+    }
   };
   return (
     <div className={cn('relative aspect-[1.586] w-full max-w-sm overflow-hidden rounded-2xl p-5 shadow-lg', className)}
@@ -24,7 +28,7 @@ export function CardVisual({ card, copyLabel = 'Nusxalash', copiedLabel = 'Nusxa
           <span aria-hidden className="h-7 w-10 rounded-md bg-gradient-to-br from-[#f5d77a] to-[#b98a2e] opacity-90" />
         </div>
         <div className="mt-auto">
-          <p className="num whitespace-nowrap text-[clamp(1.05rem,5.6vw,1.45rem)] font-semibold tracking-[0.08em]">{formatCardNumber(card.number)}</p>
+          <button type="button" onClick={copy} title={copyLabel} className="num block select-all whitespace-nowrap text-left text-[clamp(1.05rem,5.6vw,1.45rem)] font-semibold tracking-[0.08em]">{formatCardNumber(card.number)}</button>
           <div className="mt-3 flex items-end justify-between gap-3">
             <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wider opacity-85">{card.holder || ' '}</span>
             <button type="button" onClick={copy}

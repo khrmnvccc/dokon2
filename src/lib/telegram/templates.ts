@@ -146,6 +146,8 @@ export function renderTemplate(text: string, values: Record<string, string | num
     if (names.length && names.every((n) => !String(values[n] ?? '').trim())) continue;
     const html = escapeHtml(line)
       .replace(/\*([^*\n]+)\*/g, '<b>$1</b>')
+      // `teskari qoʻshtirnoq orasida` — Telegramda bosilsa nusxalanadi (karta raqami, kupon kodi)
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
       .replace(/\{\{\s*(\w+)\s*\}\}/g, (_, n: string) => escapeHtml(String(values[n] ?? '')));
     lines.push(html);
   }

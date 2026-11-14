@@ -20,15 +20,15 @@ export async function CategoryGrid({ categories, title }: { categories: Category
       <SectionHeader title={title} href="/catalog" linkText={L("Barchasi")} />
       <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 md:grid-cols-6 lg:grid-cols-9">
         {categories.map((c) => (
-          <Link key={c.id} href={`/category/${c.slug}`} className="group flex w-24 shrink-0 flex-col items-center gap-2 rounded-xl border border-line bg-surface p-3 text-center shadow-soft anim-rise transition-colors hover:bg-surface-2 sm:w-auto">
-            <span className="relative flex size-14 items-center justify-center overflow-hidden rounded-lg bg-surface-2 text-ink-2">
+          <Link key={c.id} href={`/category/${c.slug}`} className="group flex w-[88px] shrink-0 flex-col items-center gap-2 rounded-[20px] p-1.5 text-center anim-rise transition sm:w-auto">
+            <span className="relative flex size-[68px] items-center justify-center overflow-hidden rounded-[22px] border border-line/70 bg-gradient-to-br from-surface to-surface-2 text-primary shadow-soft transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[var(--shadow-lg)]">
               {c.image_url ? (
                 <Image src={c.image_url} alt="" fill sizes="64px" className="object-cover" unoptimized={isUnoptimizable(c.image_url)} />
               ) : (
                 <DynamicIcon name={c.icon} className="size-6" />
               )}
             </span>
-            <span className="line-clamp-2 text-xs font-medium leading-tight text-ink">{c.name}</span>
+            <span className="line-clamp-2 text-[12px] font-semibold leading-tight text-ink">{c.name}</span>
           </Link>
         ))}
       </div>
@@ -53,8 +53,8 @@ export function Advantages({ items, title }: { items: SiteSettings['advantages']
     <section aria-label={title}>
       <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
         {items.map((a) => (
-          <div key={a.title} className="flex flex-col items-start gap-2.5 rounded-xl border border-line bg-surface p-3.5 shadow-soft anim-rise sm:flex-row sm:items-center sm:gap-3 sm:p-4">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-primary sm:size-11">
+          <div key={a.title} className="flex flex-col items-start gap-2.5 rounded-[22px] border border-line/70 bg-surface p-3.5 shadow-soft anim-rise sm:flex-row sm:items-center sm:gap-3 sm:p-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary sm:size-11">
               <DynamicIcon name={a.icon} className="size-5" />
             </span>
             <div className="min-w-0">
@@ -75,7 +75,7 @@ export async function ReviewsSection({ title, reviews, stats }: { title: string;
     // Hali sharh yoʻq: blok baribir koʻrinadi — xaridorlarni baho berishga chaqiradi.
     return (
       <section>
-        <Link href={stats.count ? '/reviews' : '/account/orders?status=delivered'} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft transition hover:shadow-pop">
+        <Link href={stats.count ? '/reviews' : '/account/orders?status=delivered'} className="flex items-center gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft transition hover:shadow-[var(--shadow-lg)]">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--yandex)_18%,transparent)] text-[var(--yandex)]"><Star className="size-5 fill-current" /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-semibold tracking-tight">{title}</span>

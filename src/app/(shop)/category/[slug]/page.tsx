@@ -65,7 +65,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           ))}
         </div>
       )}
-      {banners[0] && <div className="mb-5 aspect-[16/5] overflow-hidden rounded-2xl"><BannerSlide banner={banners[0]} /></div>}
+      {banners[0] && <div className="mb-5 aspect-[16/7] overflow-hidden rounded-[24px] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[28px]"><BannerSlide banner={banners[0]} compact /></div>}
       <CatalogView params={catalogParams} page={page} basePath={`/category/${category.slug}`} searchParams={sp} categorySlug={category.slug} />
     </>
   );

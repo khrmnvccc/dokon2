@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Check, Copy, Gift, X } from 'lucide-react';
 import { CouponCard, type CouponCardProps } from './coupon-card';
 import { useApp, useL } from '@/components/providers';
+import { copyText } from '@/lib/client/copy';
 
 /** Ochiq kupon: bosilganda kod nusxalanadi va sovgʻa qutisi ochiladi; checkout'da kiritiladi. */
 export function CopyCoupon({ code, card, description }: { code: string; card: CouponCardProps; description: string | null }) {
@@ -13,7 +14,7 @@ export function CopyCoupon({ code, card, description }: { code: string; card: Co
   const [done, setDone] = useState(false);
   const [gift, setGift] = useState(false);
   const copy = async (withGift: boolean) => {
-    try { await navigator.clipboard.writeText(code); } catch { /* eski brauzer: kod baribir koʻrinib turadi */ }
+    await copyText(code);
     setDone(true);
     if (withGift) setGift(true);
     setTimeout(() => setDone(false), 1800);
