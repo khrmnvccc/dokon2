@@ -33,7 +33,7 @@ const OWNER_TABS: string[] = ['brand', 'pages', 'branches'];
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Asosiy slayder', categories: 'Kategoriyalar', bestsellers: 'Xit mahsulotlar', promo: 'Aksiya bannerlari', new: 'Yangi mahsulotlar',
-  sale: 'Chegirmadagilar', middle_banner: 'O‘rta banner', featured: 'Tavsiya etilganlar', advantages: 'Afzalliklar',
+  sale: 'Chegirmadagilar', middle_banner: 'O‘rta banner', featured: 'Tavsiya etilganlar', reviews: 'Mijozlar fikri (sharhlar)', advantages: 'Afzalliklar',
 };
 
 function useSection<K extends SettingsKey>(key: K, initial: SiteSettings[K]) {

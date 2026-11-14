@@ -34,10 +34,14 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           className={cn('transition duration-300 group-hover:scale-[1.03]', outOfStock && 'opacity-60')}
         />
-        <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
-          {discount > 0 && <span className="rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-white num">−{discount}%</span>}
-          {product.is_new && <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-fg">{t('product.new')}</span>}
-          {product.is_bestseller && <span className="rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-bg">{t('product.hit')}</span>}
+        {/* Koʻpi bilan 2 ta belgi, bir qatorda: chegirma + (Xit yoki Yangi) — rasm ustida tartibsizlik boʻlmasin */}
+        <div className="absolute left-1.5 right-10 top-1.5 flex flex-wrap items-start gap-1">
+          {discount > 0 && <span className="rounded-full bg-danger px-1.5 py-0.5 text-[11px] font-semibold text-white num sm:text-xs">−{discount}%</span>}
+          {product.is_bestseller ? (
+            <span className="rounded-full bg-ink px-1.5 py-0.5 text-[11px] font-semibold text-bg sm:text-xs">{t('product.hit')}</span>
+          ) : product.is_new ? (
+            <span className="rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-semibold text-primary-fg sm:text-xs">{t('product.new')}</span>
+          ) : null}
         </div>
       </Link>
       <button
@@ -54,8 +58,8 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
         <Link href={href} className="line-clamp-2 text-[13px] font-medium leading-snug text-ink hover:text-primary sm:text-[15px]">
           {product.name}
         </Link>
-        <div className="mt-1 flex items-center justify-between gap-2">
-          <Rating value={Number(product.rating_avg)} count={product.rating_count} />
+        <div className="mt-1 flex min-h-[18px] items-center justify-between gap-2">
+          {product.rating_count > 0 ? <Rating value={Number(product.rating_avg)} count={product.rating_count} /> : <span />}
           {outOfStock ? (
             <span className="text-xs font-medium text-danger">{t('product.outOfStock')}</span>
           ) : product.track_stock && product.stock <= 5 ? (

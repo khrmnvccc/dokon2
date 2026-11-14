@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { tr } from '@/lib/i18n/ui-ru';
 import type { Lang } from '@/lib/i18n/dict';
-import { Check, X } from 'lucide-react';
+import { Check, Star, X } from 'lucide-react';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { ORDER_STEPS, orderStatusLabel, orderStatusTone } from '@/lib/order-status';
@@ -117,6 +117,11 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
               <div className="min-w-0 flex-1">
                 {i.slug ? <Link href={`/product/${i.slug}`} className="line-clamp-2 hover:text-primary">{i.product_name}</Link> : <p>{i.product_name}</p>}
                 <p className="text-xs text-ink-3">{i.variant_name ? `${i.variant_name} · ` : ''}{p(i.unit_price)} × {i.quantity}</p>
+                {order.status === 'delivered' && i.slug && (
+                  <Link href={`/product/${i.slug}#reviews`} className="mt-1.5 inline-flex h-7 items-center gap-1 rounded-lg bg-warn-soft px-2.5 text-xs font-semibold text-warn hover:opacity-90">
+                    <Star className="size-3.5" aria-hidden /> {L("Baho berish")}
+                  </Link>
+                )}
               </div>
               <span className="font-semibold">{p(i.unit_price * i.quantity)}</span>
             </li>

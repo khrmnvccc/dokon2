@@ -297,3 +297,62 @@ export async function getPublicCoupons(): Promise<PublicCoupon[]> {
   if (error) return []; // migratsiya hali qoʻllanmagan boʻlsa — boʻlim koʻrinmaydi
   return (data ?? []) as PublicCoupon[];
 }
+
+// ---------- Sharhlar (barcha mahsulotlar boʻyicha: bosh sahifa va /reviews) ----------
+export interface PublicReview {
+  id: string;
+  rating: number;
+  body: string | null;
+  author_name: string | null;
+  created_at: string;
+  product: { id: string; name: string; slug: string; image_url: string | null } | null;
+}
+export interface ReviewStats { count: number; avg: number; stars: Record<1 | 2 | 3 | 4 | 5, number> }
+
+const fetchReviewsPage = unstable_cache(
+  async (page: number, perPage: number, withText: boolean): Promise<{ items: PublicReview[]; total: number }> => {
+    if (!isSupabaseConfigured) return { items: [], total: 0 };
+    let q = getPublicSupabase()
+      .from('reviews')
+      .select('id, rating, body, author_name, created_at, products!inner(id, name, slug, image_url, is_active)', { count: 'exact' })
+      .eq('is_approved', true)
+      .eq('products.is_active', true);
+    if (withText) q = q.not('body', 'is', null).neq('body', '');
+    const from = (page - 1) * perPage;
+    const { data, count } = await q.order('created_at', { ascending: false }).range(from, from + perPage - 1);
+    const items = (data ?? []).map((r) => {
+      const p = (Array.isArray(r.products) ? r.products[0] : r.products) as { id: string; name: string; slug: string; image_url: string | null } | null;
+      return {
+        id: r.id as string, rating: r.rating as number, body: r.body as string | null, author_name: r.author_name as string | null,
+        created_at: r.created_at as string, product: p ? { id: p.id, name: p.name, slug: p.slug, image_url: p.image_url } : null,
+      };
+    });
+    return { items, total: count ?? 0 };
+  },
+  ['reviews-page'],
+  { tags: [TAGS.reviews], revalidate: 300 },
+);
+
+/** Oxirgi sharhlar (mahsulot nomi joriy tilda). withText — faqat matnli sharhlar (bosh sahifa uchun). */
+export async function getReviewsPage(page = 1, perPage = 20, withText = false) {
+  const res = await fetchReviewsPage(Math.max(1, Math.floor(page)), Math.min(Math.max(perPage, 1), 50), withText);
+  const products = await localizeCards(res.items.flatMap((r) => (r.product ? [r.product] : [])));
+  const names = new Map(products.map((p) => [p.id, p.name]));
+  return { ...res, items: res.items.map((r) => (r.product ? { ...r, product: { ...r.product, name: names.get(r.product.id) ?? r.product.name } } : r)) };
+}
+
+/** Umumiy baho: oʻrtacha, soni va har bir yulduz boʻyicha taqsimot. */
+export const getReviewStats = unstable_cache(
+  async (): Promise<ReviewStats> => {
+    const stars = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as ReviewStats['stars'];
+    if (!isSupabaseConfigured) return { count: 0, avg: 0, stars };
+    const sb = getPublicSupabase();
+    const counts = await Promise.all(([1, 2, 3, 4, 5] as const).map((n) =>
+      sb.from('reviews').select('id', { count: 'exact', head: true }).eq('is_approved', true).eq('rating', n)));
+    let sum = 0, count = 0;
+    counts.forEach((c, i) => { const n = c.count ?? 0; stars[(i + 1) as 1 | 2 | 3 | 4 | 5] = n; sum += n * (i + 1); count += n; });
+    return { count, avg: count ? Math.round((sum / count) * 10) / 10 : 0, stars };
+  },
+  ['review-stats'],
+  { tags: [TAGS.reviews], revalidate: 300 },
+);
