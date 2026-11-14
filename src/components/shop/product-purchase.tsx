@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Heart, Minus, Plus, ShoppingCart, Truck, ShieldCheck } from 'lucide-react';
 import type { ProductVariant } from '@/lib/types';
 import { discountPercent } from '@/lib/format';
-import { useApp, useCart, useWishlist } from '@/components/providers';
+import { useApp, useCart, useWishlist, useL } from '@/components/providers';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/cn';
@@ -17,6 +17,7 @@ interface Props {
 }
 
 export function ProductPurchase({ product, variants, freeShippingFrom }: Props) {
+  const L = useL();
   const { t, price } = useApp();
   const cart = useCart();
   const wishlist = useWishlist();
@@ -49,12 +50,12 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
 
   const add = (goToCart: boolean) => {
     if (needsChoice) {
-      toast('Iltimos, variantni tanlang', 'info');
+      toast(L("Iltimos, variantni tanlang"), 'info');
       return;
     }
     cart.add(product.id, variant?.id ?? null, qty);
     if (goToCart) router.push('/cart');
-    else toast('Savatchaga qo‘shildi');
+    else toast(L("Savatchaga qo‘shildi"));
   };
 
   return (
@@ -70,13 +71,13 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
           )}
         </div>
         <p className={cn('mt-1.5 text-sm font-medium', outOfStock ? 'text-danger' : available !== null && available <= 5 ? 'text-warn' : 'text-success')}>
-          {needsChoice ? 'Variantni tanlang' : outOfStock ? t('product.outOfStock') : available !== null && available <= 5 ? t('product.lowStock', { n: available }) : t('product.inStock')}
+          {needsChoice ? L("Variantni tanlang") : outOfStock ? t('product.outOfStock') : available !== null && available <= 5 ? t('product.lowStock', { n: available }) : t('product.inStock')}
         </p>
       </div>
 
       {colors.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold">Rang: <span className="font-normal text-ink-3">{color ?? 'tanlanmagan'}</span></legend>
+          <legend className="mb-2 text-sm font-semibold">{L("Rang:")} <span className="font-normal text-ink-3">{color ?? 'tanlanmagan'}</span></legend>
           <div className="flex flex-wrap gap-2">
             {colors.map(([name, hex]) => (
               <button key={name} type="button" onClick={() => setColor(name)} aria-pressed={color === name}
@@ -89,7 +90,7 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
       )}
       {sizes.length > 0 && (
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold">O‘lcham: <span className="font-normal text-ink-3">{size ?? 'tanlanmagan'}</span></legend>
+          <legend className="mb-2 text-sm font-semibold">{L("O‘lcham:")} <span className="font-normal text-ink-3">{size ?? 'tanlanmagan'}</span></legend>
           <div className="flex flex-wrap gap-2">
             {sizes.map((s) => {
               const ok = isAvailable(color, s);
@@ -105,7 +106,7 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
       )}
       {product.has_variants && !usesAttributes && (
         <fieldset>
-          <legend className="mb-2 text-sm font-semibold">Variant</legend>
+          <legend className="mb-2 text-sm font-semibold">{L("Variant")}</legend>
           <div className="flex flex-wrap gap-2">
             {variants.map((v) => (
               <button key={v.id} type="button" onClick={() => setPlainVariant(v.id)} disabled={v.stock <= 0} aria-pressed={plainVariant === v.id}
@@ -123,7 +124,7 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
           <span className="w-8 text-center font-semibold" aria-live="polite">{qty}</span>
           <button type="button" onClick={() => setQty((q) => Math.min(available ?? 99, q + 1))} className="flex h-12 w-11 items-center justify-center text-ink-2 disabled:opacity-40" disabled={available !== null && qty >= available} aria-label="Ko‘paytirish"><Plus className="h-4 w-4" /></button>
         </div>
-        <button type="button" onClick={() => wishlist.toggle(product.id)} className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface" aria-label="Sevimlilar" aria-pressed={liked}>
+        <button type="button" onClick={() => wishlist.toggle(product.id)} className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface" aria-label={L("Sevimlilar")} aria-pressed={liked}>
           <Heart className={cn('h-5 w-5', liked ? 'fill-danger text-danger' : 'text-ink-2')} />
         </button>
       </div>
@@ -138,8 +139,8 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
       </div>
 
       <ul className="space-y-2 rounded-2xl bg-surface-2 p-4 text-sm text-ink-2">
-        <li className="flex gap-2"><Truck className="h-5 w-5 shrink-0 text-primary" />{freeShippingFrom > 0 ? `${price(freeShippingFrom)} dan ortiq buyurtmalarga bepul yetkazib berish` : 'Tez yetkazib berish'}</li>
-        <li className="flex gap-2"><ShieldCheck className="h-5 w-5 shrink-0 text-primary" />Sifat kafolati va 14 kun ichida qaytarish</li>
+        <li className="flex gap-2"><Truck className="h-5 w-5 shrink-0 text-primary" />{freeShippingFrom > 0 ? `${price(freeShippingFrom)} dan ortiq buyurtmalarga bepul yetkazib berish` : L("Tez yetkazib berish")}</li>
+        <li className="flex gap-2"><ShieldCheck className="h-5 w-5 shrink-0 text-primary" />{L("Sifat kafolati va 14 kun ichida qaytarish")}</li>
       </ul>
     </div>
   );

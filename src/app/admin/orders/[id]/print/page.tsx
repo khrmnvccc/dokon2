@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { requirePagePermission } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { getSettings } from '@/lib/data/public';
+import { getRawSettings as getSettings } from '@/lib/data/public';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { PrintButton } from '@/components/admin/print-button';

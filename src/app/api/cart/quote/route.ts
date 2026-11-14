@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { quoteRequestSchema } from '@/lib/validation';
 import { buildQuote } from '@/lib/checkout';
+import { localizeCards } from '@/lib/data/public';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
     couponCode: parsed.data.couponCode,
     shippingMethodId: parsed.data.shippingMethodId,
   });
-  // Tannarx mijozga yuborilmaydi
-  return NextResponse.json({ ...quote, costTotal: null, lines: quote.lines.map((l) => ({ ...l, costPrice: null })) });
+  // Tannarx mijozga yuborilmaydi; nom joriy tilda (buyurtmaga esa asl nomi yoziladi)
+  const named = await localizeCards(quote.lines.map((l) => ({ id: l.productId, name: l.name })));
+  return NextResponse.json({ ...quote, costTotal: null, lines: quote.lines.map((l, i) => ({ ...l, name: named[i].name, costPrice: null })) });
 }

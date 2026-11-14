@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, X } from 'lucide-react';
-import { useApp } from '@/components/providers';
+import { useApp, useL } from '@/components/providers';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Input, Select } from '@/components/ui/field';
 import { cn } from '@/components/ui/cn';
@@ -27,13 +27,14 @@ function useQueryUpdater() {
 }
 
 export function SortSelect() {
+  const L = useL();
   const { t } = useApp();
   const params = useSearchParams();
   const update = useQueryUpdater();
   const sorts = ['popular', 'price_asc', 'price_desc', 'new', 'rating', 'discount'] as const;
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="sr-only">Saralash</span>
+      <span className="sr-only">{L("Saralash")}</span>
       <Select value={params.get('sort') ?? 'popular'} onChange={(e) => update({ sort: e.target.value === 'popular' ? null : e.target.value })} className="h-10 w-auto min-w-44 text-sm">
         {sorts.map((s) => <option key={s} value={s}>{t(`sort.${s}` as TKey)}</option>)}
       </Select>
@@ -42,6 +43,7 @@ export function SortSelect() {
 }
 
 function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void }) {
+  const L = useL();
   const { t } = useApp();
   const params = useSearchParams();
   const update = useQueryUpdater();
@@ -66,9 +68,9 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
             onDone?.();
           }}
         >
-          <Input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value)} placeholder={facets.min_price ? String(facets.min_price) : t('filters.from')} aria-label="Minimal narx" className="h-10" />
+          <Input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value)} placeholder={facets.min_price ? String(facets.min_price) : t('filters.from')} aria-label={L("Minimal narx")} className="h-10" />
           <span className="text-ink-3">—</span>
-          <Input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} placeholder={facets.max_price ? String(facets.max_price) : t('filters.to')} aria-label="Maksimal narx" className="h-10" />
+          <Input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value)} placeholder={facets.max_price ? String(facets.max_price) : t('filters.to')} aria-label={L("Maksimal narx")} className="h-10" />
           <Button type="submit" size="sm" variant="secondary" className="h-10">OK</Button>
         </form>
       </fieldset>
@@ -97,7 +99,7 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
             {facets.colors.map((c) => (
               <button key={c.name} type="button" onClick={() => toggleList('color', colors, c.name)} aria-pressed={colors.includes(c.name)}
                 className={cn('flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm', colors.includes(c.name) ? 'border-primary bg-primary-soft font-semibold' : 'border-line')}>
-                <span className="h-4 w-4 rounded-full border border-line-strong" style={{ background: c.hex ?? '#ccc' }} />{c.name}
+                <span className="h-4 w-4 rounded-full border border-line-strong" style={{ background: c.hex ?? "#ccc" }} />{L(c.name)}
               </button>
             ))}
           </div>
@@ -126,6 +128,7 @@ function FilterBody({ facets, onDone }: { facets: Facets; onDone?: () => void })
 }
 
 export function CatalogFilters({ facets, mode }: { facets: Facets; mode: 'sidebar' | 'mobile' }) {
+  const L = useL();
   const { t } = useApp();
   const [open, setOpen] = useState(false);
   if (mode === 'sidebar') {
@@ -149,7 +152,7 @@ export function CatalogFilters({ facets, mode }: { facets: Facets; mode: 'sideba
           <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-surface p-5 pb-8 anim-pop">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-[15px] font-semibold tracking-tight">{t('filters.title')}</h2>
-              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-surface-2" aria-label="Yopish"><X className="h-5 w-5" /></button>
+              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-surface-2" aria-label={L("Yopish")}><X className="h-5 w-5" /></button>
             </div>
             <FilterBody facets={facets} onDone={() => setOpen(false)} />
             <Button className="mt-3 w-full" onClick={() => setOpen(false)}>{t('filters.apply')}</Button>

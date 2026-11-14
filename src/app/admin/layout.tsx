@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import { PauseCircle, ShieldAlert } from 'lucide-react';
 import { getCurrentProfile, getStaffContext, requireUser } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { getSettings } from '@/lib/data/public';
+import { getRawSettings as getSettings } from '@/lib/data/public';
 import { ADMIN_NAV } from '@/lib/admin/nav';
 import { canSee, pageAccess, pageConfig, pageLabel } from '@/lib/admin/pages';
 import { getBranchState } from '@/lib/admin/branch';

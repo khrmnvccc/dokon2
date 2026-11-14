@@ -1,3 +1,4 @@
+import { getL, getLang } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
@@ -9,6 +10,7 @@ import { CancelOrderButton } from '@/components/shop/account-forms';
 const UUID = /^[0-9a-f-]{36}$/i;
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
+  const L = await getL();
   const { id } = await params;
   if (!UUID.test(id)) notFound();
   const supabase = await getServerSupabase();
@@ -17,8 +19,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   if (!order) notFound();
   return (
     <div>
-      <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> Buyurtmalarim</Link>
-      <OrderDetails order={order} symbol={settings.localization.currency_symbol} />
+      <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> {L("Buyurtmalarim")}</Link>
+      <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
       {order.status === 'new' && <div className="mt-4"><CancelOrderButton orderId={order.id} /></div>}
     </div>
   );

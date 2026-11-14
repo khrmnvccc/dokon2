@@ -32,16 +32,17 @@ const num = (v: number) => new Intl.NumberFormat('ru-RU').format(v).replace(/\s/
 const scopeShort = { all: 'Barcha mahsulot', category: 'Kategoriyalar', product: 'Tanlanganlar' } as const;
 
 /** Kartadagi yozuvlar: raqam, birlik, eslatma. Admin va saytda bir xil. */
-export function couponCardProps(x: { discount_type: string; value: number; scope?: string; ends_at: string | null; min_order_amount?: number; design?: unknown }, kind: string) {
+export function couponCardProps(x: { discount_type: string; value: number; scope?: string; ends_at: string | null; min_order_amount?: number; design?: unknown }, kind: string, L: (s: string) => string = (s) => s) {
   const days = x.ends_at ? Math.ceil((new Date(x.ends_at).getTime() - Date.now()) / 86_400_000) : null;
+  const som = L('soʻm');
   return {
     design: cleanDesign(x.design),
     kind,
     value: x.discount_type === 'percent' ? String(x.value) : num(x.value),
-    unit: x.discount_type === 'percent' ? '%' : 'soʻm',
-    note: x.min_order_amount ? `Min. ${num(x.min_order_amount)} soʻm` : 'Har qanday buyurtmaga',
-    tag: x.scope ? scopeShort[x.scope as keyof typeof scopeShort] : null,
-    stubNote: days !== null && days > 0 ? `${days} kun` : null,
+    unit: x.discount_type === 'percent' ? '%' : som,
+    note: x.min_order_amount ? `${L('Min.')} ${num(x.min_order_amount)} ${som}` : L('Har qanday buyurtmaga'),
+    tag: x.scope ? L(scopeShort[x.scope as keyof typeof scopeShort]) : null,
+    stubNote: days !== null && days > 0 ? `${days} ${L('kun')}` : null,
   };
 }
 

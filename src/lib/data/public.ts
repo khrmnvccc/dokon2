@@ -1,5 +1,8 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
+import { cookies } from 'next/headers';
+import { loc, locAll, locSettings } from '@/lib/i18n/content';
+import { LANGS, type Lang } from '@/lib/i18n/dict';
 import { getPublicSupabase } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/env';
 import { TAGS } from '@/lib/cache-tags';
@@ -13,7 +16,8 @@ import type {
 
 const REVALIDATE = 300;
 
-export const getSettings = unstable_cache(
+/** Bazadagi asl (oʻzbekcha) sozlamalar — admin panel va til aniqlash shundan oʻqiydi. */
+export const getRawSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
     if (!isSupabaseConfigured) return defaultSettings;
     const { data, error } = await getPublicSupabase().from('site_settings').select('key, value');
@@ -28,7 +32,28 @@ export const getSettings = unstable_cache(
   { tags: [TAGS.settings], revalidate: REVALIDATE },
 );
 
-export const getCategories = unstable_cache(
+/** Joriy soʻrov tili: cookie (yoqilgan tillardan biri boʻlsa), aks holda standart til. Soʻrovsiz joyda — standart. */
+export async function currentLang(): Promise<Lang> {
+  const settings = await getRawSettings();
+  const enabled = settings.localization.languages;
+  try {
+    const fromCookie = (await cookies()).get('lang')?.value as Lang | undefined;
+    if (fromCookie && LANGS.includes(fromCookie) && enabled.includes(fromCookie)) return fromCookie;
+  } catch { /* soʻrovdan tashqarida (cron, fon) */ }
+  return settings.localization.default_language;
+}
+
+/** Sayt uchun sozlamalar: rus tilida ruscha tarjimalar qoʻllangan. */
+export async function getSettings(): Promise<SiteSettings> {
+  const [settings, lang] = await Promise.all([getRawSettings(), currentLang()]);
+  if (lang !== 'ru') return settings;
+  const out = locSettings(settings, settings.translations.ru);
+  // Valyuta: “soʻm” rus tilida “сум”
+  if (/^so.?m$/i.test(out.localization.currency_symbol.trim())) out.localization = { ...out.localization, currency_symbol: 'сум' };
+  return out;
+}
+
+const fetchCategories = unstable_cache(
   async (): Promise<Category[]> => {
     if (!isSupabaseConfigured) return [];
     const { data } = await getPublicSupabase().from('categories').select('*').eq('is_active', true).order('sort_order').order('name');
@@ -37,6 +62,9 @@ export const getCategories = unstable_cache(
   ['categories'],
   { tags: [TAGS.categories], revalidate: REVALIDATE },
 );
+export async function getCategories(): Promise<Category[]> {
+  return locAll(await fetchCategories(), await currentLang());
+}
 
 export function buildTree(categories: Category[]): CategoryNode[] {
   const nodes = new Map<string, CategoryNode>(categories.map((c) => [c.id, { ...c, children: [] }]));
@@ -53,7 +81,7 @@ export async function getCategoryTree() {
   return buildTree(await getCategories());
 }
 
-export const getActivePromotions = unstable_cache(
+const fetchPromotions = unstable_cache(
   async (): Promise<Promotion[]> => {
     if (!isSupabaseConfigured) return [];
     const { data } = await getPublicSupabase().from('promotions').select('*').order('sort_order');
@@ -62,8 +90,11 @@ export const getActivePromotions = unstable_cache(
   ['promotions'],
   { tags: [TAGS.promotions], revalidate: 120 },
 );
+export async function getActivePromotions(): Promise<Promotion[]> {
+  return locAll(await fetchPromotions(), await currentLang());
+}
 
-export const getBanners = unstable_cache(
+const fetchBanners = unstable_cache(
   async (placement: Banner['placement']): Promise<Banner[]> => {
     if (!isSupabaseConfigured) return [];
     const { data } = await getPublicSupabase().from('banners').select('*').eq('placement', placement).order('sort_order');
@@ -72,6 +103,9 @@ export const getBanners = unstable_cache(
   ['banners'],
   { tags: [TAGS.banners], revalidate: 120 },
 );
+export async function getBanners(placement: Banner['placement']): Promise<Banner[]> {
+  return locAll(await fetchBanners(placement), await currentLang());
+}
 
 /** Kartalarga aksiya narxlarini qo'llash */
 export async function applyPromotions<T extends ProductCard>(cards: T[]): Promise<T[]> {
@@ -117,10 +151,34 @@ const fetchCatalog = unstable_cache(
   { tags: [TAGS.products], revalidate: 120 },
 );
 
+/** Ruscha mahsulot nomlari (id → nom): kartalar uchun, bitta kichik soʻrov, keshlangan. */
+const fetchProductNamesRu = unstable_cache(
+  async (): Promise<Record<string, string>> => {
+    if (!isSupabaseConfigured) return {};
+    const { data, error } = await getPublicSupabase().from('products').select('id, i18n').eq('is_active', true).not('i18n->ru->>name', 'is', null).limit(20000);
+    if (error) return {};
+    const out: Record<string, string> = {};
+    for (const r of data ?? []) {
+      const name = (r.i18n as { ru?: { name?: string } } | null)?.ru?.name;
+      if (typeof name === 'string' && name.trim()) out[r.id as string] = name;
+    }
+    return out;
+  },
+  ['product-names-ru'],
+  { tags: [TAGS.products], revalidate: 300 },
+);
+
+/** Kartalar nomini joriy tilga oʻgiradi (ruscha nomi boʻlmasa — oʻzbekchasi). */
+export async function localizeCards<T extends { id: string; name: string }>(cards: T[]): Promise<T[]> {
+  if ((await currentLang()) !== 'ru' || !cards.length) return cards;
+  const names = await fetchProductNamesRu();
+  return cards.map((c) => (names[c.id] ? { ...c, name: names[c.id] } : c));
+}
+
 export async function getCatalog(params: CatalogParams) {
   const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '' && !(Array.isArray(v) && !v.length)));
   const result = await fetchCatalog(JSON.stringify(clean));
-  return { ...result, items: await applyPromotions(result.items) };
+  return { ...result, items: await localizeCards(await applyPromotions(result.items)) };
 }
 
 export const getFacets = unstable_cache(
@@ -159,8 +217,9 @@ const fetchProduct = unstable_cache(
 
 /** Mahsulot + aksiya qo'llangan narxlar (variantlar uchun ham) */
 export async function getProduct(slug: string) {
-  const detail = await fetchProduct(slug);
-  if (!detail) return null;
+  const raw = await fetchProduct(slug);
+  if (!raw) return null;
+  const detail = { ...raw, product: loc(raw.product, await currentLang()) };
   const [promotions, categories] = await Promise.all([getActivePromotions(), getCategories()]);
   const chain = buildCategoryChain(categories);
   const eff = effectivePrice(detail.product, promotions, chain);
@@ -188,7 +247,7 @@ export const getProductReviews = unstable_cache(
   { tags: [TAGS.reviews], revalidate: 300 },
 );
 
-export const getPage = unstable_cache(
+const fetchPage = unstable_cache(
   async (slug: string): Promise<CmsPage | null> => {
     if (!isSupabaseConfigured) return null;
     const { data } = await getPublicSupabase().from('pages').select('*').eq('slug', slug).eq('is_published', true).maybeSingle();
@@ -197,8 +256,11 @@ export const getPage = unstable_cache(
   ['page'],
   { tags: [TAGS.pages], revalidate: REVALIDATE },
 );
+export async function getPage(slug: string): Promise<CmsPage | null> {
+  return loc(await fetchPage(slug), await currentLang());
+}
 
-export const getShippingMethods = unstable_cache(
+const fetchShipping = unstable_cache(
   async (): Promise<ShippingMethod[]> => {
     if (!isSupabaseConfigured) return [];
     const { data } = await getPublicSupabase().from('shipping_methods').select('*').eq('is_active', true).order('sort_order');
@@ -207,8 +269,11 @@ export const getShippingMethods = unstable_cache(
   ['shipping-methods'],
   { tags: [TAGS.methods], revalidate: REVALIDATE },
 );
+export async function getShippingMethods(): Promise<ShippingMethod[]> {
+  return locAll(await fetchShipping(), await currentLang());
+}
 
-export const getPaymentMethods = unstable_cache(
+const fetchPayments = unstable_cache(
   async (): Promise<PaymentMethod[]> => {
     if (!isSupabaseConfigured) return [];
     const { data } = await getPublicSupabase().from('payment_methods').select('*').eq('is_active', true).order('sort_order');
@@ -217,6 +282,9 @@ export const getPaymentMethods = unstable_cache(
   ['payment-methods'],
   { tags: [TAGS.methods], revalidate: REVALIDATE },
 );
+export async function getPaymentMethods(): Promise<PaymentMethod[]> {
+  return locAll(await fetchPayments(), await currentLang());
+}
 
 export interface PublicCoupon {
   id: string; code: string; description: string | null; discount_type: 'percent' | 'fixed'; value: number;

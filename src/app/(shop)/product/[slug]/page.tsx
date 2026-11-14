@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCatalog, getCategories, getProduct, getProductReviews, getSettings } from '@/lib/data/public';
@@ -14,9 +15,10 @@ import { Rating, Stars } from '@/components/ui/misc';
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const L = await getL();
   const { slug } = await params;
   const data = await getProduct(slug);
-  if (!data) return { title: 'Mahsulot topilmadi' };
+  if (!data) return { title: L("Mahsulot topilmadi") };
   const { product, images } = data;
   const description = product.seo_description || product.short_description || product.description?.slice(0, 160) || product.name;
   return {
@@ -28,6 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
+  const L = await getL();
   const { slug } = await params;
   const data = await getProduct(slug);
   if (!data) notFound();
@@ -67,7 +70,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <Breadcrumbs items={[{ name: 'Katalog', href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` })), { name: product.name }]} />
+      <Breadcrumbs items={[{ name: L("Katalog"), href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` })), { name: product.name }]} />
 
       <div className="grid gap-6 rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
         <ProductGallery images={images} name={product.name} />
@@ -76,7 +79,7 @@ export default async function ProductPage({ params }: Props) {
           <h1 className="mt-1 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{product.name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-3">
             <Rating value={Number(product.rating_avg)} count={product.rating_count} size="md" />
-            {product.sku && <span>Kod: {product.sku}</span>}
+            {product.sku && <span>{L("Kod:")} {product.sku}</span>}
             {(product.sold_count ?? 0) > 0 && <span>{product.sold_count} marta sotib olingan</span>}
           </div>
           {product.short_description && <p className="mt-3 text-sm text-ink-2">{product.short_description}</p>}
@@ -92,12 +95,12 @@ export default async function ProductPage({ params }: Props) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
-          <h2 className="text-[15px] font-semibold tracking-tight">Tavsif</h2>
-          {product.description ? <Markdown content={product.description} className="mt-2" /> : <p className="mt-2 text-sm text-ink-3">Tavsif qo‘shilmagan.</p>}
+          <h2 className="text-[15px] font-semibold tracking-tight">{L("Tavsif")}</h2>
+          {product.description ? <Markdown content={product.description} className="mt-2" /> : <p className="mt-2 text-sm text-ink-3">{L("Tavsif qo‘shilmagan.")}</p>}
         </section>
         {product.attributes?.length > 0 && (
           <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
-            <h2 className="text-[15px] font-semibold tracking-tight">Xususiyatlar</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">{L("Xususiyatlar")}</h2>
             <dl className="mt-3 divide-y divide-line text-sm">
               {product.attributes.map((a) => (
                 <div key={a.name} className="flex justify-between gap-4 py-2.5">
@@ -105,7 +108,7 @@ export default async function ProductPage({ params }: Props) {
                   <dd className="text-right font-medium">{a.value}</dd>
                 </div>
               ))}
-              {product.weight_grams ? <div className="flex justify-between gap-4 py-2.5"><dt className="text-ink-3">Og‘irligi</dt><dd className="font-medium">{product.weight_grams} g</dd></div> : null}
+              {product.weight_grams ? <div className="flex justify-between gap-4 py-2.5"><dt className="text-ink-3">{L("Og‘irligi")}</dt><dd className="font-medium">{product.weight_grams} g</dd></div> : null}
             </dl>
           </section>
         )}
@@ -113,7 +116,7 @@ export default async function ProductPage({ params }: Props) {
 
       <section className="mt-6 rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6" id="reviews">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-[15px] font-semibold tracking-tight">Sharhlar <span className="text-ink-3">({product.rating_count})</span></h2>
+          <h2 className="text-[15px] font-semibold tracking-tight">{L("Sharhlar")} <span className="text-ink-3">({product.rating_count})</span></h2>
           {product.rating_count > 0 && <div className="flex items-center gap-2"><Stars value={Number(product.rating_avg)} /><span className="font-semibold">{Number(product.rating_avg).toFixed(1)}</span></div>}
         </div>
         <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -127,13 +130,13 @@ export default async function ProductPage({ params }: Props) {
                 <Stars value={r.rating} className="mt-1" />
                 {r.body && <p className="mt-2 whitespace-pre-line text-sm text-ink-2">{r.body}</p>}
               </article>
-            )) : <p className="text-sm text-ink-3">Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!</p>}
+            )) : <p className="text-sm text-ink-3">{L("Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!")}</p>}
           </div>
           <ReviewForm productId={product.id} slug={product.slug} />
         </div>
       </section>
 
-      {related.length > 0 && <div className="mt-8"><ProductSection title="O‘xshash mahsulotlar" products={related} href={`/category/${category!.slug}`} /></div>}
+      {related.length > 0 && <div className="mt-8"><ProductSection title={L("O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
     </>
   );
 }

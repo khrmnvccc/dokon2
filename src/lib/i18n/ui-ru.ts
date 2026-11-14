@@ -1,0 +1,132 @@
+// Doʻkon interfeysi yozuvlarining ruschasi: kalit — oʻzbekcha matnning oʻzi.
+// Komponentlarda L('…') bilan ishlatiladi; rus tilida tarjimasi boʻlsa ruscha, boʻlmasa oʻzbekchasi chiqadi.
+// (Mahsulot, kategoriya va boshqa kontent emas — ular Admin → Tarjimalar boʻlimida kiritiladi.)
+
+import type { Lang } from './dict';
+
+export const UI_RU: Record<string, string> = {
+  // Umumiy
+  'Bosh sahifa': 'Главная', 'Katalog': 'Каталог', 'Kirish': 'Войти', 'Chiqish': 'Выйти', 'Saqlash': 'Сохранить', 'Bekor qilish': 'Отмена',
+  'Tozalash': 'Очистить', 'Qo‘shish': 'Добавить', 'Asosiy': 'Основной', 'Telefon': 'Телефон', 'Email': 'Email', 'Parol': 'Пароль',
+  'Xatolik yuz berdi': 'Произошла ошибка', 'Internet aloqasini tekshiring': 'Проверьте подключение к интернету',
+  'Internet aloqasini tekshirib, qayta bosing': 'Проверьте интернет и нажмите ещё раз', 'Navigatsiya yo‘li': 'Навигация',
+  'Asosiy navigatsiya': 'Основная навигация', 'Asosiy kontentga o‘tish': 'Перейти к содержимому', 'Admin panel': 'Админ-панель',
+  'Aksiya bannerlari': 'Баннеры акций', 'Barchasi': 'Все', 'Yopish': 'Закрыть', 'Ko‘rish →': 'Смотреть →', 'Batafsil': 'Подробнее',
+  'Kupon': 'Купон', 'Aksiya': 'Акция', 'Olish': 'Получить', 'Mahsulot': 'Товар', 'Variant': 'Вариант',
+  // Ranglar va oʻlchamlar (variantlar)
+  'Qora': 'Чёрный', 'Oq': 'Белый', 'Ko‘k': 'Синий', 'Koʻk': 'Синий', 'Qizil': 'Красный', 'Yashil': 'Зелёный', 'Sariq': 'Жёлтый',
+  'Kulrang': 'Серый', 'Jigarrang': 'Коричневый', 'Pushti': 'Розовый', 'Binafsha': 'Фиолетовый', 'To‘q ko‘k': 'Тёмно-синий',
+  'Havorang': 'Голубой', 'Kumush': 'Серебристый', 'Oltin': 'Золотой', 'Bej': 'Бежевый', 'Zaytun': 'Оливковый', 'To‘q sariq': 'Оранжевый',
+  // Sarlavhalar
+  'Barcha mahsulotlar': 'Все товары', 'Barcha mahsulotlar katalogi': 'Каталог всех товаров', 'Kategoriya topilmadi': 'Категория не найдена',
+  'Buyurtmani rasmiylashtirish': 'Оформление заказа', 'Qidiruv natijalari': 'Результаты поиска', 'Qidiruv': 'Поиск',
+  'Eng ko‘p sotilayotganlar': 'Хиты продаж', 'Yangi kelganlar': 'Новинки', 'Tavsiya etamiz': 'Рекомендуем',
+  'Ommabop kategoriyalar': 'Популярные категории', 'Chegirmadagi mahsulotlar': 'Товары со скидкой', 'Siz uchun tavsiya': 'Рекомендуем вам',
+  'Chegirmalar va aksiyalar': 'Скидки и акции', 'Kuponlar': 'Купоны', 'Faol aksiyalar': 'Действующие акции',
+  'Eng yaxshi chegirmalar va maxsus aksiyalar': 'Лучшие скидки и специальные акции',
+  'Sahifa topilmadi': 'Страница не найдена',
+  'Bu sahifa o‘chirilgan yoki manzil noto‘g‘ri kiritilgan. Kerakli mahsulotni qidirib ko‘ring.': 'Страница удалена или адрес введён неверно. Попробуйте найти нужный товар через поиск.',
+  'Nimadir xato ketdi': 'Что-то пошло не так', 'Sahifani yuklab bo‘lmadi. Birozdan so‘ng qayta urinib ko‘ring.': 'Не удалось загрузить страницу. Попробуйте ещё раз чуть позже.',
+  'Qayta urinish': 'Повторить', 'Yangilangan:': 'Обновлено:',
+  // Mahsulot
+  'Tavsif': 'Описание', 'Tavsif qo‘shilmagan.': 'Описание не добавлено.', 'Xususiyatlar': 'Характеристики', 'Og‘irligi': 'Вес', 'Brend': 'Бренд',
+  'Sharhlar': 'Отзывы', 'Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!': 'Отзывов пока нет. Оставьте первый!',
+  'Mahsulot topilmadi': 'Товар не найден', 'O‘xshash mahsulotlar': 'Похожие товары', 'Kod:': 'Код:',
+  'Rang:': 'Цвет:', 'O‘lcham:': 'Размер:', 'Sifat kafolati va 14 kun ichida qaytarish': 'Гарантия качества и возврат в течение 14 дней',
+  'Iltimos, variantni tanlang': 'Пожалуйста, выберите вариант', 'Savatchaga qo‘shildi': 'Добавлено в корзину', 'Variantni tanlang': 'Выберите вариант',
+  'Tez yetkazib berish': 'Быстрая доставка', 'Sevimlilardan olib tashlash': 'Убрать из избранного', 'Sevimlilarga qoʻshish': 'Добавить в избранное',
+  '— savatga qoʻshildi': '— добавлено в корзину', 'dan ortiq buyurtmalarga bepul yetkazib berish': ' — бесплатная доставка заказов от этой суммы',
+  'Sharh qoldirish uchun': 'Чтобы оставить отзыв,', 'tizimga kiring': 'войдите', 'Rahmat! Sharhingiz qabul qilindi.': 'Спасибо! Ваш отзыв принят.',
+  'Mahsulotni baholang': 'Оцените товар', 'Sharhni yuborish': 'Отправить отзыв', 'Iltimos, baho qo‘ying': 'Пожалуйста, поставьте оценку',
+  'Mahsulot haqida fikringiz (ixtiyoriy)': 'Ваше мнение о товаре (необязательно)', 'Sharh matni': 'Текст отзыва',
+  // Katalog
+  'Saralash': 'Сортировка', 'Minimal narx': 'Минимальная цена', 'Maksimal narx': 'Максимальная цена',
+  'Barcha mahsulotlarni ko‘rish uchun kategoriya nomini bosing.': 'Нажмите на название категории, чтобы увидеть все товары.',
+  // Savatcha
+  'Promo-kod': 'Промокод', 'Qo‘llash': 'Применить', 'Yetkazib berish narxi keyingi bosqichda hisoblanadi': 'Стоимость доставки рассчитывается на следующем шаге',
+  'Davom etish uchun belgilangan mahsulotlarni to‘g‘rilang yoki olib tashlang': 'Чтобы продолжить, исправьте или удалите отмеченные товары',
+  'Savatchani tozalash?': 'Очистить корзину?', 'Barcha mahsulotlar olib tashlanadi.': 'Все товары будут удалены.',
+  'Narxni hisoblab bo‘lmadi': 'Не удалось рассчитать цену',
+  // Rasmiylashtirish
+  'Buyurtmalaringizni kuzatish uchun': 'Чтобы отслеживать заказы,', 'yoki ro‘yxatdan o‘tmasdan davom eting.': 'или продолжите без регистрации.',
+  'Yetkazib berish usullari sozlanmagan.': 'Способы доставки не настроены.', 'Yangi manzil': 'Новый адрес', 'To‘lov usullari sozlanmagan.': 'Способы оплаты не настроены.',
+  'Buyurtmangiz': 'Ваш заказ', 'Savatchadagi xatolarni tuzating.': 'Исправьте ошибки в корзине.', 'Savatchaga qaytish': 'Вернуться в корзину',
+  'Buyurtma berish orqali': 'Оформляя заказ, вы', 'foydalanish shartlariga': 'соглашаетесь с условиями использования', 'rozilik bildirasiz': '',
+  'Ismingizni kiriting': 'Введите имя', 'Yetkazib berish usulini tanlang': 'Выберите способ доставки', 'To‘lov usulini tanlang': 'Выберите способ оплаты',
+  'Toshkent shahri': 'город Ташкент', 'Qabul qiluvchi': 'Получатель', 'Yetkazib berish': 'Доставка', 'Masalan: maktab yonida': 'Например: рядом со школой',
+  'Manzilni saqlab qo‘yish': 'Сохранить адрес', 'To‘lov usuli': 'Способ оплаты', 'Kuryer uchun qo‘shimcha ma’lumot': 'Дополнительная информация для курьера',
+  'Ism va familiya': 'Имя и фамилия', 'Ism': 'Имя', 'Manzil': 'Адрес', 'Shahar / tuman': 'Город / район', 'Viloyat': 'Область', 'Shahar': 'Город',
+  'Ko‘cha, uy, xonadon': 'Улица, дом, квартира', 'Mo‘ljal': 'Ориентир', 'Izoh': 'Комментарий', 'Buyurtmaga izoh': 'Комментарий к заказу',
+  'Kontakt ma’lumotlari': 'Контактные данные', 'Aloqa ma’lumotlari': 'Контактные данные', 'Mahsulotlar': 'Товары', 'Jami': 'Итого', 'Summa': 'Сумма',
+  'Chegirma': 'Скидка', 'Bepul': 'Бесплатно', 'Buyurtma berish': 'Оформить заказ', 'Saqlangan manzil': 'Сохранённый адрес',
+  // Buyurtma
+  'Kuzatuv raqami:': 'Трек-номер:', 'Qabul qiluvchi:': 'Получатель:', 'Usul:': 'Способ:', 'Manzil:': 'Адрес:', 'To‘lov:': 'Оплата:', 'Izoh:': 'Комментарий:',
+  'Buyurtmani kuzatish': 'Отследить заказ', 'Rahmat! Buyurtmangiz qabul qilindi': 'Спасибо! Ваш заказ принят', 'Buyurtma raqami:': 'Номер заказа:',
+  'Buyurtmalarim': 'Мои заказы', 'Xaridni davom ettirish': 'Продолжить покупки', 'Buyurtma qabul qilindi': 'Заказ принят', 'Buyurtma topilmadi': 'Заказ не найден',
+  'Havola eskirgan bo‘lishi mumkin. Buyurtma holatini raqam va telefon orqali tekshiring.': 'Ссылка могла устареть. Проверьте статус заказа по номеру и телефону.',
+  'Buyurtma raqami va buyurtmada ko‘rsatilgan telefon raqamini kiriting.': 'Введите номер заказа и телефон, указанный при оформлении.',
+  'Buyurtma raqami va telefon orqali buyurtma holatini bilib oling': 'Узнайте статус заказа по номеру и телефону',
+  'Tekshirish': 'Проверить', 'Buyurtma raqami': 'Номер заказа', 'Xarid qilish': 'Перейти к покупкам', 'Buyurtmalar yo‘q': 'Заказов нет',
+  'Bu yerda buyurtmalaringiz va ularning holati ko‘rinadi.': 'Здесь будут ваши заказы и их статусы.',
+  'Buyurtmani bekor qilish': 'Отменить заказ', 'Buyurtmani bekor qilasizmi?': 'Отменить заказ?', 'Bu amalni qaytarib bo‘lmaydi.': 'Это действие нельзя отменить.',
+  'Bekor qilindi': 'Отменено',
+  // Profil
+  'Shaxsiy kabinet': 'Личный кабинет', 'Mijoz ID': 'ID клиента', 'Operatorga ayting': 'Назовите оператору', 'Buyurtmalar': 'Заказы',
+  'Ro‘yxatdan o‘tgan': 'Дата регистрации', 'Shaxsiy ma’lumotlar': 'Личные данные', 'Profil': 'Профиль', 'Manzillar': 'Адреса',
+  'Emailni o‘zgartirib bo‘lmaydi': 'Email изменить нельзя', 'Asosiy manzil': 'Основной адрес', 'Saqlangan manzil yo‘q': 'Нет сохранённых адресов',
+  'Manzil qo‘shsangiz, buyurtma berish tezlashadi.': 'Добавьте адрес — оформлять заказы станет быстрее.', 'Manzilni o‘chirish?': 'Удалить адрес?',
+  'Manzilni tahrirlash': 'Редактировать адрес', 'Bildirishnomalar': 'Уведомления', 'Hammasini o‘qilgan deb belgilash': 'Отметить все как прочитанные',
+  'Bildirishnomalar yo‘q': 'Уведомлений нет', 'Buyurtma holati o‘zgarganda shu yerda xabar paydo bo‘ladi.': 'Когда статус заказа изменится, здесь появится уведомление.',
+  'Parolni o‘zgartirish': 'Сменить пароль', 'Joriy parol': 'Текущий пароль', 'Saqlandi': 'Сохранено',
+  // Kirish
+  'Kirish sahifasiga qaytish': 'Вернуться ко входу', 'Parolni tiklash': 'Восстановление пароля', 'Emailingizni kiriting, tiklash havolasini yuboramiz': 'Введите email — мы отправим ссылку для восстановления',
+  'Buyurtmalaringiz tarixi, sevimlilar va yetkazib berish manzillari bitta hisobda.': 'История заказов, избранное и адреса доставки — в одном аккаунте.',
+  'Himoyalangan kirish va rollar nazorati': 'Защищённый вход и контроль доступа', 'Sevimli mahsulotlaringiz — bir necha bosishda eshigingizgacha.': 'Любимые товары — до вашей двери в пару нажатий.',
+  'Hisobingiz yo‘qmi?': 'Нет аккаунта?', 'Ro‘yxatdan o‘ting': 'Зарегистрируйтесь', 'Buyurtmalar va sevimlilaringiz uchun hisobingizga kiring': 'Войдите в аккаунт, чтобы видеть заказы и избранное',
+  'Hisobingiz bormi?': 'Уже есть аккаунт?', 'Ro‘yxatdan o‘tish': 'Регистрация', 'Buyurtmalar tarixi, saqlangan manzillar va sevimlilar': 'История заказов, сохранённые адреса и избранное',
+  'Yangi parol': 'Новый пароль', 'Yangi parol o‘rnatish': 'Установить новый пароль', 'Parolni unutdingizmi?': 'Забыли пароль?',
+  'Pochtangizni tekshiring': 'Проверьте почту', 'Hisobni faollashtirish uchun emailga yuborilgan havolani bosing.': 'Чтобы активировать аккаунт, перейдите по ссылке из письма.',
+  'Men': 'Я принимаю', 'foydalanish shartlari': 'условия использования', 'maxfiylik siyosati': 'политику конфиденциальности', 'ga roziman': '',
+  'va': 'и', 'Havola yuborish': 'Отправить ссылку', 'Parol yangilandi.': 'Пароль обновлён.', 'Profilga o‘tish': 'Перейти в профиль',
+  'Parolni yashirish': 'Скрыть пароль', 'Parolni ko‘rsatish': 'Показать пароль', 'Havola eskirgan yoki noto‘g‘ri. Qaytadan urinib ko‘ring': 'Ссылка устарела или неверна. Попробуйте ещё раз',
+  'Kamida 8 belgi, harf va raqam': 'Минимум 8 символов, буквы и цифры', 'Parolni takrorlang': 'Повторите пароль', 'Parollar mos emas': 'Пароли не совпадают',
+  // Sevimlilar
+  'Sevimlilar': 'Избранное', 'Katalogga o‘tish': 'Перейти в каталог', 'Yoqqan mahsulotlarni saqlash uchun tizimga kiring.': 'Войдите, чтобы сохранять понравившиеся товары.',
+  'Hozircha bo‘sh': 'Пока пусто', 'Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi.': 'Нажмите на сердечко на карточке товара — он сохранится здесь.',
+  // Kupon
+  'Checkout’da kodni kiriting': 'Введите код при оформлении', 'Kupon olindi': 'Купон получен', 'Kupon sizniki! 🎉': 'Купон ваш! 🎉', 'Xaridni boshlash': 'Начать покупки',
+  'Barcha mahsulot': 'Все товары', 'Kategoriyalar': 'Категории', 'Tanlanganlar': 'Избранные товары', 'Har qanday buyurtmaga': 'На любой заказ',
+  'kun': 'дн.', 'soʻm': 'сум', 'so‘m': 'сум', 'Min.': 'Мин.', 'kuponini olish': '— получить купон',
+  // Aloqa, sahifa, layout
+  'Bog‘lanish': 'Связаться', 'Qo‘shimcha telefon': 'Дополнительный телефон', 'Aloqa': 'Контакты', 'Ish vaqti': 'Время работы', 'Aloqa:': 'Контакты:',
+  'Xodimlar uchun kirish': 'Вход для сотрудников', 'Texnik xizmat rejimi yoqilgan — sayt faqat xodimlarga ko‘rinmoqda': 'Включён режим техработ — сайт виден только сотрудникам',
+  'Saytda texnik ishlar olib borilmoqda.': 'На сайте ведутся технические работы.',
+  // Yordam markazi
+  'Yordam markazi': 'Центр помощи', 'da xarid qilish — oddiy. Mana qisqa yoʻriqnoma.': ' — покупать просто. Вот короткая инструкция.',
+  'Yoʻl-yoʻriqni qayta koʻrish': 'Посмотреть подсказки снова', 'Qanday buyurtma beriladi': 'Как оформить заказ', 'Koʻp soʻraladigan savollar': 'Частые вопросы',
+  'Tanlang': 'Выберите', 'Qidiruv yoki katalogdan mahsulotni toping.': 'Найдите товар через поиск или каталог.', 'Savatga qoʻshing': 'Добавьте в корзину',
+  'Rang yoki oʻlchamni tanlab, “Savatga” tugmasini bosing.': 'Выберите цвет или размер и нажмите «В корзину».', 'Rasmiylashtiring': 'Оформите',
+  'Ism, telefon va manzil — boshqa hech narsa kerak emas.': 'Имя, телефон и адрес — больше ничего не нужно.', 'Kuzating': 'Отслеживайте',
+  'Operator qoʻngʻiroq qiladi, holati “Buyurtmalarim”da va Telegramda.': 'Оператор позвонит, статус — в «Моих заказах» и в Telegram.',
+  'Roʻyxatdan oʻtish shartmi?': 'Нужна ли регистрация?', 'Yoʻq. Buyurtmani roʻyxatdan oʻtmasdan berasiz. Telegram botimiz orqali kirsangiz, akkaunt avtomatik ochiladi va buyurtmalaringiz saqlanadi.': 'Нет. Заказ можно оформить без регистрации. Если войти через наш Telegram-бот, аккаунт создастся автоматически и заказы сохранятся.',
+  'Qanday toʻlayman?': 'Как оплатить?', 'Toʻlov usullari rasmiylashtirish sahifasida koʻrsatiladi: naqd, karta yoki boshqa usullar. Naqd toʻlovda pulni mahsulotni olganda berasiz.': 'Способы оплаты указаны на странице оформления: наличные, карта и другие. При оплате наличными вы платите при получении.',
+  'Yetkazib berish qancha vaqt oladi?': 'Сколько идёт доставка?', 'Muddat va narx manzilingizga bogʻliq — rasmiylashtirishda koʻrsatiladi. Batafsil:': 'Срок и стоимость зависят от адреса — они показываются при оформлении. Подробнее:',
+  'Promo-kod (kupon) qanday ishlatiladi?': 'Как использовать промокод (купон)?', 'Aksiyalar': 'Акции',
+  'sahifasidagi kuponni bosing — kod nusxalanadi. Savatda yoki rasmiylashtirishda “Promo-kod” maydoniga qoʻying.': ' — нажмите на купон, код скопируется. Вставьте его в поле «Промокод» в корзине или при оформлении.',
+  'Buyurtmam qayerda?': 'Где мой заказ?', 'Kirgan boʻlsangiz —': 'Если вы вошли —', '. Kirmagan boʻlsangiz —': '. Если не вошли — страница', 'sahifasida raqam va telefonni kiriting.': ': введите номер и телефон.',
+  'Buyurtmani bekor qilsam boʻladimi?': 'Можно ли отменить заказ?', 'Ha, yoʻlga chiqmaguncha. Bizga qoʻngʻiroq qiling yoki Telegramda yozing.': 'Да, пока он не отправлен. Позвоните нам или напишите в Telegram.',
+  'Telegram botimiz': 'Наш Telegram-бот', 'Doʻkonni Telegramdan chiqmasdan oching. Buyurtma holati va aksiyalar shu yerga keladi.': 'Открывайте магазин прямо в Telegram. Статусы заказов и акции приходят туда же.',
+  'Savol qoldimi?': 'Остались вопросы?', 'Qanday buyurtma berish, toʻlov, yetkazish, kuponlar va Telegram bot haqida qisqa yoʻriqnoma.': 'Коротко о заказе, оплате, доставке, купонах и Telegram-боте.',
+  // Buyurtma holatlari
+  'Buyurtma': 'Заказ', 'Yangi': 'Новый', 'Tasdiqlandi': 'Подтверждён', 'Yig‘ilmoqda': 'Собирается', 'Yo‘lda': 'В пути', 'Yetkazildi': 'Доставлен',
+  'Qaytarildi': 'Возвращён', 'To‘lanmagan': 'Не оплачен', 'To‘langan': 'Оплачен', 'Xato': 'Ошибка', 'Qaytarilgan': 'Возвращён',
+  // Validatsiya va xatolar
+  'Savatcha ma’lumotlari noto‘g‘ri': 'Неверные данные корзины', 'Juda ko‘p urinish. Birozdan so‘ng qayta urinib ko‘ring': 'Слишком много попыток. Попробуйте чуть позже',
+};
+
+/** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */
+export function tr(lang: Lang, s: string): string {
+  if (lang !== 'ru') return s;
+  const v = UI_RU[s];
+  return v === undefined ? s : v;
+}

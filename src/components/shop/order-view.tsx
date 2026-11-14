@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { tr } from '@/lib/i18n/ui-ru';
+import type { Lang } from '@/lib/i18n/dict';
 import { Check, X } from 'lucide-react';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
@@ -32,12 +34,13 @@ export interface PublicOrder {
   history: { status: OrderStatus; note?: string | null; created_at: string }[];
 }
 
-export function StatusTimeline({ status, history }: { status: OrderStatus; history: { status: OrderStatus; created_at: string }[] }) {
+export function StatusTimeline({ status, history, lang = 'uz' }: { status: OrderStatus; history: { status: OrderStatus; created_at: string }[]; lang?: Lang }) {
+  const L = (s: string) => tr(lang, s);
   if (status === 'cancelled' || status === 'returned') {
     const at = history.findLast((h) => h.status === status)?.created_at;
     return (
       <div className="flex items-center gap-3 rounded-xl bg-danger-soft p-4 text-sm text-danger">
-        <X className="h-5 w-5" /> Buyurtma {orderStatusLabel[status].toLowerCase()} {at && <span className="text-danger">· {formatDateTime(at)}</span>}
+        <X className="h-5 w-5" /> {L('Buyurtma')} {L(orderStatusLabel[status]).toLowerCase()} {at && <span className="text-danger">· {formatDateTime(at)}</span>}
       </div>
     );
   }
@@ -56,7 +59,7 @@ export function StatusTimeline({ status, history }: { status: OrderStatus; histo
               </span>
               <span className={cn('h-0.5 flex-1', i === ORDER_STEPS.length - 1 ? 'opacity-0' : i < current ? 'bg-primary' : 'bg-line')} />
             </div>
-            <span className={cn('mt-1.5 text-[11px] font-semibold sm:text-xs', reached ? 'text-ink' : 'text-ink-3')}>{orderStatusLabel[step]}</span>
+            <span className={cn('mt-1.5 text-[11px] font-semibold sm:text-xs', reached ? 'text-ink' : 'text-ink-3')}>{L(orderStatusLabel[step])}</span>
             {at && <span className="hidden text-[10px] text-ink-3 sm:block">{formatDateTime(at)}</span>}
           </li>
         );
@@ -65,7 +68,8 @@ export function StatusTimeline({ status, history }: { status: OrderStatus; histo
   );
 }
 
-export function OrderDetails({ order, symbol }: { order: PublicOrder; symbol: string }) {
+export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrder; symbol: string; lang?: Lang }) {
+  const L = (s: string) => tr(lang, s);
   const p = (v: number) => formatPrice(v, symbol);
   return (
     <div className="space-y-4">
@@ -75,15 +79,15 @@ export function OrderDetails({ order, symbol }: { order: PublicOrder; symbol: st
             <h2 className="text-[15px] font-semibold tracking-tight">Buyurtma #{order.number}</h2>
             <p className="text-sm text-ink-3">{formatDateTime(order.created_at)}</p>
           </div>
-          <Badge tone={orderStatusTone[order.status]}>{orderStatusLabel[order.status]}</Badge>
+          <Badge tone={orderStatusTone[order.status]}>{L(orderStatusLabel[order.status])}</Badge>
         </div>
-        <StatusTimeline status={order.status} history={order.history} />
+        <StatusTimeline status={order.status} history={order.history} lang={lang} />
         {order.tracking_number && <p className="mt-4 text-sm">Kuzatuv raqami: <b>{order.tracking_number}</b></p>}
         {order.cancelled_reason && <p className="mt-2 text-sm text-ink-3">Sabab: {order.cancelled_reason}</p>}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface p-4 text-sm shadow-soft sm:p-6">
-          <h3 className="mb-3 font-semibold">Yetkazib berish</h3>
+          <h3 className="mb-3 font-semibold">{L("Yetkazib berish")}</h3>
           <dl className="space-y-1.5">
             <div><dt className="inline text-ink-3">Qabul qiluvchi: </dt><dd className="inline">{order.customer_name}, {formatUzPhone(order.customer_phone)}</dd></div>
             <div><dt className="inline text-ink-3">Usul: </dt><dd className="inline">{order.shipping_method_name}</dd></div>
@@ -95,17 +99,17 @@ export function OrderDetails({ order, symbol }: { order: PublicOrder; symbol: st
           </dl>
         </div>
         <div className="rounded-xl border border-line bg-surface p-4 text-sm shadow-soft sm:p-6">
-          <h3 className="mb-3 font-semibold">Summa</h3>
+          <h3 className="mb-3 font-semibold">{L("Summa")}</h3>
           <dl className="space-y-1.5">
             <div className="flex justify-between"><dt className="text-ink-3">Mahsulotlar ({order.items_count})</dt><dd>{p(order.subtotal)}</dd></div>
             {order.discount_total > 0 && <div className="flex justify-between text-success"><dt>Chegirma {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total)}</dd></div>}
-            <div className="flex justify-between"><dt className="text-ink-3">Yetkazib berish</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : 'Bepul'}</dd></div>
-            <div className="flex justify-between border-t border-line pt-2 text-base font-semibold"><dt>Jami</dt><dd>{p(order.total)}</dd></div>
+            <div className="flex justify-between"><dt className="text-ink-3">{L("Yetkazib berish")}</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : L("Bepul")}</dd></div>
+            <div className="flex justify-between border-t border-line pt-2 text-base font-semibold"><dt>{L("Jami")}</dt><dd>{p(order.total)}</dd></div>
           </dl>
         </div>
       </div>
       <div className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6">
-        <h3 className="mb-3 font-semibold">Mahsulotlar</h3>
+        <h3 className="mb-3 font-semibold">{L("Mahsulotlar")}</h3>
         <ul className="divide-y divide-line">
           {order.items.map((i) => (
             <li key={i.id} className="flex items-center gap-3 py-3 text-sm">

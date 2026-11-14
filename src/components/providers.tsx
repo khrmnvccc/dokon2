@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { translate, type Lang, type TKey } from '@/lib/i18n/dict';
+import { tr } from '@/lib/i18n/ui-ru';
 import { formatPrice } from '@/lib/format';
 import { ToastProvider, useToast } from '@/components/ui/toast';
 import { ConfirmProvider } from '@/components/ui/dialog';
@@ -23,6 +24,12 @@ export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used within AppProviders');
   return ctx;
+}
+
+/** Interfeys yozuvi: const L = useL(); L('Bosh sahifa') → rus tilida 'Главная'. */
+export function useL() {
+  const lang = useContext(AppContext)?.lang ?? 'uz';
+  return useCallback((s: string) => tr(lang, s), [lang]);
 }
 
 // ---------------- Savatcha ----------------

@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import type { SiteSettings } from '@/lib/settings-schema';
@@ -6,7 +7,8 @@ import { CatalogButton, HeaderActions, LangSwitch, SearchBox } from './header-cl
 import { Logo, ThemeToggle } from '@/components/brand';
 
 // Kassa dizayni 1.13: tepada glass sarlavha — logo, qidiruv, savat (soni bilan), til, mavzu.
-export function Header({ settings, tree }: { settings: SiteSettings; tree: CategoryNode[] }) {
+export async function Header({ settings, tree }: { settings: SiteSettings; tree: CategoryNode[] }) {
+  const L = await getL();
   const { header_menu, announcement, localization } = settings;
   return (
     <header className="no-print sticky top-0 z-40 border-b border-line bg-surface glass">
@@ -18,7 +20,7 @@ export function Header({ settings, tree }: { settings: SiteSettings; tree: Categ
         </div>
       )}
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 sm:gap-3 lg:h-16">
-        <Link href="/" className="min-w-0 shrink-0" aria-label="Bosh sahifa"><Logo compact /></Link>
+        <Link href="/" className="min-w-0 shrink-0" aria-label={L("Bosh sahifa")}><Logo compact /></Link>
         <CatalogButton tree={tree} />
         <Suspense fallback={<div className="hidden h-10 flex-1 rounded-lg bg-surface-2 md:block" />}>
           <div data-tour="search" className="hidden min-w-0 flex-1 md:flex"><SearchBox className="flex flex-1" /></div>

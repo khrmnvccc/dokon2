@@ -59,6 +59,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/staff', label: 'Xodimlar', icon: 'ShieldCheck', perm: 'staff.manage' },
       { href: '/admin/methods', label: 'Yetkazish va toʻlov', icon: 'Truck', perm: 'payments.write' },
       { href: '/admin/pages', label: 'Sahifalar', icon: 'FileText', perm: 'pages.write' },
+      { href: '/admin/translations', label: 'Tarjimalar (ruscha)', icon: 'Languages', perm: 'settings.write' },
       { href: '/admin/tours', label: 'Yoʻl-yoʻriq', icon: 'Lightbulb', perm: 'settings.write' },
     ],
   },
@@ -78,7 +79,7 @@ export const NAV_RU: Record<string, string> = {
   'Katalog': 'Каталог', 'Mahsulotlar': 'Товары', 'Kategoriyalar': 'Категории', 'Ombor': 'Склад',
   'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры',
   'Telegram': 'Telegram', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
-  'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки',
+  'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки', 'Tarjimalar (ruscha)': 'Переводы',
   // Qobiq matnlari
   'Admin panel': 'Админ-панель', 'Menyu': 'Меню', 'Asosiy': 'Главная', 'Saytni ochish': 'Открыть сайт', 'Chiqish': 'Выйти',
   'Yoʻriqnoma': 'Подсказки', 'Bildirishnomalar': 'Уведомления', 'Hammasi oʻqildi': 'Прочитать все', 'Yangi bildirishnoma yoʻq': 'Новых уведомлений нет',

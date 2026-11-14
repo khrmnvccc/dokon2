@@ -1,9 +1,11 @@
+import { getL } from '@/lib/i18n/server';
 import { SITE_URL } from '@/lib/env';
 import { getBanners, getCatalog, getCategories, getSettings } from '@/lib/data/public';
 import { HeroSlider, BannerSlide } from '@/components/shop/hero-slider';
 import { Advantages, CategoryGrid, ProductSection } from '@/components/shop/home-blocks';
 
 export default async function HomePage() {
+  const L = await getL();
   const settings = await getSettings();
   const enabled = settings.home_sections.filter((s) => s.enabled);
   const has = (key: string) => enabled.some((s) => s.key === key);
@@ -23,11 +25,11 @@ export default async function HomePage() {
 
   const blocks: Record<string, React.ReactNode> = {
     hero: <HeroSlider banners={hero} />,
-    categories: <CategoryGrid categories={categories.filter((c) => !c.parent_id && c.show_on_home)} title={title('categories', 'Kategoriyalar')} />,
-    bestsellers: bestsellers && <ProductSection title={title('bestsellers', 'Eng ko‘p sotilayotganlar')} products={bestsellers.items} href="/catalog?sort=popular" />,
-    new: fresh && <ProductSection title={title('new', 'Yangi kelganlar')} products={fresh.items} href="/catalog?new=1&sort=new" />,
+    categories: <CategoryGrid categories={categories.filter((c) => !c.parent_id && c.show_on_home)} title={title('categories', L("Kategoriyalar"))} />,
+    bestsellers: bestsellers && <ProductSection title={title('bestsellers', L("Eng ko‘p sotilayotganlar"))} products={bestsellers.items} href="/catalog?sort=popular" />,
+    new: fresh && <ProductSection title={title('new', L("Yangi kelganlar"))} products={fresh.items} href="/catalog?new=1&sort=new" />,
     sale: sale && <ProductSection title={title('sale', 'Chegirmalar')} products={sale.items} href="/sale" />,
-    featured: featured && <ProductSection title={title('featured', 'Tavsiya etamiz')} products={featured.items} href="/catalog?featured=1" />,
+    featured: featured && <ProductSection title={title('featured', L("Tavsiya etamiz"))} products={featured.items} href="/catalog?featured=1" />,
     promo: promo.length > 0 && (
       <div className="grid gap-3 sm:grid-cols-2">
         {promo.slice(0, 2).map((b) => (

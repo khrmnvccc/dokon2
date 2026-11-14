@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Category, ProductCard } from '@/lib/types';
@@ -7,11 +8,12 @@ import { DynamicIcon } from './dynamic-icon';
 import { ProductRail } from './product-card';
 import { isUnoptimizable } from './product-image';
 
-export function CategoryGrid({ categories, title }: { categories: Category[]; title: string }) {
+export async function CategoryGrid({ categories, title }: { categories: Category[]; title: string }) {
+  const L = await getL();
   if (!categories.length) return null;
   return (
     <section>
-      <SectionHeader title={title} href="/catalog" />
+      <SectionHeader title={title} href="/catalog" linkText={L("Barchasi")} />
       <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 md:grid-cols-6 lg:grid-cols-9">
         {categories.map((c) => (
           <Link key={c.id} href={`/category/${c.slug}`} className="group flex w-24 shrink-0 flex-col items-center gap-2 rounded-xl border border-line bg-surface p-3 text-center shadow-soft anim-rise transition-colors hover:bg-surface-2 sm:w-auto">
@@ -30,11 +32,12 @@ export function CategoryGrid({ categories, title }: { categories: Category[]; ti
   );
 }
 
-export function ProductSection({ title, products, href }: { title: string; products: ProductCard[]; href: string }) {
+export async function ProductSection({ title, products, href }: { title: string; products: ProductCard[]; href: string }) {
+  const L = await getL();
   if (!products.length) return null;
   return (
     <section>
-      <SectionHeader title={title} href={href} />
+      <SectionHeader title={title} href={href} linkText={L("Barchasi")} />
       <ProductRail products={products} />
     </section>
   );

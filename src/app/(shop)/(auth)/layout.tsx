@@ -1,3 +1,4 @@
+import { getL } from '@/lib/i18n/server';
 import { ShieldCheck } from 'lucide-react';
 import { getSettings } from '@/lib/data/public';
 import { BrandMark } from '@/components/brand';
@@ -5,6 +6,7 @@ import { BrandMark } from '@/components/brand';
 // Kassa 1.11: chap yarmi to'q panel (brend rangida radial dog'lar + 48px to'r chiziqlar), logo, nom va katta headline;
 // o'ngda forma. Telefonda faqat forma.
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const L = await getL();
   const { brand } = await getSettings();
   return (
     <div className="mx-auto grid max-w-5xl overflow-hidden rounded-2xl lg:grid-cols-[1fr_480px] lg:border lg:border-line lg:bg-surface lg:shadow-soft">
@@ -18,10 +20,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           </div>
           <div className="max-w-md">
             <h2 className="text-[32px] font-semibold leading-[1.15] tracking-tight">{brand.headline}</h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-white/60">Buyurtmalaringiz tarixi, sevimlilar va yetkazib berish manzillari bitta hisobda.</p>
+            <p className="mt-4 text-[15px] leading-relaxed text-white/60">{L("Buyurtmalaringiz tarixi, sevimlilar va yetkazib berish manzillari bitta hisobda.")}</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-white/50">
-            <ShieldCheck className="size-4" /> Himoyalangan kirish va rollar nazorati
+            <ShieldCheck className="size-4" /> {L("Himoyalangan kirish va rollar nazorati")}
           </div>
         </div>
       </div>
