@@ -172,6 +172,8 @@ export interface PaymentMethod {
   provider: 'click' | 'payme' | 'uzum' | null;
   is_active: boolean;
   sort_order: number;
+  /** Kartaga oʻtkazma: { number, holder, bank, theme } */
+  card?: unknown;
 }
 
 export interface OrderAddress {
@@ -188,6 +190,7 @@ export interface Order {
   user_id: string | null;
   status: OrderStatus;
   payment_status: PaymentStatus;
+  payment_method_id?: string | null;
   payment_method_name: string;
   payment_provider: string | null;
   shipping_method_name: string;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cardSchema } from '@/lib/payment-card';
 import { designSchema } from '@/lib/coupon-design';
 
 const toNumber = (v: unknown) => {
@@ -172,4 +173,10 @@ export const paymentMethodSchema = z.object({
   provider: z.preprocess((v) => (v === '' ? null : v), z.enum(['click', 'payme', 'uzum']).nullable()),
   is_active: z.boolean(),
   sort_order: intField(-1000, 1000),
-}).refine((d) => d.kind !== 'online' || d.provider, { path: ['provider'], message: 'Onlayn to‘lov uchun provayderni tanlang' });
+  // Kartaga oʻtkazma: raqam boʻsh boʻlsa karta koʻrsatilmaydi
+  card: z.preprocess(
+    (v) => (v && typeof v === 'object' && String((v as { number?: unknown }).number ?? '').replace(/\D/g, '') ? v : null),
+    cardSchema.nullable(),
+  ).optional(),
+}).refine((d) => d.kind !== 'online' || d.provider, { path: ['provider'], message: 'Onlayn to‘lov uchun provayderni tanlang' })
+  .transform((d) => ({ ...d, card: d.kind === 'bank_transfer' ? d.card ?? null : null }));

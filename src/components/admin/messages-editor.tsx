@@ -4,8 +4,7 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Ban, BarChart3, Bell, Bot, CheckCircle2, ChevronLeft, CreditCard, ExternalLink, Link2, Package, PackageMinus, RefreshCw, RotateCcw, Send,
-  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, type LucideIcon,
-} from 'lucide-react';
+  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, ReceiptText, type LucideIcon } from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
   unlinkPerson, syncCustomers, saveBroadcast, updateCustomerMessage, testCustomerMsg, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
@@ -290,7 +289,7 @@ function ShopBotPanel({ data }: { data: MessagesData }) {
 
 // ---------- 2. Xabar matnlari: chapda roʻyxat, oʻngda tahrir ----------
 const TEMPLATE_ICONS: Record<TemplateKey, LucideIcon> = {
-  newOrder: ShoppingCart, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
+  newOrder: ShoppingCart, paymentReceipt: ReceiptText, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
   paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3,
 };
 const GROUP_TONES = ['bg-[#1d4f80]', 'bg-[#2f80c1]', 'bg-[#1f7a4d]', 'bg-[#8a5a12]'];

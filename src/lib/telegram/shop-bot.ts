@@ -502,3 +502,19 @@ export async function referralAttachedNotice(res: { referrer_id?: string; welcom
   const chats = await chatsOf(friendId);
   await afterReferralAttach(config, { ...res, welcome_coupon_id: chats.length ? res.welcome_coupon_id : null }, friendId, chats[0]?.chat_id ?? 0);
 }
+
+/** Kartaga toʻlov cheki tekshirildi: mijozga botda xabar (bot ulangan boʻlsa). */
+export async function notifyReceiptDecision(orderId: string, approved: boolean, note: string | null) {
+  try {
+    const config = await getShopBot();
+    if (!config) return;
+    const { data: o } = await db().from('orders').select('id, number, user_id').eq('id', orderId).maybeSingle();
+    if (!o?.user_id) return;
+    const html = approved
+      ? `✅ <b>Toʻlovingiz tasdiqlandi</b>\nBuyurtma №${o.number} — tez orada joʻnatamiz.`
+      : `⚠️ <b>Chek qabul qilinmadi</b>\nBuyurtma №${o.number}${note ? `: ${esc(note)}` : ''}\nToʻgʻri chekni qayta yuklang.`;
+    await textToUser(config, String(o.user_id), html, [[openButton(approved ? '📦 Buyurtma' : '🧾 Chekni yuklash', `/account/orders/${o.id}`)]]);
+  } catch (e) {
+    console.error('receipt decision msg', e);
+  }
+}

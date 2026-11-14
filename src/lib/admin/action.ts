@@ -15,6 +15,9 @@ export function dbErrorText(error: { code?: string; message?: string } | null | 
   if (error.code === '23503') return 'Bu yozuv boshqa ma’lumotlarda ishlatilmoqda, o‘chirib bo‘lmaydi';
   if (error.code === '23514') return 'Qiymat ruxsat etilgan chegaradan tashqarida';
   if (error.code === '42501' || msg.includes('FORBIDDEN')) return 'Bu amal uchun ruxsat yo‘q';
+  if (msg.includes('PAYMENT_NOT_CONFIRMED')) return 'Avval toʻlov chekini tasdiqlang (kartaga toʻlov hali tasdiqlanmagan)';
+  if (msg.includes('RECEIPT_DECIDED')) return 'Bu chek boʻyicha qaror allaqachon qabul qilingan. Sahifani yangilang';
+  if (msg.includes('NOTE_REQUIRED')) return 'Rad etish sababini yozing';
   if (msg.includes('INVALID_TRANSITION')) return 'Bu holatga o‘tkazib bo‘lmaydi';
   if (msg.includes('LAST_SUPER_ADMIN')) return 'Oxirgi super adminni o‘chirib bo‘lmaydi';
   if (msg.includes('OWNER_LOCKED')) return 'Ega ruxsatlarini oʻzgartirib boʻlmaydi';
