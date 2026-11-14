@@ -150,7 +150,7 @@ function CartLine({ line }: { line: PricedLine }) {
 export function CouponBox({ applied, requested, error, onApply }: { applied: string | null; requested: string | null; error: QuoteResult['couponError']; onApply: (code: string | null) => void }) {
   const L = useL();
   const [value, setValue] = useState('');
-  const [mine, setMine] = useState<{ code: string; value: number; percent?: boolean; min_order_amount: number }[]>([]);
+  const [mine, setMine] = useState<{ code: string; value: number; percent?: boolean; min_order_amount: number; starts_at?: string | null }[]>([]);
   useEffect(() => {
     let alive = true;
     myActiveCoupons().then((c) => { if (alive) setMine(c); }).catch(() => {});
@@ -182,15 +182,20 @@ export function CouponBox({ applied, requested, error, onApply }: { applied: str
       {requested && error && <p className="mt-2 text-xs font-medium text-danger">{L(couponErrorText[error])}</p>}
       {mine.length > 0 && (
         <div className="mt-3">
-          <p className="mb-1.5 text-xs font-medium text-ink-3">{L("Kuponlarim")}</p>
+          <p className="mb-1.5 text-xs font-medium text-ink-3">{L("Kuponlarim — bosing, oʻzi qoʻllanadi")}</p>
           <div className="flex flex-wrap gap-2">
-            {mine.map((c) => (
-              <button key={c.code} type="button" onClick={() => onApply(c.code)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-primary/50 bg-primary-soft px-3 py-1.5 text-[13px] font-semibold text-primary transition active:scale-95">
-                <Tag className="size-3.5" />{c.percent ? `${c.value}%` : `${new Intl.NumberFormat('ru-RU').format(c.value).replace(/\s/g, ' ')} ${L("soʻm")}`}
-                {c.min_order_amount > 0 && <span className="font-normal text-ink-3">· {L("Min.")} {new Intl.NumberFormat('ru-RU').format(c.min_order_amount).replace(/\s/g, ' ')}</span>}
-              </button>
-            ))}
+            {mine.map((c) => {
+              const soon = c.starts_at ? new Date(c.starts_at) : null;
+              return (
+                <button key={c.code} type="button" disabled={Boolean(soon)} onClick={() => { setValue(c.code); onApply(c.code); }}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-primary/50 bg-primary-soft px-3 py-1.5 text-[13px] font-semibold text-primary transition active:scale-95 disabled:border-line disabled:bg-surface-2 disabled:text-ink-3 disabled:active:scale-100">
+                  <Tag className="size-3.5" /><span className="font-mono">{c.code}</span>
+                  <span>· {c.percent ? `${c.value}%` : `${new Intl.NumberFormat('ru-RU').format(c.value).replace(/\s/g, ' ')} ${L("soʻm")}`}</span>
+                  {soon ? <span className="font-normal">· {`${String(soon.getDate()).padStart(2, '0')}.${String(soon.getMonth() + 1).padStart(2, '0')}`} {L("dan")}</span>
+                    : c.min_order_amount > 0 && <span className="font-normal text-ink-3">· {L("Min.")} {new Intl.NumberFormat('ru-RU').format(c.min_order_amount).replace(/\s/g, ' ')}</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { getSettings } from '@/lib/data/public';
 import { formatPrice } from '@/lib/format';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL, SITE_URL } from '@/lib/env';
+import { methodCard } from '@/lib/payments/receipts';
 import { chatTitle, getTelegram, logSend, tg, TelegramFail } from './server';
 import type { OrderStatus } from '@/lib/types';
 import { ensureShopUser, profileOf, savePhone, tgDisplay } from './tg-users';
@@ -289,25 +290,28 @@ export async function sendRich(token: string, chatId: number, msg: RichMessage) 
   await tg(token, 'sendMessage', { chat_id: chatId, text: msg.html, parse_mode: 'HTML', disable_web_page_preview: true, ...markup });
 }
 
-const STATUS_MSG: Partial<Record<'new' | OrderStatus, CustomerMsgKey>> = {
+const STATUS_MSG: Partial<Record<'new' | OrderStatus | 'paid' | 'receiptRejected', CustomerMsgKey>> = {
+  paid: 'paid', receiptRejected: 'receiptRejected',
   new: 'orderNew', confirmed: 'confirmed', processing: 'processing', shipped: 'shipped', delivered: 'delivered', cancelled: 'cancelled', returned: 'returned',
 };
 
 /** Buyurtma egasining Telegramiga (doʻkon boti orqali) xabar. Hech qachon xato tashlamaydi. */
-export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus) {
+export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus | 'paid' | 'receiptRejected', extra: { sabab?: string | null } = {}) {
   try {
-    const key = STATUS_MSG[kind];
+    let key = STATUS_MSG[kind];
     if (!key) return;
     const config = await getShopBot();
     if (!config) return;
-    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count').eq('id', orderId).maybeSingle();
+    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count, payment_method_id').eq('id', orderId).maybeSingle();
     if (!o?.user_id) return;
+    // Kartaga toʻlov: “qabul qilindi” oʻrniga “toʻlovni kutyapmiz”
+    if (kind === 'new' && (await methodCard(o.payment_method_id as string | null))) key = 'awaitPayment';
     const { data: subs } = await db().from('telegram_subscribers').select('chat_id').eq('user_id', o.user_id).eq('via', 'shop');
     if (!subs?.length) return;
     const { brand } = await getSettings();
     const msg = await customerMessage(key, {
       raqam: o.number, mijoz: String(o.customer_name ?? '').split(' ')[0], summa: formatPrice(Number(o.total), 'soʻm'),
-      soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon',
+      soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon', sabab: extra.sabab ?? '',
     }, { path: `/account/orders/${o.id}` });
     if (!msg) return;
     for (const s of subs) {
@@ -503,18 +507,7 @@ export async function referralAttachedNotice(res: { referrer_id?: string; welcom
   await afterReferralAttach(config, { ...res, welcome_coupon_id: chats.length ? res.welcome_coupon_id : null }, friendId, chats[0]?.chat_id ?? 0);
 }
 
-/** Kartaga toʻlov cheki tekshirildi: mijozga botda xabar (bot ulangan boʻlsa). */
+/** Kartaga toʻlov cheki tekshirildi: mijozga botda rasmli xabar (Mijozga xabarlardan boshqariladi). */
 export async function notifyReceiptDecision(orderId: string, approved: boolean, note: string | null) {
-  try {
-    const config = await getShopBot();
-    if (!config) return;
-    const { data: o } = await db().from('orders').select('id, number, user_id').eq('id', orderId).maybeSingle();
-    if (!o?.user_id) return;
-    const html = approved
-      ? `✅ <b>Toʻlovingiz tasdiqlandi</b>\nBuyurtma №${o.number} — tez orada joʻnatamiz.`
-      : `⚠️ <b>Chek qabul qilinmadi</b>\nBuyurtma №${o.number}${note ? `: ${esc(note)}` : ''}\nToʻgʻri chekni qayta yuklang.`;
-    await textToUser(config, String(o.user_id), html, [[openButton(approved ? '📦 Buyurtma' : '🧾 Chekni yuklash', `/account/orders/${o.id}`)]]);
-  } catch (e) {
-    console.error('receipt decision msg', e);
-  }
+  await notifyCustomer(orderId, approved ? 'paid' : 'receiptRejected', { sabab: note });
 }

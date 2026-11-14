@@ -239,6 +239,11 @@ export const UI_RU: Record<string, string> = {
   "Toʻlov allaqachon tasdiqlangan": "Оплата уже подтверждена",
   "Faqat rasm (JPG, PNG yoki WEBP)": "Только изображение (JPG, PNG или WEBP)",
   "Juda koʻp urinish. Birozdan keyin qayta urinib koʻring": "Слишком много попыток. Попробуйте позже",
+  "toʻlovni kutyapmiz": "ожидаем оплату",
+  "Kartaga oʻtkazing va chekni yuklang. Toʻlov tasdiqlangach, buyurtmangiz qabul qilinadi.": "Переведите на карту и загрузите чек. После подтверждения оплаты заказ будет принят.",
+  "Doʻkon javobi": "Ответ магазина",
+  "Kuponlarim — bosing, oʻzi qoʻllanadi": "Мои купоны — нажмите, чтобы применить",
+  "dan": "с",
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

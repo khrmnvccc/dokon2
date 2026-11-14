@@ -75,5 +75,5 @@ export async function reviewReceipt(input: z.input<typeof reviewSchema>): Promis
     await notifyReceiptDecision(d.orderId, d.approve, d.note ?? null);
     if (d.approve) await onOrderUpdate(d.orderId, { payment: 'paid', by });
   });
-  return { ok: true, message: d.approve ? 'Toʻlov tasdiqlandi — endi joʻnatish mumkin' : 'Chek rad etildi, mijozga xabar berildi' };
+  return { ok: true, message: d.approve ? 'Toʻlov va buyurtma tasdiqlandi — endi joʻnatish mumkin' : 'Chek rad etildi, mijozga xabar berildi' };
 }

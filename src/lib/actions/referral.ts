@@ -42,17 +42,23 @@ export async function requestPayout(input: unknown): Promise<ActionResult> {
 }
 
 /** Savat va rasmiylashtirishda “Kuponlarim”: mijozning ishlatilmagan shaxsiy kuponlari. */
-export async function myActiveCoupons(): Promise<{ code: string; value: number; percent: boolean; min_order_amount: number; ends_at: string | null }[]> {
+export async function myActiveCoupons(): Promise<{ code: string; value: number; percent: boolean; min_order_amount: number; ends_at: string | null; starts_at: string | null }[]> {
   if (!(await getCurrentUser())) return [];
   const supabase = await getServerSupabase();
   type C = { code: string; value: number; discount_type?: string; min_order_amount: number; starts_at?: string | null; ends_at: string | null; used: boolean };
-  // Shaxsiy kuponlar (doʻst taklifi, sovgʻa) + mijozga tegishli umumiy kuponlar (botda yuborilgan, hammaga ochiq)
+  // Shaxsiy kuponlar (doʻst taklifi, sovgʻa) + mijozga tegishli umumiy kuponlar (botda yuborilgan, hammaga ochiq).
+  // Hali boshlanmaganlari ham qaytadi — savatchada “… dan” deb koʻrinadi (bosib boʻlmaydi).
   const [{ data }, { data: wallet }] = await Promise.all([supabase.rpc('my_referral'), supabase.rpc('my_coupon_wallet')]);
   const own = ((data as { coupons?: C[] } | null)?.coupons ?? []);
   const shared = (Array.isArray(wallet) ? wallet : []) as C[];
   const now = Date.now();
+  const seen = new Set<string>();
   return [...own, ...shared]
-    .filter((c) => !c.used && (!c.ends_at || new Date(c.ends_at).getTime() > now) && (!c.starts_at || new Date(c.starts_at).getTime() <= now))
-    .map(({ code, value, discount_type, min_order_amount, ends_at }) => ({ code, value: Number(value), percent: discount_type === 'percent', min_order_amount: Number(min_order_amount), ends_at }))
-    .slice(0, 6);
+    .filter((c) => !c.used && (!c.ends_at || new Date(c.ends_at).getTime() > now) && !seen.has(c.code) && seen.add(c.code))
+    .map(({ code, value, discount_type, min_order_amount, ends_at, starts_at }) => ({
+      code, value: Number(value), percent: discount_type === 'percent', min_order_amount: Number(min_order_amount), ends_at,
+      starts_at: starts_at && new Date(starts_at).getTime() > now ? starts_at : null,
+    }))
+    .sort((a, b) => Number(Boolean(a.starts_at)) - Number(Boolean(b.starts_at)))
+    .slice(0, 8);
 }

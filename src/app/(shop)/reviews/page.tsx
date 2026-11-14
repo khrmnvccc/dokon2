@@ -36,7 +36,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
           </div>
           <div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {items.map((r) => <ReviewCard key={r.id} review={r} buyerLabel={L('Xaridor')} />)}
+              {items.map((r) => <ReviewCard key={r.id} review={r} buyerLabel={L('Xaridor')} replyLabel={L('Doʻkon javobi')} />)}
             </div>
             <div className="mt-6">
               <Pagination page={page} total={total} pageSize={PER_PAGE} makeHref={(p) => (p === 1 ? '/reviews' : `/reviews?page=${p}`)} />

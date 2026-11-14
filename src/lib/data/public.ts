@@ -305,6 +305,7 @@ export interface PublicReview {
   body: string | null;
   author_name: string | null;
   created_at: string;
+  reply?: string | null;
   product: { id: string; name: string; slug: string; image_url: string | null } | null;
 }
 export interface ReviewStats { count: number; avg: number; stars: Record<1 | 2 | 3 | 4 | 5, number> }
@@ -314,7 +315,7 @@ const fetchReviewsPage = unstable_cache(
     if (!isSupabaseConfigured) return { items: [], total: 0 };
     let q = getPublicSupabase()
       .from('reviews')
-      .select('id, rating, body, author_name, created_at, products!inner(id, name, slug, image_url, is_active)', { count: 'exact' })
+      .select('id, rating, body, author_name, created_at, reply, products!inner(id, name, slug, image_url, is_active)', { count: 'exact' })
       .eq('is_approved', true)
       .eq('products.is_active', true);
     if (withText) q = q.not('body', 'is', null).neq('body', '');
@@ -323,7 +324,7 @@ const fetchReviewsPage = unstable_cache(
     const items = (data ?? []).map((r) => {
       const p = (Array.isArray(r.products) ? r.products[0] : r.products) as { id: string; name: string; slug: string; image_url: string | null } | null;
       return {
-        id: r.id as string, rating: r.rating as number, body: r.body as string | null, author_name: r.author_name as string | null,
+        id: r.id as string, rating: r.rating as number, body: r.body as string | null, author_name: r.author_name as string | null, reply: (r.reply as string | null) ?? null,
         created_at: r.created_at as string, product: p ? { id: p.id, name: p.name, slug: p.slug, image_url: p.image_url } : null,
       };
     });

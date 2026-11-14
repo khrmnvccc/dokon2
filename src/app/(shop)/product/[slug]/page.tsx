@@ -129,6 +129,12 @@ export default async function ProductPage({ params }: Props) {
                 </div>
                 <Stars value={r.rating} className="mt-1" />
                 {r.body && <p className="mt-2 whitespace-pre-line text-sm text-ink-2">{r.body}</p>}
+                {r.reply && (
+                  <div className="mt-2 rounded-lg border-l-2 border-primary bg-primary-soft/40 px-3 py-2 text-sm">
+                    <p className="text-xs font-semibold text-primary">{L("Doʻkon javobi")}</p>
+                    <p className="whitespace-pre-line text-ink-2">{r.reply}</p>
+                  </div>
+                )}
               </article>
             )) : <p className="text-sm text-ink-3">{L("Hali sharhlar yo‘q. Birinchi bo‘lib fikr bildiring!")}</p>}
           </div>

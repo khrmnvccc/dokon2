@@ -276,6 +276,8 @@ export interface Review {
   body: string | null;
   is_approved: boolean;
   created_at: string;
+  reply?: string | null;
+  replied_at?: string | null;
 }
 
 export interface CmsPage {

@@ -30,6 +30,12 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
   const payment = await getOrderPayment(order.id).catch(() => null);
   return (
     <div className="mx-auto max-w-3xl">
+      {payment && payment.paymentStatus !== 'paid' ? (
+        <div className="mb-4 rounded-xl border border-line bg-surface p-5 text-center shadow-soft sm:p-6">
+          <h1 className="text-[20px] font-semibold tracking-tight sm:text-2xl">{L("Buyurtma")} #{order.number} — {L("toʻlovni kutyapmiz")}</h1>
+          <p className="mt-2 text-sm text-ink-3">{L("Kartaga oʻtkazing va chekni yuklang. Toʻlov tasdiqlangach, buyurtmangiz qabul qilinadi.")}</p>
+        </div>
+      ) : (
       <div className="mb-4 rounded-xl border border-line bg-surface p-6 text-center shadow-soft sm:p-8">
         <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight sm:text-2xl">{L("Rahmat! Buyurtmangiz qabul qilindi")}</h1>
@@ -45,6 +51,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
           <Link href="/catalog" className={buttonClass('outline')}>{L("Xaridni davom ettirish")}</Link>
         </div>
       </div>
+      )}
       {payment && <div className="mb-4"><CardPayment data={payment} token={token} symbol={settings.localization.currency_symbol} /></div>}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
     </div>
