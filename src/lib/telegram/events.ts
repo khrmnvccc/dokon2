@@ -45,7 +45,7 @@ export async function onNewOrder(orderId: string) {
     ...base(o), yetkazish: o.shipping_method_name, mahsulotlar: lines.join('\n'), izoh: o.comment,
     manzil: a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '',
     havola: `${ADMIN_URL}/admin/orders/${o.id}`,
-  });
+  }, { link: `/admin/orders/${o.id}` });
   await checkLowStock((items ?? []).map((i) => i.product_id).filter(Boolean));
 }
 
@@ -55,7 +55,7 @@ async function checkLowStock(productIds: string[]) {
   const { data } = await getServiceSupabase().from('products')
     .select('name, stock, low_stock_threshold, track_stock, has_variants').in('id', productIds);
   const low = (data ?? []).filter((p) => p.track_stock && !p.has_variants && p.stock <= p.low_stock_threshold);
-  if (low.length) await notify('lowStock', { royxat: low.map((p) => `• ${p.name} — ${p.stock} dona`).join('\n') });
+  if (low.length) await notify('lowStock', { royxat: low.map((p) => `• ${p.name} — ${p.stock} dona`).join('\n') }, { link: '/admin/inventory' });
 }
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {
@@ -66,12 +66,12 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   const o = await loadOrder(orderId);
   if (!o) return;
   if (change.status === 'cancelled' || change.status === 'returned') {
-    await notify('orderCancel', { ...base(o), kim: change.by, sabab: change.note });
+    await notify('orderCancel', { ...base(o), kim: change.by, sabab: change.note }, { link: `/admin/orders/${o.id}` });
   } else if (change.status) {
-    await notify('orderStatus', { ...base(o), holat: orderStatusLabel[change.status], trek: o.tracking_number, kim: change.by });
+    await notify('orderStatus', { ...base(o), holat: orderStatusLabel[change.status], trek: o.tracking_number, kim: change.by }, { link: `/admin/orders/${o.id}` });
   }
-  if (change.payment === 'paid') await notify('paymentReceived', { ...base(o), kim: change.by });
-  if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by });
+  if (change.payment === 'paid') await notify('paymentReceived', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
+  if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
 }
 
 /** Mijoz chek yukladi: rasm bilan xodimlarga. */
@@ -79,7 +79,7 @@ export async function onReceiptUploaded(orderId: string, photo: TgPhoto) {
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;
-  await notify('paymentReceipt', { ...base(o), havola: `${ADMIN_URL}/admin/orders/${o.id}` }, { photo });
+  await notify('paymentReceipt', { ...base(o), havola: `${ADMIN_URL}/admin/orders/${o.id}` }, { photo, link: `/admin/orders/${o.id}` });
 }
 
 const DAY_MS = 86_400_000;

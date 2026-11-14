@@ -193,10 +193,14 @@ export async function setChatPaused(which: 'personal' | 'group', paused: boolean
 const chatsSchema = z.object({ personal: z.boolean().optional(), group: z.boolean().optional(), staff: z.array(z.string().uuid()).max(100).optional() });
 
 /** Bitta xabar: matni (null — standartga qaytarish), yoqilgan/oʻchirilgan va qaysi chatlarga ketadi. */
-export async function updateTemplate(key: string, change: { text?: string | null; on?: boolean; chats?: TemplateChats }): Promise<ActionResult> {
+export async function updateTemplate(key: string, change: { text?: string | null; on?: boolean; chats?: TemplateChats; button?: string | null }): Promise<ActionResult> {
   return withPermission('messages.manage', async (ctx) => {
     if (!isTemplateKey(key)) return { ok: false, error: 'Bunday xabar yoʻq' };
-    const clean: { text?: string | null; on?: boolean; chats?: TemplateChats } = {};
+    const clean: { text?: string | null; on?: boolean; chats?: TemplateChats; button?: string | null } = {};
+    if ('button' in change) {
+      if (!TEMPLATE_BY_KEY[key].button) return { ok: false, error: 'Bu xabarda tugma yoʻq' };
+      clean.button = change.button == null ? null : String(change.button).slice(0, 30);
+    }
     if ('text' in change) clean.text = change.text == null ? null : String(change.text).slice(0, MAX_TEMPLATE_LENGTH + 1);
     if (typeof change.on === 'boolean') clean.on = change.on;
     if (change.chats) {
@@ -208,7 +212,7 @@ export async function updateTemplate(key: string, change: { text?: string | null
     }
     try {
       await saveTemplate(key, clean);
-      await audit(ctx, clean.chats ? 'telegram_template_chats' : clean.on === undefined ? 'telegram_template' : clean.on ? 'telegram_template_on' : 'telegram_template_off', { key });
+      await audit(ctx, clean.button !== undefined ? 'telegram_template_button' : clean.chats ? 'telegram_template_chats' : clean.on === undefined ? 'telegram_template' : clean.on ? 'telegram_template_on' : 'telegram_template_off', { key });
     } catch (e) { return fail(e); }
     { revalidatePath(PAGE); revalidatePath(BOTS); }
     return { ok: true, message: 'Saqlandi' };

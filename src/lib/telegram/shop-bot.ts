@@ -6,7 +6,8 @@ import { formatPrice } from '@/lib/format';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import { methodCard } from '@/lib/payments/receipts';
-import { chatTitle, getTelegram, logSend, tg, TelegramFail } from './server';
+import { chatTitle, getTelegram, logSend, notify, tg, TelegramFail, type TgPhoto } from './server';
+import { formatUzPhone } from '@/lib/phone';
 import type { OrderStatus } from '@/lib/types';
 import { ensureShopUser, profileOf, savePhone, tgDisplay } from './tg-users';
 import { attachReferral, trackRefOpen } from '@/lib/referral-server';
@@ -111,7 +112,9 @@ export async function setupAdminMenu(token: string) {
 export interface ShopUpdate {
   update_id: number;
   message?: {
-    message_id: number; text?: string;
+    message_id: number; text?: string; caption?: string;
+    photo?: Array<{ file_id: string; file_size?: number; width: number; height: number }>;
+    document?: { file_id: string; mime_type?: string }; sticker?: unknown; voice?: unknown; video?: unknown;
     contact?: { phone_number: string; first_name?: string; last_name?: string; user_id?: number };
     chat: { id: number; type: string; first_name?: string; last_name?: string; username?: string };
     from?: { id: number; first_name?: string; last_name?: string; username?: string; language_code?: string };
@@ -174,9 +177,18 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
     await send(config, m.chat.id, `Endi <b>${esc(b0.name || 'doʻkon')}</b>dan xarid qilishingiz mumkin 👇`, [[openButton('🛍 Doʻkonni ochish')]]);
     return;
   }
-  if (typeof m.text !== 'string') return;
+  // Matn boʻlmagan xabar (rasm, ovoz, fayl…) — murojaat sifatida Egaga
+  if (typeof m.text !== 'string') {
+    await saveCustomerMessage(config, m);
+    return;
+  }
   const text = m.text.trim();
   const cmd = text.split(/[\s@]/)[0].toLowerCase();
+  // Buyruq boʻlmagan har qanday matn — mijoz savoli: Ega tanlagan chatlarga va admin paneldagi Murojaatlarga
+  if (!text.startsWith('/')) {
+    await saveCustomerMessage(config, m);
+    return;
+  }
   const { brand, contact } = await getSettings();
   const name = esc(brand.name || 'Doʻkon');
 
@@ -230,6 +242,65 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
     `Buyurtma holati shu chatga keladi. Savol boʻlsa, bizga yozing.${phone}`,
     [[openButton('🛍 Doʻkonni ochish')], [openButton('❓ Yordam markazi', '/help')]],
   );
+}
+
+// ---------- Murojaatlar: mijoz yozgani Egaga, Ega javobi mijozga ----------
+type InMessage = NonNullable<ShopUpdate['message']>;
+
+/** Telegramdagi faylni (doʻkon boti orqali) yuklab oladi — admin botiga qayta yuborish uchun. */
+export async function downloadShopFile(token: string, fileId: string, maxBytes = 8 * 1024 * 1024): Promise<TgPhoto | null> {
+  try {
+    const f = (await tg(token, 'getFile', { file_id: fileId })) as { file_path?: string; file_size?: number };
+    if (!f.file_path || (f.file_size ?? 0) > maxBytes) return null;
+    const res = await fetch(`https://api.telegram.org/file/bot${token}/${f.file_path}`, { signal: AbortSignal.timeout(15_000), cache: 'no-store' });
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    if (bytes.length > maxBytes) return null;
+    const ext = f.file_path.split('.').pop()?.toLowerCase();
+    return { bytes, mime: ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg', name: `rasm.${ext || 'jpg'}` };
+  } catch {
+    return null;
+  }
+}
+
+async function saveCustomerMessage(config: ShopBotConfig, m: InMessage) {
+  const photo = m.photo?.length ? m.photo[m.photo.length - 1] : null;
+  const body = (m.text ?? m.caption ?? '').trim().slice(0, 4000);
+  const kind = photo ? '' : m.voice ? '🎤 Ovozli xabar' : m.video ? '🎬 Video' : m.document ? '📎 Fayl' : m.sticker ? '🙂 Stiker' : '';
+  const text = body || kind || null;
+  if (!text && !photo) return;
+  const userId = await linkedUser(m.chat.id);
+  const since = new Date(Date.now() - 10 * 60_000).toISOString();
+  const [{ count: recent }, profile] = await Promise.all([
+    db().from('support_messages').select('id', { count: 'exact', head: true }).eq('chat_id', m.chat.id).gte('created_at', since),
+    userId ? profileOf(userId) : Promise.resolve(null),
+  ]);
+  const { error } = await db().from('support_messages').insert({
+    chat_id: m.chat.id, user_id: userId, direction: 'in', text, photo_file_id: photo?.file_id ?? null, tg_message_id: m.message_id,
+  });
+  if (error) console.error('support save', error.message);
+  // Javob kutayotganini bildiramiz (10 daqiqada bir marta, ketma-ket xabarlarda takrorlanmaydi)
+  if (!recent) {
+    await send(config, m.chat.id, '✅ Xabaringiz qabul qilindi. Tez orada shu yerda javob beramiz.').catch(() => {});
+    await db().from('notifications').insert({
+      user_id: null, type: 'support', title: `Yangi murojaat: ${profile?.full_name || chatTitle(m.chat)}`,
+      body: (text ?? '📷 Rasm').slice(0, 200), link: `/admin/support?chat=${m.chat.id}`,
+    });
+  }
+  const image = photo ? await downloadShopFile(config.token, photo.file_id) : null;
+  await notify('customerMessage', {
+    mijoz: profile?.full_name || chatTitle(m.chat), telefon: profile?.phone ? formatUzPhone(profile.phone) : '',
+    id: profile?.client_no ?? '', matn: text ?? (photo ? '📷 Rasm' : ''),
+  }, { link: `/admin/support?chat=${m.chat.id}`, photo: image ?? undefined });
+}
+
+/** Ega/xodim admin paneldan mijozga javob yozadi (doʻkon boti orqali). */
+export async function replyToCustomer(chatId: number, text: string, staffId: string) {
+  const config = await getShopBot();
+  if (!config) throw new TelegramFail('Doʻkon boti ulanmagan');
+  const res = (await tg(config.token, 'sendMessage', { chat_id: chatId, text: `💬 ${esc(text)}`, parse_mode: 'HTML', disable_web_page_preview: true })) as { message_id?: number };
+  await db().from('support_messages').insert({ chat_id: chatId, direction: 'out', text, sent_by: staffId, tg_message_id: res?.message_id ?? null });
+  await db().from('support_messages').update({ read_at: new Date().toISOString() }).eq('chat_id', chatId).eq('direction', 'in').is('read_at', null);
 }
 
 // ---------- Xaridorga xabarlar: rasm + matn + tugma (Ega boshqaradi) ----------
