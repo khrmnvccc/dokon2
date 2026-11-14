@@ -202,6 +202,22 @@ export const UI_RU: Record<string, string> = {
   "Baho berish": "Оценить",
   "Doʻstlar": "Друзья",
   "Xaridor": "Покупатель",
+  "Ulashish": "Поделиться",
+  "OLINDI": "ПОЛУЧЕН",
+  "NAVBATDA": "ОЖИДАЕТ",
+  "YOPIQ": "ЗАКРЫТ",
+  "DOʻST": "ДРУГ",
+  "bosqich": "этапов",
+  "Doʻst taklifi": "Приглашение друзей",
+  "Havolani nusxalash": "Скопировать ссылку",
+  "Doʻstingiz havolangiz orqali roʻyxatdan oʻtsa": "Если друг зарегистрируется по вашей ссылке, он получит",
+  "Uning buyurtmasi yetkazilgach sizga kupon beriladi.": "После доставки его заказа вы получите купон.",
+  "Uning buyurtmasi tasdiqlangach sizga kupon beriladi.": "После подтверждения его заказа вы получите купон.",
+  "Doʻst buyurtmasi yetkazilsa ochiladi": "Откроется после доставки заказа друга",
+  "Doʻst buyurtmasi tasdiqlansa ochiladi": "Откроется после подтверждения заказа друга",
+  "Min. buyurtma": "Мин. заказ",
+  "Hozircha kupon yoʻq. Doʻstingizni taklif qiling — birinchi kupon 1 ta doʻstdan keyin!": "Купонов пока нет. Пригласите друга — первый купон уже после 1 друга!",
+  "Xarid qilgan mahsulotingizga baho bering — fikringiz boshqalarga yordam beradi": "Оцените купленный товар — ваш отзыв поможет другим",
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

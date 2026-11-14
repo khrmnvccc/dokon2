@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Copy, Crown, Gift, Lock, Send, Users, Wallet } from 'lucide-react';
+import { Check, ChevronRight, Copy, Crown, Gift, Hourglass, Lock, Send, Users, Wallet } from 'lucide-react';
 import { useL } from '@/components/providers';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,9 @@ import { Field, Input } from '@/components/ui/field';
 import { Badge } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import { CouponCard } from '@/components/coupon/coupon-card';
+import { CopyCoupon } from '@/components/coupon/copy-coupon';
+import { Modal } from '@/components/ui/dialog';
+import type { PublicCoupon } from '@/lib/data/public';
 import { couponCardProps } from '@/lib/coupon-design';
 import { applyPartner, requestPayout, trackReferral } from '@/lib/actions/referral';
 import { PAYOUT_STATUS, REFERRAL_STATUS, type ReferralStep } from '@/lib/referral';
@@ -40,10 +43,11 @@ type TgWebApp = { openTelegramLink?: (url: string) => void; initData?: string };
 const tgApp = () => (typeof window !== 'undefined' ? (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp : undefined);
 
 /** Doʻstni taklif qilish: havola, bosqichlar, kuponlar, doʻstlar va (hamkor boʻlsa) balans. */
-export function ReferralView({ data, link, shopName }: { data: MyReferral; link: string; shopName: string }) {
+export function ReferralView({ data, link, shopName, publicCoupons = [] }: { data: MyReferral; link: string; shopName: string; publicCoupons?: PublicCoupon[] }) {
   const L = useL();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
 
   useEffect(() => { void trackReferral('view'); }, []);
 
@@ -75,82 +79,62 @@ export function ReferralView({ data, link, shopName }: { data: MyReferral; link:
     return <p className="rounded-2xl border border-line bg-surface p-6 text-center text-ink-3">{L('Doʻst taklif qilish dasturi hozircha toʻxtatilgan.')}</p>;
   }
 
+  const coupons = [...data.coupons].sort((a, b) => Number(isOff(a)) - Number(isOff(b)));
+  const activeCount = coupons.filter((c) => !isOff(c)).length + publicCoupons.length;
+
   return (
     <div className="space-y-5">
-      {/* Bosqichlar */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#1d4f80] to-[#0f2f52] p-5 text-white shadow-soft">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">{L('Doʻstlaringizni taklif qiling')}</h2>
-            <p className="mt-1 text-sm text-white/75">
-              {next
-                ? <>{L('Yana')} <b className="text-white">{next.friends - data.qualified}</b> {L('ta doʻst — ')}<b className="text-white">{num(next.amount)} {L('soʻm')}</b> {L('kupon')}</>
-                : data.partner ? L('Barcha bosqichlar bajarildi — siz hamkorsiz!') : L('Barcha bosqichlar bajarildi!')}
-            </p>
+      {/* Bosqichlar + ulashish (bitta ixcham karta) */}
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#1d4f80] to-[#0f2f52] text-white shadow-soft">
+        <div className="px-4 pt-4 sm:px-5 sm:pt-5">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-[17px] font-semibold tracking-tight">{L('Doʻstni taklif qilish')}</h2>
+            {data.partner?.status === 'active' && <span className="flex items-center gap-1 rounded-full bg-[#ffd34d] px-2.5 py-0.5 text-xs font-semibold text-[#3a2a06]"><Crown className="size-3.5" />{L('Hamkor')}</span>}
           </div>
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-semibold num"><Users className="size-4" />{data.qualified}</span>
+          <p className="mt-0.5 text-[13px] text-white/70">
+            {next
+              ? <>{L('Yana')} <b className="text-white">{next.friends - data.qualified}</b> {L('ta doʻst — ')}<b className="text-white">{num(next.amount)} {L('soʻm')}</b> {L('kupon')}</>
+              : data.partner ? L('Barcha bosqichlar bajarildi — siz hamkorsiz!') : L('Barcha bosqichlar bajarildi!')}
+          </p>
+          <Ladder steps={steps} qualified={data.qualified} partnerCfg={data.partner_cfg} partnerActive={data.partner?.status === 'active'} lastFriends={lastFriends} />
         </div>
-        <ol className="no-scrollbar -mx-1 mt-5 flex items-start overflow-x-auto px-1 pb-1">
-          {steps.map((s, i) => {
-            const done = data.qualified >= s.friends;
-            const current = !done && (i === 0 || data.qualified >= steps[i - 1].friends);
-            return (
-              <li key={i} className="flex min-w-[76px] flex-1 flex-col items-center text-center">
-                <div className="flex w-full items-center">
-                  <span className={cn('h-0.5 flex-1', i === 0 ? 'bg-transparent' : done || current ? 'bg-white/70' : 'bg-white/20')} />
-                  <span className={cn('flex size-11 shrink-0 items-center justify-center rounded-full border-2 transition',
-                    done ? 'border-white bg-white text-[#1d4f80]' : current ? 'border-[#ffd34d] bg-[#ffd34d]/20 text-[#ffd34d] ring-4 ring-[#ffd34d]/20' : 'border-white/25 text-white/50')}>
-                    {done ? <Check className="size-5" strokeWidth={3} /> : current ? <Gift className="size-5" /> : <Lock className="size-4" />}
-                  </span>
-                  <span className={cn('h-0.5 flex-1', done ? 'bg-white/70' : 'bg-white/20')} />
-                </div>
-                <span className={cn('mt-2 text-[13px] font-semibold num', done || current ? 'text-white' : 'text-white/55')}>{num(s.amount)}</span>
-                <span className="text-[11px] text-white/60 num">{s.friends} {L('doʻst')}</span>
-              </li>
-            );
-          })}
-          {data.partner_cfg?.enabled && (
-            <li className="flex min-w-[76px] flex-1 flex-col items-center text-center">
-              <div className="flex w-full items-center">
-                <span className={cn('h-0.5 flex-1', data.qualified >= lastFriends ? 'bg-white/70' : 'bg-white/20')} />
-                <span className={cn('flex size-11 shrink-0 items-center justify-center rounded-full border-2',
-                  data.partner?.status === 'active' ? 'border-[#ffd34d] bg-[#ffd34d] text-[#3a2a06]' : 'border-white/25 text-white/55')}>
-                  <Crown className="size-5" />
-                </span>
-                <span className="h-0.5 flex-1 bg-transparent" />
-              </div>
-              <span className="mt-2 text-[13px] font-semibold">{L('Hamkor')}</span>
-              <span className="text-[11px] text-white/60 num">{data.partner_cfg.percent}%</span>
-            </li>
-          )}
-        </ol>
-      </section>
-
-      {/* Havola */}
-      <section className="rounded-2xl border border-line bg-surface p-4 shadow-soft">
-        <p className="text-sm font-semibold">{L('Sizning havolangiz')}</p>
-        <div className="mt-2 flex items-center gap-2">
-          <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} aria-label={L('Sizning havolangiz')}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-surface-2 px-3 font-mono text-[13px] text-ink-2" />
-          <Button variant="outline" onClick={copy} aria-label={L('Nusxalash')} className="h-11 shrink-0">
-            {copied ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}<span className="max-sm:hidden">{copied ? L('Nusxalandi') : L('Nusxalash')}</span>
-          </Button>
+        <div className="mt-1 flex items-center justify-between gap-2 border-t border-white/10 px-3 py-3 sm:px-4">
+          <button type="button" onClick={() => setFriendsOpen(true)} className="flex min-w-0 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm font-medium text-white/90 hover:bg-white/10">
+            <span className="flex -space-x-2">
+              {(data.friends.length ? data.friends.slice(0, 3) : [{ name: '?' }]).map((f, i) => (
+                <span key={i} className="flex size-7 items-center justify-center rounded-full border-2 border-[#163f69] bg-white text-[11px] font-semibold text-[#1d4f80]">{f.name.charAt(0).toUpperCase()}</span>
+              ))}
+            </span>
+            <span className="truncate num">{data.friends.length} {L('doʻst')}</span>
+            <ChevronRight className="size-4 shrink-0 text-white/60" />
+          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={copy} aria-label={L('Havolani nusxalash')} title={link}
+              className="flex size-9 items-center justify-center rounded-full bg-white/12 text-white hover:bg-white/20">
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+            </button>
+            <button type="button" onClick={share} className="flex h-9 items-center gap-1.5 rounded-full bg-[#2aa3ef] px-4 text-sm font-semibold text-white shadow-soft active:scale-95">
+              <Send className="size-4" /> {L('Ulashish')}
+            </button>
+          </div>
         </div>
-        <Button className="mt-3 h-11 w-full" onClick={share}><Send className="size-4" /> {L('Doʻstga yuborish')}</Button>
-        <ol className="mt-4 grid gap-2 text-[13px] text-ink-2 sm:grid-cols-3">
-          <li className="rounded-xl bg-surface-2 p-3"><b className="text-ink">1.</b> {L('Havolani doʻstingizga yuboring')}</li>
-          <li className="rounded-xl bg-surface-2 p-3"><b className="text-ink">2.</b> {welcome ? `${L('Doʻstingiz roʻyxatdan oʻtadi va')} ${num(welcome)} ${L('soʻm sovgʻa oladi')}` : L('Doʻstingiz havola orqali roʻyxatdan oʻtadi')}</li>
-          <li className="rounded-xl bg-surface-2 p-3"><b className="text-ink">3.</b> {data.qualify_on === 'confirmed' ? L('Buyurtmasi tasdiqlangach sizga kupon beriladi') : L('Buyurtmasi yetkazilgach sizga kupon beriladi')}</li>
-        </ol>
-        {data.referred_by && <p className="mt-3 text-xs text-ink-3">{L('Sizni taklif qilgan')}: <b>{data.referred_by.name}</b></p>}
       </section>
+      <p className="-mt-3 px-1 text-[12px] leading-snug text-ink-3">
+        {welcome ? `${L('Doʻstingiz havolangiz orqali roʻyxatdan oʻtsa')} ${num(welcome)} ${L('soʻm sovgʻa oladi')}. ` : ''}
+        {data.qualify_on === 'confirmed' ? L('Uning buyurtmasi tasdiqlangach sizga kupon beriladi.') : L('Uning buyurtmasi yetkazilgach sizga kupon beriladi.')}
+        {data.referred_by && <> {L('Sizni taklif qilgan')}: <b>{data.referred_by.name}</b>.</>}
+      </p>
 
-      {/* Kuponlar */}
-      {data.coupons.length > 0 && (
+      {/* Bosqich kuponlari (gorizontal) */}
+      {steps.length > 0 && (
         <section>
-          <h2 className="mb-3 text-[17px] font-semibold">{L('Kuponlarim')}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {data.coupons.map((c) => <MyCoupon key={c.id} c={c} />)}
+          <h2 className="mb-2.5 flex items-center gap-2 text-[15px] font-semibold"><span className="flex size-6 items-center justify-center rounded-full bg-primary-soft text-primary"><Users className="size-3.5" /></span>{L('Doʻst taklifi')} · {steps.length} {L('bosqich')}</h2>
+          <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {steps.map((s, i) => {
+              const done = data.qualified >= s.friends;
+              const current = !done && (i === 0 || data.qualified >= steps[i - 1].friends);
+              return <StepTicket key={i} step={s} state={done ? 'done' : current ? 'current' : 'locked'} qualifyOn={data.qualify_on} />;
+            })}
           </div>
         </section>
       )}
@@ -158,16 +142,30 @@ export function ReferralView({ data, link, shopName }: { data: MyReferral; link:
       {data.partner && <PartnerBox p={data.partner} cfg={data.partner_cfg} />}
       {!data.partner && data.partner_cfg?.enabled && steps.length > 0 && data.qualified >= lastFriends && <ApplyPartner />}
 
-      {/* Doʻstlar */}
-      <section className="rounded-2xl border border-line bg-surface p-4 shadow-soft">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[17px] font-semibold">{L('Doʻstlarim')}</h2>
-          <span className="text-sm text-ink-3 num">{data.friends.length}</span>
-        </div>
+      {/* Mijozdagi barcha kuponlar: shaxsiy (doʻst taklifi, sovgʻa) + hammaga ochiq kuponlar */}
+      <section>
+        <h2 className="mb-2.5 flex items-baseline justify-between text-[15px] font-semibold">
+          <span>{L('Kuponlarim')}</span>
+          {activeCount > 0 && <span className="text-sm font-normal text-ink-3 num">{activeCount}</span>}
+        </h2>
+        {coupons.length + publicCoupons.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-line-strong p-5 text-center text-sm text-ink-3">{L('Hozircha kupon yoʻq. Doʻstingizni taklif qiling — birinchi kupon 1 ta doʻstdan keyin!')}</p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {coupons.filter((c) => !isOff(c)).map((c) => <MyCoupon key={c.id} c={c} />)}
+            {publicCoupons.map((c) => (
+              <CopyCoupon key={c.id} code={c.code} description={c.description} card={{ ...couponCardProps({ ...c, scope: undefined }, L('Kupon'), L), cutout: 'var(--bg)' }} />
+            ))}
+            {coupons.filter(isOff).map((c) => <MyCoupon key={c.id} c={c} />)}
+          </div>
+        )}
+      </section>
+
+      <Modal open={friendsOpen} onClose={() => setFriendsOpen(false)} title={`${L('Doʻstlarim')} · ${data.friends.length}`}>
         {data.friends.length === 0 ? (
           <p className="py-6 text-center text-sm text-ink-3">{L('Hali hech kim qoʻshilmadi. Havolani yuboring — birinchi doʻstingiz uchun ham kupon bor!')}</p>
         ) : (
-          <ul className="mt-2 divide-y divide-line">
+          <ul className="divide-y divide-line">
             {data.friends.map((f, i) => {
               const st = REFERRAL_STATUS[f.status];
               return (
@@ -185,7 +183,78 @@ export function ReferralView({ data, link, shopName }: { data: MyReferral; link:
             })}
           </ul>
         )}
-      </section>
+      </Modal>
+    </div>
+  );
+}
+
+const isOff = (c: MyReferral['coupons'][number]) => c.used || Boolean(c.ends_at && new Date(c.ends_at).getTime() <= Date.now());
+
+function Ladder({ steps, qualified, partnerCfg, partnerActive, lastFriends }: { steps: ReferralStep[]; qualified: number; partnerCfg: MyReferral['partner_cfg']; partnerActive: boolean; lastFriends: number }) {
+  const L = useL();
+  return (
+    <ol className="no-scrollbar -mx-1 mt-4 flex items-start overflow-x-auto px-1 pb-1">
+      {steps.map((s, i) => {
+        const done = qualified >= s.friends;
+        const current = !done && (i === 0 || qualified >= steps[i - 1].friends);
+        return (
+          <li key={i} className="flex min-w-[64px] flex-1 flex-col items-center text-center">
+            <div className="flex w-full items-center">
+              <span className={cn('h-0.5 flex-1', i === 0 ? 'bg-transparent' : done || current ? 'bg-white/70' : 'bg-white/20')} />
+              <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition',
+                done ? 'border-white bg-white text-[#1d4f80]' : current ? 'border-[#ffd34d] bg-[#ffd34d]/20 text-[#ffd34d] ring-4 ring-[#ffd34d]/20' : 'border-white/25 text-white/50')}>
+                {done ? <Check className="size-5" strokeWidth={3} /> : current ? <Gift className="size-5" /> : <Lock className="size-4" />}
+              </span>
+              <span className={cn('h-0.5 flex-1', done ? 'bg-white/70' : 'bg-white/20')} />
+            </div>
+            <span className={cn('mt-1.5 text-[12px] font-semibold num', current ? 'text-[#ffd34d]' : done ? 'text-white' : 'text-white/55')}>{num(s.amount)}</span>
+          </li>
+        );
+      })}
+      {partnerCfg?.enabled && (
+        <li className="flex min-w-[64px] flex-1 flex-col items-center text-center">
+          <div className="flex w-full items-center">
+            <span className={cn('h-0.5 flex-1', qualified >= lastFriends ? 'bg-white/70' : 'bg-white/20')} />
+            <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full border-2',
+              partnerActive ? 'border-[#ffd34d] bg-[#ffd34d] text-[#3a2a06]' : 'border-white/25 text-white/55')}>
+              <Crown className="size-5" />
+            </span>
+            <span className="h-0.5 flex-1 bg-transparent" />
+          </div>
+          <span className="mt-1.5 text-[12px] font-semibold">{L('Hamkor')}</span>
+        </li>
+      )}
+    </ol>
+  );
+}
+
+/** Bosqich chiptasi: summa, holat (olindi / navbatda / yopiq) va necha doʻst kerakligi. */
+function StepTicket({ step, state, qualifyOn }: { step: ReferralStep; state: 'done' | 'current' | 'locked'; qualifyOn: string }) {
+  const L = useL();
+  const status = state === 'done'
+    ? { icon: <Check className="size-3.5" strokeWidth={3} />, text: L('OLINDI'), cls: 'text-success' }
+    : state === 'current'
+      ? { icon: <Hourglass className="size-3.5" />, text: L('NAVBATDA'), cls: 'text-ink' }
+      : { icon: <Lock className="size-3.5" />, text: L('YOPIQ'), cls: 'text-ink-3' };
+  return (
+    <div className={cn('flex w-[82%] max-w-[340px] shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-surface shadow-soft sm:w-[320px]', state === 'locked' && 'opacity-60')}>
+      <div className="relative flex w-[46%] flex-col items-center justify-center bg-surface-2 px-2 py-3 text-center">
+        <span className={cn('text-[26px] font-bold leading-none tracking-tight num', state === 'locked' ? 'text-ink-3' : 'text-ink')}>{num(step.amount)}</span>
+        <span className="mt-1 text-xs text-ink-3">{L('soʻm')}</span>
+        <span className="my-2 w-full border-t border-dashed border-line-strong" />
+        <span className={cn('flex items-center gap-1 text-[11px] font-bold tracking-wide', status.cls)}>{status.icon}{status.text}</span>
+        <span className="absolute -right-2 -top-2 size-4 rounded-full bg-[var(--bg)]" />
+        <span className="absolute -bottom-2 -right-2 size-4 rounded-full bg-[var(--bg)]" />
+      </div>
+      <div className="flex flex-1 flex-col items-end justify-center gap-2 p-3 text-right">
+        <span className="flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[11px] font-bold text-bg">
+          <span className="flex size-4 items-center justify-center rounded-full bg-bg text-[10px] text-ink num">{step.friends}</span>{L('DOʻST')}
+        </span>
+        <span className="text-[12px] leading-snug text-ink-2">
+          {qualifyOn === 'confirmed' ? L('Doʻst buyurtmasi tasdiqlansa ochiladi') : L('Doʻst buyurtmasi yetkazilsa ochiladi')}
+        </span>
+        {step.min_order > 0 && <span className="text-[11px] text-ink-3 num">{L('Min. buyurtma')} {num(step.min_order)}</span>}
+      </div>
     </div>
   );
 }

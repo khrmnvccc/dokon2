@@ -2,6 +2,7 @@ import { getL } from '@/lib/i18n/server';
 import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/auth';
 import { getSettings } from '@/lib/data/public';
 import { formatDateTime, formatPrice } from '@/lib/format';
 import { ORDER_STATUSES, orderStatusLabel, orderStatusTone } from '@/lib/order-status';
@@ -20,23 +21,32 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const status = ORDER_STATUSES.includes(sp.status as OrderStatus) ? (sp.status as OrderStatus) : null;
   const page = Math.max(1, Number(sp.page) || 1);
   const supabase = await getServerSupabase();
-  const [{ data }, settings] = await Promise.all([
+  const user = await requireUser('/account/orders');
+  const [{ data }, settings, { data: statusRows }] = await Promise.all([
     supabase.rpc('my_orders', { p_status: status, p_limit: PAGE, p_offset: (page - 1) * PAGE }),
     getSettings(),
+    supabase.from('orders').select('status').eq('user_id', user.id).limit(1000),
   ]);
   const result = (data ?? { items: [], total: 0 }) as { items: Row[]; total: number };
-  const tabs: (OrderStatus | null)[] = [null, 'new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+  // Faqat mijozda buyurtmasi bor holatlar (soni bilan); bitta holat boʻlsa — filtr umuman koʻrsatilmaydi.
+  const counts = new Map<OrderStatus, number>();
+  for (const r of (statusRows ?? []) as { status: OrderStatus }[]) counts.set(r.status, (counts.get(r.status) ?? 0) + 1);
+  const used = ORDER_STATUSES.filter((s) => counts.has(s));
+  const tabs: (OrderStatus | null)[] = used.length > 1 || (status && !counts.has(status)) ? [null, ...used] : [];
 
   return (
     <div>
       <h1 className="mb-3 text-xl font-semibold">{L("Buyurtmalarim")}</h1>
-      <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
-        {tabs.map((s) => (
-          <Link key={s ?? 'all'} href={s ? `?status=${s}` : '?'} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium', status === s ? 'bg-primary text-primary-fg' : 'bg-surface text-ink-2 shadow-soft')}>
-            {s ? L(orderStatusLabel[s]) : L("Barchasi")}
-          </Link>
-        ))}
-      </div>
+      {tabs.length > 0 && (
+        <div className="no-scrollbar -mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          {tabs.map((s) => (
+            <Link key={s ?? 'all'} href={s ? `?status=${s}` : '?'} className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium', status === s ? 'bg-primary text-primary-fg' : 'bg-surface text-ink-2 shadow-soft')}>
+              {s ? L(orderStatusLabel[s]) : L("Barchasi")}
+              <span className={cn('num text-[11px]', status === s ? 'text-primary-fg/80' : 'text-ink-3')}>{s ? counts.get(s) ?? 0 : statusRows?.length ?? 0}</span>
+            </Link>
+          ))}
+        </div>
+      )}
       {result.items.length === 0 ? (
         <EmptyState icon={<Package className="h-8 w-8" />} title={L("Buyurtmalar yo‘q")} text={L("Bu yerda buyurtmalaringiz va ularning holati ko‘rinadi.")}
           action={<Link href="/catalog" className={buttonClass('primary')}>{L("Xarid qilish")}</Link>} />
