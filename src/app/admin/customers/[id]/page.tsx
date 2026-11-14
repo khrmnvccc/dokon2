@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requirePagePermission } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { formatDate, formatDateTime, formatPrice } from '@/lib/format';
+import { formatDate, formatDateTime, formatPrice, visibleEmail } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { orderStatusLabel, orderStatusTone } from '@/lib/order-status';
 import { Badge } from '@/components/ui/misc';
@@ -31,7 +31,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   return (
     <div>
       <PageHeader title={p.full_name || 'Ismsiz mijoz'} back={{ href: '/admin/customers', label: 'Mijozlar' }}
-        description={<>{p.email} · {formatUzPhone(p.phone)} {p.is_blocked && <Badge tone="red">Bloklangan</Badge>} {(roles ?? []).length > 0 && <Badge tone="violet">Xodim</Badge>}</>} />
+        description={<>{p.client_no ? <b className="num">ID {p.client_no}</b> : null} · {visibleEmail(p.email) ?? 'Telegram orqali'} · {formatUzPhone(p.phone) || 'raqam yoʻq'} {p.is_blocked && <Badge tone="red">Bloklangan</Badge>} {(roles ?? []).length > 0 && <Badge tone="violet">Xodim</Badge>}</>} />
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Buyurtmalar" value={list.length} />
         <StatCard label="Xaridlar summasi" value={formatPrice(spent)} />
