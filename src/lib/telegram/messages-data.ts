@@ -2,7 +2,7 @@ import 'server-only';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/supabase/admin';
 import { getTelegram, getTelegramErrors, getTemplateSettings, groupCode } from '@/lib/telegram/server';
-import { getShopBot } from '@/lib/telegram/shop-bot';
+import { getCustomerMsgSettings, getShopBot } from '@/lib/telegram/shop-bot';
 import { ADMIN_URL, SITE_URL } from '@/lib/env';
 import type { MessagesData } from '@/components/admin/messages-editor';
 import type { Broadcast } from '@/lib/telegram/templates';
@@ -14,15 +14,16 @@ import type { Broadcast } from '@/lib/telegram/templates';
 export async function loadMessagesData(isOwner: boolean): Promise<MessagesData> {
   const service = getServiceSupabase();
   const supabase = await getServerSupabase();
-  const [config, errors, templates, people, staff, log, logCount, broadcasts, subscribers, shopBot, shopSubs] = await Promise.all([
+  const [config, errors, templates, customerMessages, people, staff, log, logCount, broadcasts, subscribers, shopBot, shopSubs] = await Promise.all([
     getTelegram(),
     getTelegramErrors(),
     getTemplateSettings(),
+    getCustomerMsgSettings(),
     service.from('telegram_people').select('user_id, chat_name, linked_at'),
     supabase.rpc('admin_staff').then((r) => r, () => ({ data: [] })),
     service.from('telegram_log').select('id, at, template, chat, ok, text, error').order('id', { ascending: false }).limit(60),
     service.from('telegram_log').select('id', { count: 'exact', head: true }),
-    service.from('broadcasts').select('id, title, text, buttons, audience, silent, send_at, status, delivered, failed, created_at, sent_at').order('id', { ascending: false }).limit(30),
+    service.from('broadcasts').select('id, title, text, image, buttons, audience, silent, send_at, status, delivered, failed, created_at, sent_at').order('id', { ascending: false }).limit(30),
     service.from('telegram_subscribers').select('chat_id', { count: 'exact', head: true }).eq('subscribed', true),
     getShopBot(),
     service.from('telegram_subscribers').select('chat_id', { count: 'exact', head: true }).eq('via', 'shop'),
@@ -44,6 +45,7 @@ export async function loadMessagesData(isOwner: boolean): Promise<MessagesData> 
       errors: errors.filter((e) => e.chat === 'personal' || config.groupId),
     } : null,
     templates,
+    customerMessages,
     people: staffRows.map((s) => ({
       id: s.user_id, name: s.full_name || s.email || 'Xodim', linked: linked.has(s.user_id), chatName: linked.get(s.user_id)?.chat_name ?? null,
     })),

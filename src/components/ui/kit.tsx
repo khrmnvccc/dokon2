@@ -2,7 +2,7 @@
 
 // Kassa dizayn tizimining qolgan komponentlari (khrmnvccc/laylak-cargo-kassa src/components/ui.tsx dan).
 import { useState, type ReactNode } from 'react';
-import { AlertCircle, ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronDown, Minus, MoreHorizontal, RefreshCw } from 'lucide-react';
+import { AlertCircle, Info, ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronDown, Minus, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { Button } from './button';
 import { cn } from './cn';
 import { formatPrice } from '@/lib/format';
@@ -88,9 +88,9 @@ export function StatCard({ label, value, previous, hint, accent, loading, format
   const body = (
     <>
       <div className="flex items-center gap-2 text-[13px] font-medium text-ink-2">
-        {accent && <span className="size-2 rounded-full" style={{ background: accent }} />}
-        <span className="line-clamp-2">{label}</span>
-        {href && <ChevronDown className="ml-auto size-4 -rotate-90 text-ink-3" />}
+        {accent && <span className="size-2 shrink-0 rounded-full" style={{ background: accent }} />}
+        <span className="min-w-0 line-clamp-2 break-words">{label}</span>
+        {href && <ChevronDown className="ml-auto size-4 shrink-0 -rotate-90 text-ink-3" />}
       </div>
       {loading ? <div className="skeleton mt-3 h-7 w-3/4" /> : (
         <div className={cn('mt-2 text-lg font-semibold tracking-tight num sm:text-2xl', tone === 'warn' ? 'text-warn' : tone === 'bad' ? 'text-danger' : 'text-ink')}>{shown}</div>
@@ -101,7 +101,7 @@ export function StatCard({ label, value, previous, hint, accent, loading, format
       </div>
     </>
   );
-  const cls = 'anim-rise block min-w-0 rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-5';
+  const cls = 'anim-rise block min-w-0 rounded-xl border border-line bg-surface p-3.5 shadow-soft sm:p-5';
   if (href) return <a href={href} className={cn(cls, 'transition-colors hover:bg-surface-2')}>{body}</a>;
   return <div className={cls}>{body}</div>;
 }
@@ -137,9 +137,9 @@ export function Toggle({ checked, onChange, label, disabled, name }: { checked: 
   );
 }
 
-export function Alert({ tone = 'danger', className, children }: { tone?: 'danger' | 'success' | 'warn'; className?: string; children: ReactNode }) {
-  const map = { danger: 'bg-danger-soft text-danger', success: 'bg-success-soft text-success', warn: 'bg-warn-soft text-warn' };
-  const Icon = tone === 'success' ? CheckCircle2 : AlertCircle;
+export function Alert({ tone = 'danger', className, children }: { tone?: 'danger' | 'success' | 'warn' | 'info'; className?: string; children: ReactNode }) {
+  const map = { danger: 'bg-danger-soft text-danger', success: 'bg-success-soft text-success', warn: 'bg-warn-soft text-warn', info: 'bg-primary-soft text-ink-2' };
+  const Icon = tone === 'success' ? CheckCircle2 : tone === 'info' ? Info : AlertCircle;
   return (
     <div className={cn('flex items-start gap-2 rounded-lg px-3 py-2.5 text-[13px] anim-fade', map[tone], className)} role={tone === 'danger' ? 'alert' : 'status'}>
       <Icon className="mt-px size-4 shrink-0" />

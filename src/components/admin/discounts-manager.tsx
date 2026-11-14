@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { Controller, useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
-import { ChevronLeft, ChevronsUpDown, PartyPopper, Plus, Search, TicketPercent, X } from 'lucide-react';
+import { ChevronLeft, ChevronsUpDown, PartyPopper, Plus, Search, Send, TicketPercent, X } from 'lucide-react';
+import { sendCoupon } from '@/lib/actions/admin/telegram';
+import { useToast } from '@/components/ui/toast';
 import { COUPON_THEMES, COUPON_THEME_KEYS, cleanDesign, couponCardProps, type CouponTheme } from '@/lib/coupon-design';
 import { CouponCard } from '@/components/coupon/coupon-card';
 import { cn } from '@/components/ui/cn';
@@ -38,6 +40,7 @@ type DesignInput = { theme: CouponTheme; badge: string };
 export function DiscountsManager({ kind, items, categories, products }: { kind: Kind; items: Item[]; categories: Opt[]; products: Opt[] }) {
   const crud = useCrud(kind);
   const [editing, setEditing] = useState<Item | 'new' | null>(null);
+  const [sending, setSending] = useState<Coupon | null>(null);
   const [q, setQ] = useState('');
   const [onlyCurrent, setOnlyCurrent] = useState(true);
   const isCoupon = kind === 'coupons';
@@ -100,6 +103,10 @@ export function DiscountsManager({ kind, items, categories, products }: { kind: 
                   <td>
                     <div className="flex items-center justify-end gap-2">
                       <Toggle checked={x.is_active} label="Faol" onChange={(v) => crud.toggle(x.id, v)} disabled={crud.pending} />
+                      {isCoupon && (
+                        <button type="button" onClick={() => setSending(x as Coupon)} disabled={!current(x)} title={current(x) ? 'Botda yuborish' : 'Faol emas'}
+                          className="rounded-lg p-1.5 text-ink-3 hover:bg-primary-soft hover:text-primary disabled:opacity-40" aria-label="Botda yuborish"><Send className="h-4 w-4" /></button>
+                      )}
                       <RowActions onEdit={() => setEditing(x)} onDelete={() => crud.remove(x.id)} />
                     </div>
                   </td>
@@ -110,9 +117,44 @@ export function DiscountsManager({ kind, items, categories, products }: { kind: 
         </Table>
         <div className="border-t border-line px-4 py-2.5 text-xs text-ink-3 num">{shown.length} / {items.length}</div>
       </div>
+      <Modal open={sending !== null} onClose={() => setSending(null)} title="Kuponni botda yuborish" size="md">
+        {sending && <SendCouponForm coupon={sending} onDone={() => setSending(null)} />}
+      </Modal>
       <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? (isCoupon ? 'Yangi promo-kod' : 'Yangi aksiya') : 'Tahrirlash'} size="xl" className="max-w-5xl">
         {editing !== null && <DiscountForm kind={kind} item={editing === 'new' ? null : editing} categories={categories} products={products} onDone={() => setEditing(null)} save={crud.save} />}
       </Modal>
+    </div>
+  );
+}
+
+/** Kuponni doʻkon boti orqali yuborish: hamma obunachilarga yoki bitta mijozga (Mijoz ID boʻyicha). */
+function SendCouponForm({ coupon, onDone }: { coupon: Coupon; onDone: () => void }) {
+  const [who, setWho] = useState<'all' | 'one'>('all');
+  const [id, setId] = useState('');
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  const clientNo = who === 'one' ? Number(id) : null;
+  const valid = who === 'all' || (Number.isInteger(clientNo) && (clientNo ?? 0) > 0);
+  const submit = () => start(async () => {
+    const r = await sendCoupon(coupon.id, clientNo);
+    if (r.ok) { toast(r.message ?? 'Yuborildi', 'success'); onDone(); } else toast(r.error, 'error');
+  });
+  return (
+    <div className="space-y-4">
+      <div className="w-56"><CouponCard {...couponCardProps(coupon, 'Kupon')} size="sm" /></div>
+      <p className="text-sm text-ink-2">
+        Xaridorga doʻkon boti orqali <b>“Sizga kupon berildi”</b> xabari keladi: kupon rasmi, kod <code className="rounded bg-surface-2 px-1 font-mono">{coupon.code}</code> va “Kupon markazi” tugmasi.
+        Matn va rasmni <a href="/admin/messages" className="font-medium text-primary underline">Xabarlar va Push → Mijozga</a> boʻlimida oʻzgartirasiz.
+      </p>
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm"><input type="radio" checked={who === 'all'} onChange={() => setWho('all')} /> Botga obuna boʻlgan hamma xaridorlarga</label>
+        <label className="flex items-center gap-2 text-sm"><input type="radio" checked={who === 'one'} onChange={() => setWho('one')} /> Bitta mijozga (Mijoz ID)</label>
+        {who === 'one' && <Input inputMode="numeric" autoFocus value={id} onChange={(e) => setId(e.target.value.replace(/\D/g, '').slice(0, 9))} placeholder="Masalan: 1001" aria-label="Mijoz ID" className="max-w-[200px]" />}
+      </div>
+      <div className="flex justify-end gap-2 border-t border-line pt-4">
+        <Button variant="ghost" onClick={onDone}>Bekor qilish</Button>
+        <Button loading={pending} disabled={!valid} onClick={submit}><Send className="h-4 w-4" /> Yuborish</Button>
+      </div>
     </div>
   );
 }

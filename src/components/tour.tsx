@@ -17,13 +17,24 @@ export interface TourStep { target?: string; title: string; text: ReactNode; ico
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-function findTarget(name?: string): Rect | null {
+function targetEl(name?: string): HTMLElement | null {
   if (!name) return null;
   for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
     const r = el.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight) return { top: r.top, left: r.left, width: r.width, height: r.height };
+    if (r.width > 0 && r.height > 0) return el;
   }
   return null;
+}
+
+function findTarget(name?: string): Rect | null {
+  const el = targetEl(name);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  // Ekrandan tashqaridagi qismi kesiladi: halqa va karta doim koʻrinadigan joyda turadi.
+  const top = Math.max(r.top, 0);
+  const bottom = Math.min(r.bottom, innerHeight);
+  if (bottom - top < 8) return null;
+  return { top, left: Math.max(r.left, 0), width: Math.min(r.right, innerWidth) - Math.max(r.left, 0), height: bottom - top };
 }
 
 export function Tour({ id, steps, delay = 700, storageKey, autoOpen = true }: { id: string; steps: TourStep[]; delay?: number; storageKey?: string; autoOpen?: boolean }) {
@@ -35,7 +46,7 @@ export function Tour({ id, steps, delay = 700, storageKey, autoOpen = true }: { 
 
   useEffect(() => {
     // Shu ekranda koʻrinmaydigan joylar (masalan telefonda yashirin menyu) oʻtkazib yuboriladi.
-    const open = () => { setList(steps.filter((s) => !s.target || findTarget(s.target))); setI(0); };
+    const open = () => { setList(steps.filter((s) => !s.target || targetEl(s.target))); setI(0); };
     window.addEventListener(`dk:tour:${id}`, open);
     let seen = true;
     try { seen = localStorage.getItem(key) === '1'; } catch { /* */ }
@@ -53,6 +64,12 @@ export function Tour({ id, steps, delay = 700, storageKey, autoOpen = true }: { 
   useLayoutEffect(() => {
     if (!step) return;
     const update = () => setRect(findTarget(step.target));
+    // Pastda qolgan element avval koʻrinadigan joyga keltiriladi.
+    const el = targetEl(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+    }
     update();
     addEventListener('resize', update);
     addEventListener('scroll', update, true);
@@ -70,13 +87,21 @@ export function Tour({ id, steps, delay = 700, storageKey, autoOpen = true }: { 
   const last = i === list.length - 1;
   const pad = 6;
   // Karta: element ostida, joy boʻlmasa ustida; element yoʻq boʻlsa — pastda (telefon) / oʻrtada
-  const below = rect ? rect.top + rect.height + 16 + 220 < innerHeight : false;
-  const cardStyle: React.CSSProperties = rect
-    ? {
-        left: Math.min(Math.max(12, rect.left + rect.width / 2 - 170), innerWidth - 352 > 12 ? innerWidth - 352 : 12),
-        ...(below ? { top: rect.top + rect.height + pad + 12 } : { bottom: innerHeight - rect.top + pad + 12 }),
-      }
-    : {};
+  // Karta balandligi taxminan 230px. Ostida joy boʻlsa — ostida, ustida boʻlsa — ustida,
+  // ikkalasi ham boʻlmasa (masalan butun boʻyli yon menyu) — yonida yoki ekran ichida qisib qoʻyiladi.
+  const CARD_H = 230;
+  const cardW = Math.min(340, innerWidth - 24);
+  let cardStyle: React.CSSProperties = {};
+  if (rect) {
+    const spaceBelow = innerHeight - (rect.top + rect.height + pad + 12);
+    const spaceAbove = rect.top - pad - 12;
+    const spaceRight = innerWidth - (rect.left + rect.width + pad + 12);
+    const centered = Math.min(Math.max(12, rect.left + rect.width / 2 - cardW / 2), innerWidth - cardW - 12);
+    if (spaceBelow >= CARD_H) cardStyle = { left: centered, top: rect.top + rect.height + pad + 12 };
+    else if (spaceAbove >= CARD_H) cardStyle = { left: centered, bottom: innerHeight - rect.top + pad + 12 };
+    else if (spaceRight >= cardW + 12) cardStyle = { left: rect.left + rect.width + pad + 12, top: Math.min(Math.max(12, rect.top), innerHeight - CARD_H - 12) };
+    else cardStyle = { left: centered, bottom: 24 };
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-label={step.title}>

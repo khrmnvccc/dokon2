@@ -10,7 +10,10 @@ import {
   ChatMoved, TelegramFail, chatTitle, getTelegram, groupCode, newCode, personCode, recentUpdates,
   saveTelegram, saveTemplate, sendToOwner, tg,
 } from '@/lib/telegram/server';
-import { TOKEN_RE, getShopBot, saveShopBot, setupAdminMenu, setupShopBot } from '@/lib/telegram/shop-bot';
+import {
+  TOKEN_RE, getShopBot, saveCustomerMsgSetting, saveShopBot, sendCouponToCustomers, setupAdminMenu, setupShopBot, testCustomerMessage,
+} from '@/lib/telegram/shop-bot';
+import { CUSTOMER_BUTTON_MAX, CUSTOMER_TEXT_MAX, isCustomerMsgKey, validImageUrl } from '@/lib/telegram/customer-messages';
 import { claim, deliver, parseBroadcast, recipients, sendOne, syncSubscribers, type BroadcastInput } from '@/lib/telegram/broadcast';
 import { MAX_TEMPLATE_LENGTH, TEMPLATE_BY_KEY, isTemplateKey, renderTemplate, sampleValues, type TemplateChats } from '@/lib/telegram/templates';
 import type { ActionResult } from '@/lib/types';
@@ -212,6 +215,66 @@ export async function updateTemplate(key: string, change: { text?: string | null
   });
 }
 
+// ---------- Mijozga xabarlar (doʻkon boti: rasm + matn + tugma) ----------
+export async function updateCustomerMessage(key: string, change: { text?: string | null; button?: string | null; image?: string | null; on?: boolean }): Promise<ActionResult> {
+  return withPermission('messages.manage', async (ctx) => {
+    if (!isCustomerMsgKey(key)) return { ok: false, error: 'Bunday xabar yoʻq' };
+    const clean: { text?: string | null; button?: string | null; image?: string | null; on?: boolean } = {};
+    if ('text' in change) {
+      const t = change.text == null ? null : String(change.text).replace(/\r\n/g, '\n').trim();
+      if (t !== null && !t) return { ok: false, error: 'Matn boʻsh boʻlmasin' };
+      if (t && t.length > CUSTOMER_TEXT_MAX) return { ok: false, error: `Matn ${CUSTOMER_TEXT_MAX} belgidan oshmasin` };
+      clean.text = t;
+    }
+    if ('button' in change) {
+      const b = change.button == null ? null : String(change.button).trim();
+      if (b && b.length > CUSTOMER_BUTTON_MAX) return { ok: false, error: `Tugma nomi ${CUSTOMER_BUTTON_MAX} belgidan oshmasin` };
+      clean.button = b;
+    }
+    if ('image' in change) {
+      const i = change.image == null ? null : String(change.image).trim();
+      if (i && i !== 'none' && !validImageUrl(i)) return { ok: false, error: 'Rasm manzili notoʻgʻri (https:// bilan boshlansin)' };
+      clean.image = i;
+    }
+    if (typeof change.on === 'boolean') clean.on = change.on;
+    try {
+      await saveCustomerMsgSetting(key, clean);
+      await audit(ctx, 'telegram_customer_message', { key, on: clean.on });
+    } catch (e) { return fail(e); }
+    { revalidatePath(PAGE); revalidatePath(BOTS); }
+    return { ok: true, message: 'Saqlandi' };
+  });
+}
+
+/** Namuna: Eganing oʻziga doʻkon boti orqali, xuddi xaridorga qanday borsa shunday. */
+export async function testCustomerMsg(key: string, text: string, button: string): Promise<ActionResult> {
+  return withPermission('messages.manage', async (ctx) => {
+    if (!isCustomerMsgKey(key)) return { ok: false, error: 'Bunday xabar yoʻq' };
+    try {
+      await testCustomerMessage(key, ctx.userId, {
+        text: String(text ?? '').slice(0, CUSTOMER_TEXT_MAX).trim() || undefined,
+        button: String(button ?? '').slice(0, CUSTOMER_BUTTON_MAX),
+      });
+    } catch (e) { return fail(e); }
+    return { ok: true, message: 'Namuna doʻkon botidagi chatingizga yuborildi' };
+  });
+}
+
+/** Kuponni doʻkon boti orqali yuborish: hamma obunachilarga yoki bitta mijozga (ID). */
+export async function sendCoupon(couponId: string, clientNo: number | null): Promise<ActionResult<{ delivered: number; failed: number }>> {
+  return withPermission<{ delivered: number; failed: number }>('messages.manage', async (ctx) => {
+    if (!z.string().uuid().safeParse(couponId).success) return { ok: false, error: 'Kupon topilmadi' };
+    if (clientNo !== null && !(Number.isInteger(clientNo) && clientNo > 0 && clientNo < 1e9)) return { ok: false, error: 'Mijoz ID notoʻgʻri' };
+    try {
+      const r = await sendCouponToCustomers(couponId, clientNo);
+      await audit(ctx, 'coupon_send', { coupon: couponId, client: clientNo, ...r });
+      revalidatePath(PAGE);
+      if (!r.delivered) return { ok: false, error: 'Hech kimga yetmadi (botni bloklagan boʻlishi mumkin). Yuborilganlar jurnaliga qarang' };
+      return { ok: true, data: r, message: r.failed ? `${r.delivered} kishiga yuborildi, ${r.failed} tasiga yetmadi` : `${r.delivered} kishiga yuborildi` };
+    } catch (e) { return fail(e); }
+  });
+}
+
 /** Namuna: matn namunaviy qiymatlar bilan Ega chatiga, xuddi haqiqiydek. */
 export async function testTemplate(key: string, text: string): Promise<ActionResult> {
   return withPermission('messages.manage', async () => {
@@ -297,7 +360,7 @@ export async function saveBroadcast(id: number | null, input: BroadcastInput, mo
         if (!(await recipients(b.audience)).length) return { ok: false, error: 'Bu xabar hech kimga yetmaydi: hali hech kim Telegramini ulamagan' };
       }
       const row = {
-        title: b.title, text: b.text, buttons: b.buttons, audience: b.audience, silent: b.silent,
+        title: b.title, text: b.text, image: b.image, buttons: b.buttons, audience: b.audience, silent: b.silent,
         send_at: mode === 'schedule' ? b.sendAt : null, status: mode === 'schedule' ? 'scheduled' : 'draft', updated_at: new Date().toISOString(),
       };
       const s = getServiceSupabase();
