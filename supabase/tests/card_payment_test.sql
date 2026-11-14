@@ -31,7 +31,6 @@ begin
   exception when raise_exception then
     if sqlerrm <> 'PAYMENT_NOT_CONFIRMED' then raise; end if;
   end;
-  update public.orders set status = 'confirmed' where id = v_card; -- boshqa holatlar mumkin
   insert into public.payment_receipts (order_id, path, mime, size, uploaded_by)
   values (v_card, v_card || '/a.jpg', 'image/jpeg', 1000, '00000000-0000-0000-0000-000000000051') returning id into r1;
   insert into public.payment_receipts (order_id, path, mime, size, uploaded_by)
@@ -97,3 +96,53 @@ do $$ begin
 end $$;
 reset role;
 select 'card_payment_test OK';
+
+-- 2-bosqich: kartali buyurtma toʻlovsiz “Tasdiqlandi” boʻlmaydi; chek tasdiqlansa oʻzi tasdiqlanadi
+do $$
+declare v uuid; rc uuid;
+begin
+  insert into public.orders (user_id, payment_method_id, payment_method_name, shipping_method_name, customer_name, customer_phone, subtotal, total, idempotency_key)
+  select '00000000-0000-0000-0000-000000000051', id, name, 'Kuryer', 'Karta Mijoz', '+998901234567', 50000, 50000, 'card2-' || code
+  from public.payment_methods where code = 't_card' returning id into v;
+  begin
+    update public.orders set status = 'confirmed' where id = v;
+    raise exception 'toʻlovsiz tasdiqlandi';
+  exception when raise_exception then
+    if sqlerrm <> 'PAYMENT_NOT_CONFIRMED' then raise; end if;
+  end;
+  insert into public.payment_receipts (order_id, path, mime, size) values (v, v || '/c.jpg', 'image/jpeg', 10) returning id into rc;
+  perform set_config('test.r3', rc::text, false);
+  perform set_config('test.o3', v::text, false);
+end $$;
+set role authenticated;
+set request.jwt.claims = '{"role":"authenticated"}';
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000052';
+select public.admin_review_receipt(current_setting('test.r3')::uuid, true);
+reset role; reset request.jwt.claims; reset request.jwt.claim.sub;
+do $$ begin
+  assert (select status::text from public.orders where id = current_setting('test.o3')::uuid) = 'confirmed', 'toʻlovdan keyin tasdiqlanmadi';
+  assert exists (select 1 from public.order_status_history where order_id = current_setting('test.o3')::uuid and status = 'confirmed'), 'tarixga yozilmadi';
+end $$;
+
+-- Sharh javobi: mijoz yoza olmaydi, moderator yozadi
+insert into public.reviews (product_id, user_id, rating, body)
+select id, '00000000-0000-0000-0000-000000000051', 5, 'zoʻr' from public.products limit 1
+on conflict do nothing;
+set role authenticated;
+set request.jwt.claims = '{"role":"authenticated"}';
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000051';
+do $$ begin
+  update public.reviews set reply = 'soxta javob' where user_id = '00000000-0000-0000-0000-000000000051';
+end $$;
+reset role;
+do $$ begin
+  assert not exists (select 1 from public.reviews where reply = 'soxta javob'), 'mijoz javob yozdi';
+end $$;
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-000000000052';
+update public.reviews set reply = 'Rahmat!', replied_at = now() where user_id = '00000000-0000-0000-0000-000000000051';
+reset role; reset request.jwt.claims; reset request.jwt.claim.sub;
+do $$ begin
+  assert exists (select 1 from public.reviews where reply = 'Rahmat!'), 'moderator javob yoza olmadi';
+end $$;
+select 'card_payment_test 2 OK';

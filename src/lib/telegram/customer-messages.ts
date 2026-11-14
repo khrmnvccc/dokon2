@@ -5,11 +5,11 @@
 import type { TemplateVar } from './templates';
 
 export type CustomerMsgKey =
-  | 'orderNew' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'coupon';
+  | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'coupon';
 
 /** Standart rasm (kartochka) uchun yozuvlar va ranglar. */
 export interface CardArt { title: string; subtitle: string; from: string; to: string; icon: CardIcon }
-export type CardIcon = 'cart' | 'check' | 'box' | 'truck' | 'gift' | 'x' | 'undo' | 'ticket';
+export type CardIcon = 'cart' | 'check' | 'box' | 'truck' | 'gift' | 'x' | 'undo' | 'ticket' | 'card';
 
 export interface CustomerMsgDef {
   key: CustomerMsgKey; title: string; hint: string; vars: TemplateVar[]; text: string; button: string; art: CardArt;
@@ -28,6 +28,27 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
     text: '🙌 *Buyurtmangiz qabul qilindi!*\n\n🧾 Buyurtma: №{{raqam}}\n📦 Mahsulotlar: {{soni}}\n💰 Summa: *{{summa}}*\n\nTez orada operator bogʻlanadi. Holati shu yerga keladi.',
     button: 'Koʻrish',
     art: { title: 'BUYURTMA\nQABUL QILINDI', subtitle: 'Rahmat! Tez orada bogʻlanamiz', from: '#2a7de1', to: '#163f7a', icon: 'cart' },
+  },
+  {
+    key: 'awaitPayment', title: 'Toʻlov kutilmoqda (karta)', hint: 'Kartaga toʻlov bilan buyurtma berilganda — “Buyurtma qabul qilindi” oʻrniga',
+    vars: [RAQAM, MIJOZ, SUMMA, SONI, DOKON],
+    text: '💳 *Buyurtma №{{raqam}} — toʻlovni kutyapmiz*\n\n💰 Summa: *{{summa}}*\n\nKartaga oʻtkazing va chek rasmini yuklang. Toʻlov tasdiqlangach, buyurtmangiz qabul qilinadi.',
+    button: 'Toʻlash',
+    art: { title: 'TOʻLOVNI\nKUTYAPMIZ', subtitle: 'Kartaga oʻtkazib, chekni yuklang', from: '#f59e0b', to: '#b45309', icon: 'card' },
+  },
+  {
+    key: 'paid', title: 'Toʻlov tasdiqlandi', hint: 'Siz chekni tasdiqlaganingizda (buyurtma ham tasdiqlanadi)',
+    vars: [RAQAM, MIJOZ, SUMMA, DOKON],
+    text: '✅ *Toʻlovingiz tasdiqlandi!*\n\n🧾 Buyurtma: №{{raqam}}\n💰 Summa: {{summa}}\n\nBuyurtmangiz qabul qilindi, tez orada joʻnatamiz.',
+    button: 'Koʻrish',
+    art: { title: 'TOʻLOV\nTASDIQLANDI', subtitle: 'Buyurtmangiz qabul qilindi', from: '#1fa45a', to: '#0f6a3a', icon: 'check' },
+  },
+  {
+    key: 'receiptRejected', title: 'Chek qabul qilinmadi', hint: 'Siz chekni rad etganingizda (sabab bilan)',
+    vars: [RAQAM, MIJOZ, SUMMA, { name: 'sabab', label: 'Sabab', sample: 'Summa toʻliq emas' }, DOKON],
+    text: '⚠️ *Chek qabul qilinmadi*\n\n🧾 Buyurtma: №{{raqam}}\n❗️ Sabab: {{sabab}}\n\nToʻgʻri chekni qayta yuklang.',
+    button: 'Chekni yuklash',
+    art: { title: 'CHEK\nQABUL QILINMADI', subtitle: 'Toʻgʻri chekni qayta yuklang', from: '#e0192d', to: '#a30c1b', icon: 'x' },
   },
   {
     key: 'confirmed', title: 'Tasdiqlandi', hint: 'Operator buyurtmani tasdiqlaganda',

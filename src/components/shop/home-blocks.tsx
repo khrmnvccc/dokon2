@@ -95,7 +95,7 @@ export async function ReviewsSection({ title, reviews, stats }: { title: string;
         </div>
         {reviews.slice(0, 6).map((r, i) => (
           <div key={r.id} className={cn('w-[80%] shrink-0 snap-start', i < 2 ? 'sm:w-auto' : i === 2 ? 'sm:hidden lg:block lg:w-auto' : 'sm:hidden')}>
-            <ReviewCard review={r} buyerLabel={L("Xaridor")} clamp />
+            <ReviewCard review={r} buyerLabel={L("Xaridor")} replyLabel={L("Doʻkon javobi")} clamp />
           </div>
         ))}
       </div>

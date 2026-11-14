@@ -6,7 +6,7 @@ import { formatDateTime } from '@/lib/format';
 import { Pagination, Stars, Badge } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import { PageHeader } from '@/components/admin/ui';
-import { ReviewActions } from '@/components/admin/review-actions';
+import { ReviewActions, ReviewReply } from '@/components/admin/review-actions';
 
 export const metadata = { title: 'Sharhlar' };
 const PAGE = 20;
@@ -16,7 +16,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const page = pageParam(sp.page);
   const supabase = await getServerSupabase();
-  let q = supabase.from('reviews').select('id, rating, body, author_name, is_approved, created_at, product_id, products(name, slug)', { count: 'exact' });
+  let q = supabase.from('reviews').select('id, rating, body, author_name, is_approved, created_at, product_id, reply, products(name, slug)', { count: 'exact' });
   if (sp.status === 'hidden') q = q.eq('is_approved', false);
   if (sp.status === 'visible') q = q.eq('is_approved', true);
   if (sp.rating && /^[1-5]$/.test(sp.rating)) q = q.eq('rating', Number(sp.rating));
@@ -24,7 +24,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
   const tabs = [{ k: undefined, l: 'Barchasi' }, { k: 'visible', l: 'Ko‘rinadigan' }, { k: 'hidden', l: 'Yashirilgan' }];
   return (
     <div>
-      <PageHeader title="Sharhlar" description="Sharhlar darhol chiqadi. Nomaqbul sharhni yashiring yoki o‘chiring." />
+      <PageHeader title="Sharhlar" description="Sharhlar darhol chiqadi. Javob yozing — u sharh ostida “Doʻkon javobi” boʻlib chiqadi va mijozga xabar boradi." />
       <div className="mb-3 flex flex-wrap gap-2">
         {tabs.map((t) => (
           <Link key={t.l} href={buildHref('/admin/reviews', sp, { status: t.k ?? null, page: null })} className={cn('rounded-full px-3 py-1.5 text-sm font-medium', sp.status === t.k ? 'bg-primary text-primary-fg shadow-soft' : 'bg-surface ring-1 ring-line')}>{t.l}</Link>
@@ -45,6 +45,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
                   {product && <Link href={`/product/${product.slug}`} target="_blank" className="text-xs text-primary">{product.name}</Link>}
                   <p className="mt-2 whitespace-pre-line text-sm text-ink-2">{r.body || <i className="text-ink-3">Matnsiz</i>}</p>
                   <p className="mt-1 text-xs text-ink-3">{formatDateTime(r.created_at)}</p>
+                  <ReviewReply id={r.id} reply={r.reply as string | null} />
                 </div>
                 <ReviewActions id={r.id} approved={r.is_approved} />
               </div>

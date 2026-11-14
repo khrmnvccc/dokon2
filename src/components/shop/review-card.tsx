@@ -8,7 +8,7 @@ import { cn } from '@/components/ui/cn';
 import { isUnoptimizable } from './product-image';
 
 /** Bitta sharh kartasi: muallif, yulduzlar, matn va qaysi mahsulotga yozilgani. */
-export function ReviewCard({ review, buyerLabel, className, clamp }: { review: PublicReview; buyerLabel: string; className?: string; clamp?: boolean }) {
+export function ReviewCard({ review, buyerLabel, replyLabel = 'Doʻkon javobi', className, clamp }: { review: PublicReview; buyerLabel: string; replyLabel?: string; className?: string; clamp?: boolean }) {
   const name = review.author_name?.trim() || buyerLabel;
   return (
     <article className={cn('flex h-full flex-col rounded-xl border border-line bg-surface p-4 shadow-soft', className)}>
@@ -25,6 +25,12 @@ export function ReviewCard({ review, buyerLabel, className, clamp }: { review: P
           <Quote className="mr-1 inline size-3.5 -translate-y-0.5 text-ink-3" aria-hidden />{review.body}
         </p>
       ) : <div className="h-3" />}
+      {review.reply && (
+        <div className="mb-3 rounded-lg border-l-2 border-primary bg-primary-soft/40 px-3 py-2 text-[13px]">
+          <p className="text-[11px] font-semibold text-primary">{replyLabel}</p>
+          <p className={cn('whitespace-pre-line text-ink-2', clamp && 'line-clamp-3')}>{review.reply}</p>
+        </div>
+      )}
       {review.product && (
         <Link href={`/product/${review.product.slug}`} className="mt-auto flex items-center gap-2.5 border-t border-line pt-3 text-[13px] text-ink-2 hover:text-primary">
           <span className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-surface-2">
