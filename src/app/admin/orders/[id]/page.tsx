@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/misc';
 import { buttonClass } from '@/components/ui/button';
 import { PageHeader, Panel, Table } from '@/components/admin/ui';
 import { OrderControls } from '@/components/admin/order-controls';
+import { ReceiptReview } from '@/components/admin/receipt-review';
+import { getReceiptsForStaff, methodCard } from '@/lib/payments/receipts';
 import { ProductImage } from '@/components/shop/product-image';
 import type { Order, OrderItem, OrderStatus } from '@/lib/types';
 
@@ -37,6 +39,9 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
 
   // Mijozning oldingi buyurtmalari soni (firibgarlik/qayta xaridorni bilish uchun)
   const { count: phoneOrders } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('customer_phone', o.customer_phone);
+  // Kartaga oʻtkazma: chek rasmlari (yopiq bucket, 10 daqiqalik havola)
+  const card = process.env.SUPABASE_SERVICE_ROLE_KEY ? await methodCard(o.payment_method_id ?? null).catch(() => null) : null;
+  const receipts = card ? await getReceiptsForStaff(o.id).catch(() => []) : [];
 
   return (
     <div>
@@ -93,6 +98,11 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
           </Panel>
         </div>
         <div className="space-y-4">
+          {card && (
+            <Panel title="Toʻlov cheki">
+              <ReceiptReview orderId={o.id} card={card} receipts={receipts} paid={o.payment_status === 'paid'} canWrite={ctx.permissions.has('orders.write')} />
+            </Panel>
+          )}
           <Panel title="Boshqaruv">
             <OrderControls
               orderId={o.id}

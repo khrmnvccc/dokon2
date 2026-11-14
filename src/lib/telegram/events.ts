@@ -4,7 +4,7 @@ import { formatPrice } from '@/lib/format';
 import { formatUzPhone } from '@/lib/phone';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL } from '@/lib/env';
-import { getTelegram, notify } from './server';
+import { getTelegram, notify, type TgPhoto } from './server';
 import { notifyCustomer, notifyReferralRewards } from './shop-bot';
 import type { OrderStatus } from '@/lib/types';
 
@@ -72,6 +72,14 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   }
   if (change.payment === 'paid') await notify('paymentReceived', { ...base(o), kim: change.by });
   if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by });
+}
+
+/** Mijoz chek yukladi: rasm bilan xodimlarga. */
+export async function onReceiptUploaded(orderId: string, photo: TgPhoto) {
+  if (!(await getTelegram())?.chatId) return;
+  const o = await loadOrder(orderId);
+  if (!o) return;
+  await notify('paymentReceipt', { ...base(o), havola: `${ADMIN_URL}/admin/orders/${o.id}` }, { photo });
 }
 
 const DAY_MS = 86_400_000;

@@ -1,7 +1,7 @@
 // Telegram xabar matnlari (kassa tgTemplates.ts uslubida). Server (yuborish uchun) va brauzer
 // (qanday koʻrinishini oldindan koʻrsatish uchun) shu bitta fayldan oʻqiydi — natija bir xil boʻladi.
 
-export type TemplateKey = 'newOrder' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
+export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
 
 /** Roʻyxatdagi oʻrni: A — buyurtma va pul, B — bekor qilish, C — hisobot. */
 export type TemplateGroup = 'kirim' | 'bekor' | 'hisobot';
@@ -40,6 +40,11 @@ export const TEMPLATES: TemplateDef[] = [
       HAVOLA,
     ],
     text: '🛒 *Yangi buyurtma №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\n🚚 {{yetkazish}}\n{{mahsulotlar}}\n📍 {{manzil}}\n📝 {{izoh}}\n{{havola}}',
+  },
+  {
+    key: 'paymentReceipt', group: 'kirim', groupChat: true, staff: true, title: 'Chek yuklandi', hint: 'Mijoz kartaga oʻtkazma chekini yuklaganda (rasm bilan)',
+    vars: [RAQAM, MIJOZ, TELEFON, SUMMA, TOLOV, HAVOLA],
+    text: '🧾 *Chek yuklandi · №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\nTekshirib, tasdiqlang:\n{{havola}}',
   },
   {
     key: 'paymentReceived', group: 'kirim', groupChat: true, staff: true, title: 'Toʻlov qabul qilindi', hint: 'Buyurtma “Toʻlangan” deb belgilanganda',

@@ -8,6 +8,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { buttonClass } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/misc';
 import { OrderDetails, type PublicOrder } from '@/components/shop/order-view';
+import { CardPayment } from '@/components/payment/card-payment';
+import { getOrderPayment } from '@/lib/payments/receipts';
 
 export const metadata: Metadata = { title: 'Buyurtma qabul qilindi', robots: { index: false } };
 
@@ -25,6 +27,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
       action={<Link href="/track" className={buttonClass('primary')}>{L("Buyurtmani kuzatish")}</Link>} />;
   }
 
+  const payment = await getOrderPayment(order.id).catch(() => null);
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 rounded-xl border border-line bg-surface p-6 text-center shadow-soft sm:p-8">
@@ -42,6 +45,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
           <Link href="/catalog" className={buttonClass('outline')}>{L("Xaridni davom ettirish")}</Link>
         </div>
       </div>
+      {payment && <div className="mb-4"><CardPayment data={payment} token={token} symbol={settings.localization.currency_symbol} /></div>}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
     </div>
   );

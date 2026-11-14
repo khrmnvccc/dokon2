@@ -162,11 +162,35 @@ export async function messageText(key: TemplateKey, values: Record<string, strin
 const sendText = (token: string, chatId: number, text: string, extra: Record<string, unknown> = {}) =>
   tg(token, 'sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true, ...extra });
 
+export interface TgPhoto { bytes: Uint8Array; mime: string; name: string }
+
+/** Rasmni toʻgʻridan-toʻgʻri yuklab yuboradi (havola tashqariga chiqmaydi). Izoh 1024 belgidan oshsa — alohida xabar. */
+async function sendPhoto(token: string, chatId: number, photo: TgPhoto, caption: string, extra: Record<string, unknown> = {}) {
+  const short = caption.length <= 1024;
+  const form = new FormData();
+  form.set('chat_id', String(chatId));
+  for (const [k, v] of Object.entries(extra)) form.set(k, String(v));
+  if (short) { form.set('caption', caption); form.set('parse_mode', 'HTML'); }
+  form.set('photo', new Blob([photo.bytes as BlobPart], { type: photo.mime }), photo.name);
+  let res: Response;
+  try {
+    res = await fetch(`${API}/bot${token}/sendPhoto`, { method: 'POST', body: form, signal: AbortSignal.timeout(20_000), cache: 'no-store' });
+  } catch {
+    throw new TelegramFail('Telegram bilan aloqa boʻlmadi. Birozdan keyin qayta urinib koʻring');
+  }
+  const data = (await res.json().catch(() => null)) as { ok?: boolean; description?: string; parameters?: { migrate_to_chat_id?: number } } | null;
+  if (!data?.ok) {
+    if (data?.parameters?.migrate_to_chat_id) throw new ChatMoved(data.parameters.migrate_to_chat_id);
+    throw new TelegramFail(translateTelegramError(data?.description || String(res.status)));
+  }
+  if (!short) await sendText(token, chatId, caption, extra);
+}
+
 /**
  * Bitta shablon xabarini Ega chatiga, guruhga va tanlangan xodimlarga yuboradi. Hech qachon xato tashlamaydi:
  * natija jurnalga yoziladi. Buyurtma saqlanishini sekinlashtirmaslik uchun after() ichida chaqiriladi.
  */
-export async function notify(key: TemplateKey, values: Record<string, string | number | null | undefined>, opts: { personalOnly?: boolean } = {}) {
+export async function notify(key: TemplateKey, values: Record<string, string | number | null | undefined>, opts: { personalOnly?: boolean; photo?: TgPhoto } = {}) {
   try {
     const config = await getTelegram();
     if (!config?.chatId) return;
@@ -185,16 +209,26 @@ export async function notify(key: TemplateKey, values: Record<string, string | n
         if (!targets.some((t) => t.chatId === chatId)) targets.push({ chatId, which: 'staff', name: p.chat_name ?? '' });
       }
     }
+    // Rasm boʻlsa — rasm + izoh; rasm oʻtmasa ham matn baribir yetib borsin
+    const send = async (id: number, topic: Record<string, unknown>) => {
+      if (!opts.photo) return sendText(config.token, id, text, topic);
+      try {
+        await sendPhoto(config.token, id, opts.photo, text, topic);
+      } catch (e) {
+        if (e instanceof ChatMoved) throw e;
+        await sendText(config.token, id, text, topic);
+      }
+    };
     await Promise.allSettled(targets.map(async ({ chatId, which, name }) => {
       const topic = which === 'group' && config.groupThreadId ? { message_thread_id: config.groupThreadId } : {};
       const logChat = which === 'staff' ? `staff:${name}` : which;
       try {
         try {
-          await sendText(config.token, chatId, text, topic);
+          await send(chatId, topic);
         } catch (e) {
           if (!(e instanceof ChatMoved) || which !== 'group') throw e;
           await saveTelegram({ ...config, groupId: e.chatId });
-          await sendText(config.token, e.chatId, text, topic);
+          await send(e.chatId, topic);
         }
         await Promise.all([which === 'staff' ? null : setTelegramError(which, null), logSend(key, logChat, text, null)]);
       } catch (e) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 import { AlertTriangle, Plus } from 'lucide-react';
@@ -14,9 +14,11 @@ import { Badge } from '@/components/ui/misc';
 import { MoveButtons, RowActions, Toggle, useCrud } from './crud-kit';
 import { Panel } from './ui';
 import type { PaymentMethod, ShippingMethod } from '@/lib/types';
+import { CARD_THEMES, CARD_THEME_KEYS, cleanCard, formatCardNumber, type CardTheme } from '@/lib/payment-card';
+import { CardVisual } from '@/components/payment/card-visual';
 
 const kindLabel = { courier: 'Kuryer', pickup: 'Olib ketish', post: 'Pochta' } as const;
-const payKindLabel = { cash: 'Naqd', card_on_delivery: 'Karta (qabulda)', bank_transfer: 'Bank o‘tkazmasi', online: 'Onlayn' } as const;
+const payKindLabel = { cash: 'Naqd', card_on_delivery: 'Karta (qabulda)', bank_transfer: 'Kartaga / bank o‘tkazmasi', online: 'Onlayn' } as const;
 
 export function MethodsManager({ shipping, payment, configured }: { shipping: ShippingMethod[]; payment: PaymentMethod[]; configured: Record<string, boolean> }) {
   const ship = useCrud('shipping_methods');
@@ -51,7 +53,12 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
                   <p className="font-medium">{m.name} <Badge className="ml-1">{payKindLabel[m.kind]}</Badge></p>
                   {notConnected ? (
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (README: to‘lov integratsiyasi)</p>
-                  ) : m.description && <p className="text-xs text-ink-3">{m.description}</p>}
+                  ) : (() => {
+                    const card = m.kind === 'bank_transfer' ? cleanCard(m.card) : null;
+                    return card
+                      ? <p className="num text-xs text-ink-3">Karta: {formatCardNumber(card.number)}{card.holder ? ` · ${card.holder}` : ''} · chek bilan tasdiqlanadi</p>
+                      : m.description && <p className="text-xs text-ink-3">{m.description}</p>;
+                  })()}
                 </div>
                 <Toggle checked={m.is_active} label="Faol" onChange={(v) => pay.toggle(m.id, v)} />
                 <RowActions onEdit={() => setEditPay(m)} onDelete={() => pay.remove(m.id)} />
@@ -94,20 +101,57 @@ function ShippingForm({ method, count, onDone, save }: { method: ShippingMethod 
   );
 }
 
+type PayFormIn = Omit<z.input<typeof paymentMethodSchema>, 'card'> & { card: { number: string; holder: string; bank: string; theme: CardTheme } };
+
 function PaymentForm({ method, count, onDone, save }: { method: PaymentMethod | null; count: number; onDone: () => void; save: ReturnType<typeof useCrud>['save'] }) {
-  const { register, handleSubmit, watch, setError, formState: { errors, isSubmitting } } = useForm<z.input<typeof paymentMethodSchema>, unknown, z.output<typeof paymentMethodSchema>>({
-    resolver: zodResolver(paymentMethodSchema),
-    defaultValues: method ? { ...method, description: method.description ?? '', instructions: method.instructions ?? '', provider: method.provider ?? '' } : { code: '', name: '', kind: 'cash', provider: '', is_active: true, sort_order: count * 10 },
+  const card = cleanCard(method?.card);
+  const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } = useForm<PayFormIn, unknown, z.output<typeof paymentMethodSchema>>({
+    resolver: zodResolver(paymentMethodSchema) as unknown as Resolver<PayFormIn, unknown, z.output<typeof paymentMethodSchema>>,
+    defaultValues: {
+      ...(method ? { ...method, description: method.description ?? '', instructions: method.instructions ?? '', provider: method.provider ?? '' } : { code: '', name: '', kind: 'cash', provider: '', is_active: true, sort_order: count * 10 }),
+      card: { number: card ? formatCardNumber(card.number) : '', holder: card?.holder ?? '', bank: card?.bank ?? '', theme: card?.theme ?? 'dark' },
+    },
   });
+  const kind = watch('kind');
+  const c = watch('card');
+  const cardErr = errors.card ?? {};
   return (
     <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={handleSubmit(async (d) => { if (await save(method?.id ?? null, d, setError)) onDone(); })}>
       <Field label="Nomi" required error={errors.name?.message} htmlFor="pm-name"><Input id="pm-name" {...register('name')} /></Field>
       <Field label="Kod" required error={errors.code?.message} htmlFor="pm-code"><Input id="pm-code" readOnly={Boolean(method)} {...register('code')} /></Field>
       <Field label="Turi" htmlFor="pm-kind"><Select id="pm-kind" {...register('kind')}>{Object.entries(payKindLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
-      {watch('kind') === 'online' && (
+      {kind === 'online' && (
         <Field label="Provayder" error={errors.provider?.message} htmlFor="pm-prov" hint="Integratsiya va kalitlarsiz checkout’da ko‘rinmaydi">
           <Select id="pm-prov" {...register('provider')}><option value="">—</option><option value="click">Click</option><option value="payme">Payme</option><option value="uzum">Uzum</option></Select>
         </Field>
+      )}
+      {kind === 'bank_transfer' && (
+        <div className="grid gap-4 rounded-xl border border-line bg-surface-2/50 p-4 sm:col-span-2 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <p className="text-sm font-semibold">Karta (mijozga shunday koʻrinadi)</p>
+            <p className="text-xs text-ink-3">Mijoz pul oʻtkazib, chek rasmini yuklaydi. Siz chekni tasdiqlamaguningizcha buyurtmani “Yoʻlda”ga oʻtkazib boʻlmaydi. Raqamni boʻsh qoldirsangiz, karta va chek yuklash chiqmaydi.</p>
+          </div>
+          <Field label="Karta raqami" error={cardErr.number?.message} htmlFor="pm-cnum">
+            <Input id="pm-cnum" inputMode="numeric" autoComplete="off" placeholder="8600 0000 0000 0000" {...register('card.number', {
+              onChange: (e) => setValue('card.number', formatCardNumber(String(e.target.value)).slice(0, 23)),
+            })} />
+          </Field>
+          <Field label="Karta egasi" hint="Masalan: ALIYEV ALI" htmlFor="pm-chold"><Input id="pm-chold" {...register('card.holder')} /></Field>
+          <Field label="Bank / karta turi" hint="Masalan: Uzcard, Humo, Kapitalbank" htmlFor="pm-cbank"><Input id="pm-cbank" {...register('card.bank')} /></Field>
+          <div>
+            <p className="mb-1.5 text-sm font-medium">Rang</p>
+            <div className="flex flex-wrap gap-2">
+              {CARD_THEME_KEYS.map((k) => (
+                <button key={k} type="button" title={CARD_THEMES[k].label} aria-pressed={c.theme === k} onClick={() => setValue('card.theme', k)}
+                  className={`size-8 rounded-full ring-offset-2 ring-offset-surface ${c.theme === k ? 'ring-2 ring-primary' : ''}`}
+                  style={{ background: `linear-gradient(135deg, ${CARD_THEMES[k].bg[0]}, ${CARD_THEMES[k].bg[1]})` }} />
+              ))}
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <CardVisual card={{ number: (c.number ?? '').replace(/\D/g, '') || '0000000000000000', holder: c.holder ?? '', bank: c.bank ?? '', theme: c.theme ?? 'dark' }} />
+          </div>
+        </div>
       )}
       <Field label="Tavsif" className="sm:col-span-2" htmlFor="pm-desc"><Input id="pm-desc" {...register('description')} /></Field>
       <Field label="Ko‘rsatma" hint="Masalan: bank rekvizitlari" className="sm:col-span-2" htmlFor="pm-ins"><Textarea id="pm-ins" rows={3} {...register('instructions')} /></Field>

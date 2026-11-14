@@ -7,6 +7,8 @@ import { requireUser } from '@/lib/auth';
 import { getSettings } from '@/lib/data/public';
 import { OrderDetails, type PublicOrder } from '@/components/shop/order-view';
 import { CancelOrderButton } from '@/components/shop/account-forms';
+import { CardPayment } from '@/components/payment/card-payment';
+import { getOrderPayment } from '@/lib/payments/receipts';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -27,6 +29,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       raw.status === 'delivered' ? supabase.from('reviews').select('product_id, rating').in('product_id', ids).eq('user_id', user.id) : Promise.resolve({ data: [] as { product_id: string; rating: number }[] }),
     ])
     : [{ data: [] as { id: string }[] }, { data: [] as { product_id: string; rating: number }[] }];
+  const payment = await getOrderPayment(raw.id).catch(() => null);
   const activeIds = new Set((active ?? []).map((p) => p.id as string));
   const myRating = new Map((mine ?? []).map((r) => [r.product_id as string, r.rating as number]));
   const order: PublicOrder = {
@@ -36,6 +39,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   return (
     <div>
       <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> {L("Buyurtmalarim")}</Link>
+      {payment && <div className="mb-4"><CardPayment data={payment} symbol={settings.localization.currency_symbol} /></div>}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
       {order.status === 'new' && <div className="mt-4"><CancelOrderButton orderId={order.id} /></div>}
     </div>
