@@ -82,33 +82,33 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
       <div className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-[15px] font-semibold tracking-tight">Buyurtma #{order.number}</h2>
+            <h2 className="text-[15px] font-semibold tracking-tight">{L('Buyurtma')} #{order.number}</h2>
             <p className="text-sm text-ink-3">{formatDateTime(order.created_at)}</p>
           </div>
           <Badge tone={orderStatusTone[order.status]}>{L(orderStatusLabel[order.status])}</Badge>
         </div>
         <StatusTimeline status={order.status} history={order.history} lang={lang} />
-        {order.tracking_number && <p className="mt-4 text-sm">Kuzatuv raqami: <b>{order.tracking_number}</b></p>}
-        {order.cancelled_reason && <p className="mt-2 text-sm text-ink-3">Sabab: {order.cancelled_reason}</p>}
+        {order.tracking_number && <p className="mt-4 text-sm">{L('Kuzatuv raqami:')} <b>{order.tracking_number}</b></p>}
+        {order.cancelled_reason && <p className="mt-2 text-sm text-ink-3">{L('Sabab:')} {order.cancelled_reason}</p>}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface p-4 text-sm shadow-soft sm:p-6">
           <h3 className="mb-3 font-semibold">{L("Yetkazib berish")}</h3>
           <dl className="space-y-1.5">
-            <div><dt className="inline text-ink-3">Qabul qiluvchi: </dt><dd className="inline">{order.customer_name}, {formatUzPhone(order.customer_phone)}</dd></div>
+            <div><dt className="inline text-ink-3">{L('Qabul qiluvchi:')} </dt><dd className="inline">{order.customer_name}, {formatUzPhone(order.customer_phone)}</dd></div>
             <div><dt className="inline text-ink-3">{L('Usul')}: </dt><dd className="inline">{order.fulfillment === 'pickup' ? `${L('Oʻzi olib ketadi')} · ${order.shipping_method_name}` : L(order.shipping_method_name)}</dd></div>
             {order.address && (
-              <div><dt className="inline text-ink-3">Manzil: </dt><dd className="inline">{[order.address.region, order.address.city, order.address.street, order.address.apartment, order.address.landmark].filter(Boolean).join(', ')}</dd></div>
+              <div><dt className="inline text-ink-3">{L('Manzil:')} </dt><dd className="inline">{[order.address.region, order.address.city, order.address.street, order.address.apartment, order.address.landmark].filter(Boolean).join(', ')}</dd></div>
             )}
-            <div><dt className="inline text-ink-3">To‘lov: </dt><dd className="inline">{order.payment_method_name}</dd></div>
-            {order.comment && <div><dt className="inline text-ink-3">Izoh: </dt><dd className="inline">{order.comment}</dd></div>}
+            <div><dt className="inline text-ink-3">{L('To‘lov:')} </dt><dd className="inline">{L(order.payment_method_name)}</dd></div>
+            {order.comment && <div><dt className="inline text-ink-3">{L('Izoh:')} </dt><dd className="inline">{order.comment}</dd></div>}
           </dl>
         </div>
         <div className="rounded-xl border border-line bg-surface p-4 text-sm shadow-soft sm:p-6">
           <h3 className="mb-3 font-semibold">{L("Summa")}</h3>
           <dl className="space-y-1.5">
-            <div className="flex justify-between"><dt className="text-ink-3">Mahsulotlar ({order.items_count})</dt><dd>{p(order.subtotal)}</dd></div>
-            {order.discount_total > 0 && <div className="flex justify-between text-success"><dt>Chegirma {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total)}</dd></div>}
+            <div className="flex justify-between"><dt className="text-ink-3">{L('Mahsulotlar')} ({order.items_count})</dt><dd>{p(order.subtotal)}</dd></div>
+            {order.discount_total > 0 && <div className="flex justify-between text-success"><dt>{L('Chegirma')} {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total)}</dd></div>}
             <div className="flex justify-between"><dt className="text-ink-3">{L("Yetkazib berish")}</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : order.shipping_method_name === 'Keyin tanlanadi' && !order.fulfillment ? L('Keyin tanlanadi') : L("Bepul")}</dd></div>
             {!!order.delivery_fee && <div className="flex justify-between text-ink-2"><dt className="text-ink-3">{L('Yetkazish (yetkazganda toʻlanadi)')}</dt><dd>{p(order.delivery_fee)}</dd></div>}
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold"><dt>{L("Jami")}</dt><dd>{p(order.total)}</dd></div>

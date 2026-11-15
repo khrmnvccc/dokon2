@@ -54,13 +54,13 @@ export function TrackForm() {
         <div className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6 anim-fade">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-[15px] font-semibold tracking-tight">Buyurtma #{result.number}</h2>
-              <p className="text-sm text-ink-3">{formatDateTime(result.created_at)} · {result.items_count} dona · {price(result.total)}</p>
+              <h2 className="text-[15px] font-semibold tracking-tight">{L('Buyurtma')} #{result.number}</h2>
+              <p className="text-sm text-ink-3">{formatDateTime(result.created_at)} · {result.items_count} {L('dona')} · {price(result.total)}</p>
             </div>
             <Badge tone={orderStatusTone[result.status]}>{L(orderStatusLabel[result.status])}</Badge>
           </div>
           <StatusTimeline status={result.status} history={result.history} lang={lang} />
-          <p className="mt-4 text-sm text-ink-3">Yetkazib berish: {result.shipping_method_name}{result.tracking_number ? ` · Kuzatuv raqami: ${result.tracking_number}` : ''}</p>
+          <p className="mt-4 text-sm text-ink-3">{L('Yetkazib berish')}: {L(result.shipping_method_name)}{result.tracking_number ? ` · ${L('Kuzatuv raqami:')} ${result.tracking_number}` : ''}</p>
         </div>
       )}
     </div>

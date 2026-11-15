@@ -418,6 +418,9 @@ export const UI_RU: Record<string, string> = {
   "Manzilni toʻliq kiriting": "Введите адрес полностью",
   "Arizani yuborib boʻlmadi": "Не удалось отправить заявку",
   "Oʻzbekistonda": "В Узбекистане",
+  'Hisobingiz bloklangan': 'Ваш аккаунт заблокирован', 'Yangi buyurtma berib boʻlmaydi.': 'Новые заказы оформить нельзя.',
+  'Operatorimiz tez orada qoʻngʻiroq qilib, buyurtmani tasdiqlaydi:': 'Оператор скоро позвонит, чтобы подтвердить заказ:',
+  'Chegirmalar': 'Скидки', 'Amal qiladi:': 'Действует:', 'Sabab:': 'Причина:', 'dona': 'шт.',
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

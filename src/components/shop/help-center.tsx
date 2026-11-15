@@ -133,7 +133,7 @@ export function QuickTopics({ help, bot }: { help: Help; bot: string | null }) {
                 <div className="overflow-hidden rounded-2xl bg-black">
                   {e.kind === 'iframe'
                     ? <iframe src={e.src} title={L(open.title)} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen className="aspect-video w-full" />
-                    // eslint-disable-next-line jsx-a11y/media-has-caption
+                     
                     : <video src={e.src} controls autoPlay playsInline className="max-h-[70vh] w-full" />}
                 </div>
               )}
