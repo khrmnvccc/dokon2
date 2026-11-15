@@ -14,6 +14,7 @@ import { SingleImageField } from './upload';
 import { Panel } from './ui';
 import { BrandCard } from './brand-card';
 import { BranchesTab, PagesTab, type BranchRow } from './owner-tabs';
+import { HelpTab } from './help-settings';
 
 const TABS = [
   { id: 'brand', label: 'Brend va dizayn' },
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'branches', label: 'Filiallar' },
   { id: 'store', label: 'Doʻkon' },
   { id: 'contact', label: 'Aloqa va ijtimoiy tarmoqlar' },
+  { id: 'help', label: 'Yordam markazi' },
   { id: 'home', label: 'Bosh sahifa' },
   { id: 'menu', label: 'Menyu va footer' },
   { id: 'checkout', label: 'Buyurtma' },
@@ -36,7 +38,7 @@ const SECTION_LABELS: Record<string, string> = {
   sale: 'Chegirmadagilar', middle_banner: 'O‘rta banner', featured: 'Tavsiya etilganlar', reviews: 'Mijozlar fikri (sharhlar)', advantages: 'Afzalliklar',
 };
 
-function useSection<K extends SettingsKey>(key: K, initial: SiteSettings[K]) {
+export function useSection<K extends SettingsKey>(key: K, initial: SiteSettings[K]) {
   const [value, setValue] = useState<SiteSettings[K]>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, start] = useTransition();
@@ -57,7 +59,7 @@ function useSection<K extends SettingsKey>(key: K, initial: SiteSettings[K]) {
   return { value, setValue, errors, pending, save };
 }
 
-function SaveBar({ pending, onSave }: { pending: boolean; onSave: () => void }) {
+export function SaveBar({ pending, onSave }: { pending: boolean; onSave: () => void }) {
   return <div className="mt-5 flex justify-end border-t border-line pt-4"><Button loading={pending} onClick={onSave}>Saqlash</Button></div>;
 }
 
@@ -83,6 +85,7 @@ export function SettingsEditor({ initial, isOwner, branches, initialTab }: { ini
         {tab === 'branches' && isOwner && <BranchesTab key={branches.map((b) => b.id).join()} initial={branches} />}
         {tab === 'store' && <StoreTab initial={initial.store} />}
         {tab === 'contact' && <ContactTab contact={initial.contact} social={initial.social} />}
+        {tab === 'help' && <HelpTab initial={initial.help_center} contactPhone={initial.contact.phone} />}
         {tab === 'home' && <HomeTab sections={initial.home_sections} advantages={initial.advantages} announcement={initial.announcement} />}
         {tab === 'menu' && <MenuTab menu={initial.header_menu} footer={initial.footer} />}
         {tab === 'checkout' && <CheckoutTab initial={initial.checkout} />}

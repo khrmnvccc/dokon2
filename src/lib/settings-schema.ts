@@ -81,6 +81,20 @@ export const settingsSchemas = {
   maintenance: z.object({ enabled: z.boolean(), message: z.string().trim().max(300).default('') }),
   advantages: z.array(z.object({ icon: z.string().trim().max(40), title: z.string().trim().min(1).max(60), text: z.string().trim().max(120) })).max(8),
   announcement: z.object({ enabled: z.boolean(), text: z.string().trim().max(200).default(''), link: optUrl }),
+  // Yordam markazi (Profil → Yordam markazi): Telegram kartasi, tez mavzular videolari, telefon.
+  help_center: z.object({
+    support_title: z.string().trim().max(60).default('Telegram qoʻllab-quvvatlash'),
+    status: z.string().trim().max(60).default('Onlayn · hozir javob beradi'),
+    reply_time: z.string().trim().max(20).default('~2 daq'),
+    hours: z.string().trim().max(20).default('24 / 7'),
+    phone: z.string().trim().max(30).default(''),
+    phone_hours: z.string().trim().max(60).default(''),
+    videos: z.object({
+      order: z.object({ url: optUrl, duration: z.string().trim().max(8).default('') }).default({ url: null, duration: '' }),
+      payment: z.object({ url: optUrl, duration: z.string().trim().max(8).default('') }).default({ url: null, duration: '' }),
+      address: z.object({ url: optUrl, duration: z.string().trim().max(8).default('') }).default({ url: null, duration: '' }),
+    }).default({}),
+  }),
   // Sayt matnlarining ruscha tarjimasi: {"ru": {"announcement.text": "…"}} (Sozlamalar → Tarjimalar).
   translations: z.object({ ru: z.record(z.string().max(120), z.string().max(2000)).default({}) }),
 };
@@ -104,6 +118,11 @@ export const defaultSettings: SiteSettings = {
   advantages: [],
   announcement: { enabled: false, text: '', link: null },
   translations: { ru: {} },
+  help_center: {
+    support_title: 'Telegram qoʻllab-quvvatlash', status: 'Onlayn · hozir javob beradi', reply_time: '~2 daq', hours: '24 / 7',
+    phone: '', phone_hours: '',
+    videos: { order: { url: null, duration: '' }, payment: { url: null, duration: '' }, address: { url: null, duration: '' } },
+  },
 };
 
 /** Bazadagi xom qiymatlarni xavfsiz tarzda tiplangan sozlamalarga aylantiradi. Noto'g'ri qiymat — default. */

@@ -23,8 +23,8 @@ export function AccountNav({ name, email, isStaff }: { name: string; email: stri
   const L = useL();
   const pathname = usePathname();
   return (
-    // Telefonda "Buyurtmalar" va "Doʻstlar" pastki menyudan ochiladi — u yerda kabinet menyusi koʻrsatilmaydi (ekran toza).
-    <aside className={cn('rounded-xl border border-line bg-surface p-3 shadow-soft', TAB_PAGES.some((p) => pathname.startsWith(p)) && 'hidden md:block')}>
+    // Telefonda "Buyurtmalar" va "Doʻstlar" pastki menyudan ochiladi, Profilning oʻz roʻyxati bor — u yerda kabinet menyusi koʻrsatilmaydi.
+    <aside className={cn('rounded-xl border border-line bg-surface p-3 shadow-soft', (pathname === '/account' || TAB_PAGES.some((p) => pathname.startsWith(p))) && 'hidden md:block')}>
       <div className="flex items-center gap-3 border-b border-line px-2 pb-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[15px] font-semibold tracking-tight text-primary">{name.charAt(0).toUpperCase()}</span>
         <div className="min-w-0">

@@ -265,6 +265,9 @@ export interface Profile {
   is_blocked: boolean;
   blocked_reason: string | null;
   created_at: string;
+  avatar_url?: string | null;
+  notify_orders?: boolean;
+  notify_promo?: boolean;
 }
 
 export interface Review {

@@ -28,7 +28,7 @@ function pageTarget(pathname: string): { href: string; label: string } | null {
   if (pathname.startsWith('/category/') || pathname === '/catalog') return { href: '/admin/categories', label: 'Kategoriyalar' };
   if (pathname === '/sale') return { href: '/admin/promotions', label: 'Aksiyalar' };
   if (pathname === '/reviews') return { href: '/admin/reviews', label: 'Sharhlar' };
-  if (pathname === '/help') return { href: '/admin/tours', label: 'Yoʻl-yoʻriq' };
+  if (pathname === '/help') return { href: '/admin/settings?tab=help', label: 'Yordam markazi' };
   if (['/about', '/delivery', '/faq', '/terms', '/privacy', '/contact'].includes(pathname)) return { href: '/admin/pages', label: 'Sahifa matni' };
   if (pathname === '/checkout' || pathname === '/cart') return { href: '/admin/methods', label: 'Yetkazish va toʻlov' };
   if (pathname.startsWith('/account/referral')) return { href: '/admin/partners/rules', label: 'Hamkorlik qoidalari' };

@@ -94,3 +94,18 @@ export async function markMyNotificationsRead(): Promise<ActionResult> {
   revalidatePath('/account');
   return { ok: true };
 }
+
+/** Profil → “Bildirishnomalar” va “Aksiya va kuponlar” tugmalari. */
+export async function setMyPrefs(input: { notify_orders?: boolean; notify_promo?: boolean }): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'Tizimga kiring' };
+  const patch: { notify_orders?: boolean; notify_promo?: boolean } = {};
+  if (typeof input?.notify_orders === 'boolean') patch.notify_orders = input.notify_orders;
+  if (typeof input?.notify_promo === 'boolean') patch.notify_promo = input.notify_promo;
+  if (!Object.keys(patch).length) return { ok: false, error: 'Maʼlumot yoʻq' };
+  const supabase = await getServerSupabase();
+  const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);
+  if (error) return { ok: false, error: 'Saqlab boʻlmadi' };
+  revalidatePath('/account');
+  return { ok: true };
+}
