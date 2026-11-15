@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Gift, Grid2x2, Heart, Home, LayoutGrid, Package, Search, ShoppingCart, User, X } from 'lucide-react';
 import type { CategoryNode } from '@/lib/types';
 import { useApp, useCart, useWishlist, useL } from '@/components/providers';
 import { cn } from '@/components/ui/cn';
 import { DynamicIcon } from './dynamic-icon';
+import { NotificationBell } from './notification-bell';
 
 export function SearchBox({ className, autoFocus }: { className?: string; autoFocus?: boolean }) {
   const { t } = useApp();
@@ -57,7 +58,9 @@ export function HeaderActions() {
   return (
     <nav className="flex items-center gap-1" aria-label="Foydalanuvchi">
       {items.map(({ href, label, icon: Icon, badge, cls, tour }) => (
-        <Link key={href} href={href} aria-label={label} title={label} data-tour={tour}
+        <Fragment key={href}>
+        {tour === 'profile' && <NotificationBell />}
+        <Link href={href} aria-label={label} title={label} data-tour={tour}
           className={cn('relative size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink', cls)}>
           {tour === 'profile' && user ? (
             <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary">{(user.name || user.email || '?').trim().charAt(0).toUpperCase()}</span>
@@ -68,6 +71,7 @@ export function HeaderActions() {
             <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-primary px-1 text-center text-[11px] font-semibold leading-[18px] text-primary-fg num">{badge > 99 ? '99+' : badge}</span>
           )}
         </Link>
+        </Fragment>
       ))}
     </nav>
   );

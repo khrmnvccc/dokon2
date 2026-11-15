@@ -24,6 +24,10 @@ export interface BrandSettings {
   effectWhere: 'all' | 'login';
   /** Over the page (like the sample video) or only behind the cards. */
   effectLayer: 'front' | 'back';
+  /** Default colour mode for everyone: follow the device, always light or always dark. */
+  theme: 'system' | 'light' | 'dark';
+  /** true: shoppers can't switch the mode themselves (the moon/sun button is hidden on the shop). */
+  themeLock: boolean;
 }
 
 export const EFFECTS = [
@@ -53,6 +57,8 @@ export const DEFAULT_BRAND: BrandSettings = {
   effectAmount: 'mid',
   effectWhere: 'all',
   effectLayer: 'front',
+  theme: 'system',
+  themeLock: false,
 };
 
 export const COLOR_PRESETS: Array<{ value: string; label: string }> = [
@@ -93,6 +99,8 @@ export function cleanBrand(raw: unknown): BrandSettings {
     effectAmount: r.effectAmount === 'low' || r.effectAmount === 'high' ? r.effectAmount : 'mid',
     effectWhere: r.effectWhere === 'login' ? 'login' : 'all',
     effectLayer: r.effectLayer === 'back' ? 'back' : 'front',
+    theme: r.theme === 'light' || r.theme === 'dark' ? r.theme : 'system',
+    themeLock: r.themeLock === true,
   };
 }
 

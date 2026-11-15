@@ -206,6 +206,13 @@ export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate
       if (res.ok) await afterReferralAttach(config, res, startUser, m.chat.id);
     }
     const first = esc(m.from?.first_name || m.chat.first_name || '');
+    // Saytdagi Yordam markazi → “Boshqa savol” / “Telegramda yozish”: /start support
+    if (text.split(/\s+/)[1] === 'support') {
+      const no = startProfile?.client_no ? ` Mijoz kodingiz: <b>${startProfile.client_no}</b> — xabaringizga avtomatik biriktiriladi.` : '';
+      await send(config, m.chat.id,
+        `Assalomu alaykum${first ? `, <b>${first}</b>` : ''}! 👋\n\n✍️ <b>Savolingizni shu yerga yozing</b> — operatorimiz shu chatda javob beradi.${no}\n\nRasm yoki skrinshot ham yuborishingiz mumkin.`);
+      return;
+    }
     await send(config, m.chat.id,
       `Assalomu alaykum${first ? `, <b>${first}</b>` : ''}! 👋\n\n<b>${name}</b> botiga xush kelibsiz.\n\n` +
       `🛍 <b>Doʻkonni ochish</b> tugmasini bosing — doʻkon shu yerda, Telegram ichida ochiladi. Roʻyxatdan oʻtish shart emas.\n` +
@@ -376,6 +383,11 @@ export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus 
     if (!config) return;
     const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count, payment_method_id').eq('id', orderId).maybeSingle();
     if (!o?.user_id) return;
+    // Profilda “Bildirishnomalar” oʻchirilgan boʻlsa Telegramga yozmaymiz (toʻlov kutish xabari bundan mustasno — unda karta raqami bor).
+    if (kind !== 'new') {
+      const { data: pf } = await db().from('profiles').select('notify_orders').eq('id', o.user_id).maybeSingle();
+      if (pf && pf.notify_orders === false) return;
+    }
     // Kartaga toʻlov: “qabul qilindi” oʻrniga “toʻlovni kutyapmiz”
     const card = kind === 'new' ? await methodCard(o.payment_method_id as string | null) : null;
     if (card) key = 'awaitPayment';

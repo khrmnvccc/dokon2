@@ -62,8 +62,15 @@ export async function recipients(audience: BroadcastAudience): Promise<Recipient
     for (const p of data ?? []) out.set(Number(p.chat_id), { chatId: Number(p.chat_id), name: `staff:${p.chat_name ?? ''}`, via: 'admin' });
   }
   if (audience.kind !== 'staff') {
-    const { data } = await db().from('telegram_subscribers').select('chat_id, name, via').eq('subscribed', true).limit(20_000);
-    for (const s of data ?? []) if (!out.has(Number(s.chat_id))) out.set(Number(s.chat_id), { chatId: Number(s.chat_id), name: `mijoz:${s.name ?? ''}`, via: s.via === 'shop' ? 'shop' : 'admin' });
+    const { data } = await db().from('telegram_subscribers').select('chat_id, name, via, user_id').eq('subscribed', true).limit(20_000);
+    // Profilda “Aksiya va kuponlar” oʻchirilgan xaridorlarga tarqatma yuborilmaydi.
+    const ids = [...new Set((data ?? []).map((s) => s.user_id as string | null).filter((x): x is string => Boolean(x)))];
+    const optedOut = new Set<string>();
+    for (let i = 0; i < ids.length; i += 500) {
+      const { data: off } = await db().from('profiles').select('id').in('id', ids.slice(i, i + 500)).eq('notify_promo', false);
+      for (const p of off ?? []) optedOut.add(p.id as string);
+    }
+    for (const s of data ?? []) if (!(s.user_id && optedOut.has(s.user_id as string)) && !out.has(Number(s.chat_id))) out.set(Number(s.chat_id), { chatId: Number(s.chat_id), name: `mijoz:${s.name ?? ''}`, via: s.via === 'shop' ? 'shop' : 'admin' });
   }
   return [...out.values()];
 }

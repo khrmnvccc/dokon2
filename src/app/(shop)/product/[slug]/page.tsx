@@ -11,6 +11,7 @@ import { ProductSection } from '@/components/shop/home-blocks';
 import { Markdown } from '@/components/shop/markdown';
 import { ReviewForm } from '@/components/shop/reviews';
 import { Rating, Stars } from '@/components/ui/misc';
+import { EditSpot } from '@/components/shop/site-editor';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -77,6 +78,7 @@ export default async function ProductPage({ params }: Props) {
         <div>
           {product.brand && <div className="text-sm font-semibold text-primary">{product.brand}</div>}
           <h1 className="mt-1 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{product.name}</h1>
+          <EditSpot inline href={`/admin/products/${product.id}`} label="Mahsulotni tahrirlash" className="mt-2" />
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-3">
             <Rating value={Number(product.rating_avg)} count={product.rating_count} size="md" />
             {product.sku && <span>{L("Kod:")} {product.sku}</span>}

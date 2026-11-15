@@ -9,7 +9,7 @@ import { AppProviders } from '@/components/providers';
 import { BrandBoot } from '@/components/brand';
 import { TelegramBoot } from '@/components/telegram-boot';
 import { brandCss } from '@/lib/brand/css';
-import { THEME_BOOT } from '@/lib/theme';
+import { themeBoot } from '@/lib/theme-boot';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter', display: 'swap' });
 
@@ -54,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={lang} className={inter.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: themeBoot(brand.theme, brand.themeLock) }} />
         <style id="brand" dangerouslySetInnerHTML={{ __html: brandCss(brand) }} />
       </head>
       <body>

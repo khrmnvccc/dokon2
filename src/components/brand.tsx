@@ -36,6 +36,7 @@ export function Logo({ compact, className }: { compact?: boolean; className?: st
 
 export function ThemeToggle({ className }: { className?: string }) {
   const theme = useTheme();
+  if (theme.locked) return null;
   return (
     <IconButton label={theme.isDark ? 'Yorugʻ rejim' : 'Qorongʻi rejim'} onClick={theme.toggle} className={className}>
       {theme.isDark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}

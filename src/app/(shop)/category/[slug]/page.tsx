@@ -7,6 +7,7 @@ import { buildTree, getBanners, getCategories } from '@/lib/data/public';
 import { CatalogView } from '@/components/shop/catalog-view';
 import { Breadcrumbs } from '@/components/shop/breadcrumbs';
 import { BannerSlide } from '@/components/shop/hero-slider';
+import { EditSpot } from '@/components/shop/site-editor';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -57,6 +58,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     <>
       <Breadcrumbs items={[{ name: L("Katalog"), href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` }))]} />
       <h1 className="mb-2 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">{category.name}</h1>
+      <EditSpot inline href="/admin/categories" label="Kategoriyani tahrirlash" className="mb-3" />
       {category.description && <p className="mb-4 max-w-3xl text-sm text-ink-3">{category.description}</p>}
       {children.length > 0 && (
         <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4">
