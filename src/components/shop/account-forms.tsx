@@ -119,7 +119,7 @@ export function AddressBook({ addresses }: { addresses: Address[] }) {
                 </div>
               </div>
               <p className="mt-1 text-ink-2">{[a.region, a.city, a.street, a.apartment].filter(Boolean).join(', ')}</p>
-              {a.landmark && <p className="text-xs text-ink-3">Mo‘ljal: {a.landmark}</p>}
+              {a.landmark && <p className="text-xs text-ink-3">{L('Mo‘ljal')}: {a.landmark}</p>}
               <p className="mt-1 text-xs text-ink-3">{a.full_name} · {formatUzPhone(a.phone)}</p>
             </li>
           ))}

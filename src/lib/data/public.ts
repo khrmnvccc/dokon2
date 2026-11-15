@@ -77,8 +77,33 @@ export function buildTree(categories: Category[]): CategoryNode[] {
   return roots;
 }
 
+/** Faol mahsulot bor kategoriyalar id si (ota kategoriyalar ham hisobga olinadi) */
+const fetchFilledCategoryIds = unstable_cache(
+  async (): Promise<string[] | null> => {
+    if (!isSupabaseConfigured) return null;
+    const { data, error } = await getPublicSupabase().from('products').select('category_id').eq('is_active', true).not('category_id', 'is', null).limit(5000);
+    if (error) return null;
+    return [...new Set((data ?? []).map((r) => r.category_id as string))];
+  },
+  ['filled-categories'],
+  { tags: [TAGS.products, TAGS.categories], revalidate: REVALIDATE },
+);
+
+/** Doʻkon uchun: mahsuloti yoʻq (boʻsh) kategoriyalar menyu va bosh sahifada koʻrinmaydi */
+export async function getShopCategories(): Promise<Category[]> {
+  const [all, filled] = await Promise.all([getCategories(), fetchFilledCategoryIds()]);
+  if (!filled) return all;
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const keep = new Set<string>();
+  for (const id of filled) {
+    let c = byId.get(id);
+    while (c && !keep.has(c.id)) { keep.add(c.id); c = c.parent_id ? byId.get(c.parent_id) : undefined; }
+  }
+  return all.filter((c) => keep.has(c.id));
+}
+
 export async function getCategoryTree() {
-  return buildTree(await getCategories());
+  return buildTree(await getShopCategories());
 }
 
 const fetchPromotions = unstable_cache(

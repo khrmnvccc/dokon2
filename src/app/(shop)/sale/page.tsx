@@ -54,7 +54,7 @@ export default async function SalePage({ searchParams }: { searchParams: Promise
                     <span className="rounded-lg bg-primary px-2 py-0.5 text-sm font-semibold text-primary-fg">−{p.discount_type === 'percent' ? `${p.value}%` : `${p.value.toLocaleString('ru-RU')} ${L('so‘m')}`}</span>
                   </div>
                   {p.description && <p className="mt-1 text-sm text-ink-3">{p.description}</p>}
-                  {p.ends_at && <p className="mt-2 text-xs text-ink-3">Amal qiladi: {formatDate(p.ends_at)} gacha</p>}
+                  {p.ends_at && <p className="mt-2 text-xs text-ink-3">{L('Amal qiladi:')} {formatDate(p.ends_at)} {L('gacha')}</p>}
                 </div>
               </article>
             ))}

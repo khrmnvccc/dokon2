@@ -40,7 +40,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
         <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
         <h1 className="mt-3 text-[22px] font-semibold tracking-tight sm:text-2xl">{L("Rahmat! Buyurtmangiz qabul qilindi")}</h1>
         <p className="mt-2 text-ink-3">
-          {L("Buyurtma raqami:")} <b className="text-ink">#{order.number}</b>. Operatorimiz tez orada {order.customer_phone} raqamiga qo‘ng‘iroq qilib, buyurtmani tasdiqlaydi.
+          {L("Buyurtma raqami:")} <b className="text-ink">#{order.number}</b>. {L('Operatorimiz tez orada qoʻngʻiroq qilib, buyurtmani tasdiqlaydi:')} {order.customer_phone}
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {user ? (

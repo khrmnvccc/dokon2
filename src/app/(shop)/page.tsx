@@ -1,6 +1,6 @@
 import { getL } from '@/lib/i18n/server';
 import { SITE_URL } from '@/lib/env';
-import { getBanners, getCatalog, getCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
+import { getBanners, getCatalog, getShopCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
 import { HeroSlider, BannerSlide } from '@/components/shop/hero-slider';
 import { Advantages, CategoryGrid, ProductSection, ReviewsSection } from '@/components/shop/home-blocks';
 import { HomeLayout } from '@/components/shop/site-editor';
@@ -22,7 +22,7 @@ export default async function HomePage() {
     has('hero') ? getBanners('home_hero') : [],
     has('middle_banner') ? getBanners('home_middle') : [],
     has('promo') ? getBanners('home_promo') : [],
-    has('categories') ? getCategories() : [],
+    has('categories') ? getShopCategories() : [],
     has('bestsellers') ? getCatalog({ sort: 'popular', limit: 10 }) : null,
     has('new') ? getCatalog({ new: true, sort: 'new', limit: 10 }) : null,
     has('sale') ? getCatalog({ discount: true, sort: 'discount', limit: 10 }) : null,
@@ -36,7 +36,7 @@ export default async function HomePage() {
     categories: <CategoryGrid categories={categories.filter((c) => !c.parent_id && c.show_on_home)} title={title('categories', L("Kategoriyalar"))} size={size('categories')} />,
     bestsellers: bestsellers && <ProductSection title={title('bestsellers', L("Eng ko‘p sotilayotganlar"))} products={bestsellers.items} href="/catalog?sort=popular" size={size('bestsellers')} />,
     new: fresh && <ProductSection title={title('new', L("Yangi kelganlar"))} products={fresh.items} href="/catalog?new=1&sort=new" size={size('new')} />,
-    sale: sale && <ProductSection title={title('sale', 'Chegirmalar')} products={sale.items} href="/sale" size={size('sale')} />,
+    sale: sale && <ProductSection title={title('sale', L('Chegirmalar'))} products={sale.items} href="/sale" size={size('sale')} />,
     featured: featured && <ProductSection title={title('featured', L("Tavsiya etamiz"))} products={featured.items} href="/catalog?featured=1" size={size('featured')} />,
     promo: promo.length > 0 && (
       <div className={cn('grid gap-3', size('promo') !== 'lg' && 'sm:grid-cols-2')}>
