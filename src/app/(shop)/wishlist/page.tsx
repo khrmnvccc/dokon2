@@ -8,6 +8,7 @@ import { getCatalog } from '@/lib/data/public';
 import { EmptyState } from '@/components/ui/misc';
 import { buttonClass } from '@/components/ui/button';
 import { ProductGrid } from '@/components/shop/product-card';
+import { SizeBlock } from '@/components/shop/size-block';
 
 export const metadata: Metadata = { title: 'Sevimlilar', robots: { index: false } };
 
@@ -31,7 +32,7 @@ export default async function WishlistPage() {
         <EmptyState icon={<Heart className="h-8 w-8" />} title={L("Hozircha bo‘sh")} text={L("Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi.")}
           action={<Link href="/catalog" className={buttonClass('primary')}>{L("Katalogga o‘tish")}</Link>} />
       ) : (
-        <ProductGrid products={ordered} />
+        <SizeBlock id="grid.wishlist" label="Mahsulotlar" mode="grid"><ProductGrid products={ordered} /></SizeBlock>
       )}
     </div>
   );

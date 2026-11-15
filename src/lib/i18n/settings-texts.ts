@@ -8,7 +8,7 @@ export interface SettingText { path: string; label: string; uz: string; ru: stri
 const SECTION_LABELS: Record<string, string> = {
   announcement: 'Eʼlon qatori', store: 'Doʻkon', brand: 'Brend', header_menu: 'Yuqori menyu', footer: 'Pastki qism (footer)',
   advantages: 'Afzalliklar', home_sections: 'Bosh sahifa boʻlimlari', contact: 'Aloqa', seo: 'SEO (qidiruv tizimlari)',
-  maintenance: 'Texnik ishlar', checkout: 'Rasmiylashtirish',
+  maintenance: 'Texnik ishlar', checkout: 'Rasmiylashtirish', help_center: 'Yordam markazi',
 };
 export const settingKeyLabel = (path: string) => SECTION_LABELS[path.split('.')[0]] ?? path;
 
@@ -36,5 +36,12 @@ export function settingsTexts(s: SiteSettings): SettingText[] {
   add('seo.title', 'Sayt sarlavhasi (Google)', s.seo.title);
   add('seo.description', 'Sayt tavsifi (Google)', s.seo.description, true);
   add('maintenance.message', 'Texnik ishlar xabari', s.maintenance.message, true);
+  if (s.help_center) {
+    add('help_center.support_title', 'Telegram kartasi sarlavhasi', s.help_center.support_title);
+    add('help_center.status', 'Holat yozuvi', s.help_center.status);
+    add('help_center.reply_time', 'Oʻrtacha javob vaqti', s.help_center.reply_time);
+    add('help_center.hours', 'Ish vaqti', s.help_center.hours);
+    add('help_center.phone_hours', 'Telefon ish vaqti', s.help_center.phone_hours);
+  }
   return out;
 }

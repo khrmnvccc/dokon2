@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/dialog';
 import { cn } from '@/components/ui/cn';
 import { logout } from '@/lib/actions/auth';
 import { setMyPrefs } from '@/lib/actions/shop';
+import { SizeBlock } from './size-block';
 
 const LANG_NAMES: Record<string, string> = { uz: 'Oʻzbekcha', ru: 'Русский', zh: '中文' };
 
@@ -43,6 +44,7 @@ export function ProfileHome(p: Props) {
   return (
     <div className="mx-auto max-w-xl space-y-4">
       {/* Karta */}
+      <SizeBlock id="profile.card" label="Profil kartasi">
       <section className="relative overflow-hidden rounded-[28px] p-4 text-white shadow-pop sm:p-5"
         style={{ background: 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 70%, #0b1f3a), color-mix(in srgb, var(--primary) 30%, #071426))' }}>
         <svg aria-hidden className="pointer-events-none absolute inset-0 size-full opacity-[0.13]" viewBox="0 0 400 220" preserveAspectRatio="none">
@@ -86,8 +88,10 @@ export function ProfileHome(p: Props) {
           </Link>
         </div>
       </section>
+      </SizeBlock>
 
       {/* Roʻyxat */}
+      <SizeBlock id="profile.menu" label="Menyu">
       <ul className="overflow-hidden rounded-[24px] border border-line bg-surface shadow-soft">
         <Row href="/account/addresses" icon={MapPin} title={L('Mening manzillarim')} sub={L('Yetkazish manzillaringiz')} />
         <Row href="/account/orders" icon={Package} title={L('Mening buyurtmalarim')} sub={L('Barcha buyurtmalar tarixi')} />
@@ -102,6 +106,7 @@ export function ProfileHome(p: Props) {
         <Row href="/faq" icon={CircleHelp} tone="purple" title={L('Savol-javob')} />
         {p.isStaff && <Row href="/admin" icon={LayoutDashboard} title={L('Admin panel')} />}
       </ul>
+      </SizeBlock>
 
       <form action={logout}>
         <button className="flex w-full items-center justify-center gap-2 rounded-[24px] border border-danger/20 bg-surface py-4 text-[15px] font-semibold text-danger shadow-soft transition hover:bg-danger-soft">

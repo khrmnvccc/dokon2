@@ -12,6 +12,7 @@ import { Markdown } from '@/components/shop/markdown';
 import { ReviewForm } from '@/components/shop/reviews';
 import { Rating, Stars } from '@/components/ui/misc';
 import { EditSpot } from '@/components/shop/site-editor';
+import { SizeBlock } from '@/components/shop/size-block';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -74,8 +75,8 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumbs items={[{ name: L("Katalog"), href: '/catalog' }, ...chain.map((c) => ({ name: c.name, href: `/category/${c.slug}` })), { name: product.name }]} />
 
       <div className="grid gap-6 rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
-        <ProductGallery images={images} name={product.name} />
-        <div>
+        <SizeBlock id="product.gallery" label="Rasmlar"><ProductGallery images={images} name={product.name} /></SizeBlock>
+        <SizeBlock id="product.info" label="Nomi va narxi">
           {product.brand && <div className="text-sm font-semibold text-primary">{product.brand}</div>}
           <h1 className="mt-1 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{product.name}</h1>
           <EditSpot inline href={`/admin/products/${product.id}`} label="Mahsulotni tahrirlash" className="mt-2" />
@@ -92,10 +93,11 @@ export default async function ProductPage({ params }: Props) {
               freeShippingFrom={settings.checkout.free_shipping_threshold}
             />
           </div>
-        </div>
+        </SizeBlock>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <SizeBlock id="product.details" label="Tavsif" className="mt-6">
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6">
           <h2 className="text-[15px] font-semibold tracking-tight">{L("Tavsif")}</h2>
           {product.description ? <Markdown content={product.description} className="mt-2" /> : <p className="mt-2 text-sm text-ink-3">{L("Tavsif qo‘shilmagan.")}</p>}
@@ -115,8 +117,10 @@ export default async function ProductPage({ params }: Props) {
           </section>
         )}
       </div>
+      </SizeBlock>
 
-      <section className="mt-6 rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6" id="reviews">
+      <SizeBlock id="product.reviews" label="Sharhlar" className="mt-6">
+      <section className="rounded-xl border border-line bg-surface p-5 shadow-soft sm:p-6" id="reviews">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-[15px] font-semibold tracking-tight">{L("Sharhlar")} <span className="text-ink-3">({product.rating_count})</span></h2>
           {product.rating_count > 0 && <div className="flex items-center gap-2"><Stars value={Number(product.rating_avg)} /><span className="font-semibold">{Number(product.rating_avg).toFixed(1)}</span></div>}
@@ -143,6 +147,7 @@ export default async function ProductPage({ params }: Props) {
           <ReviewForm productId={product.id} slug={product.slug} />
         </div>
       </section>
+      </SizeBlock>
 
       {related.length > 0 && <div className="mt-8"><ProductSection title={L("O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
     </>

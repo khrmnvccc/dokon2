@@ -9,6 +9,7 @@ import { MobileBottomNav } from '@/components/shop/header-client';
 import { ShopTour } from '@/components/shop/shop-tour';
 import { EditPencil } from '@/components/shop/site-editor';
 import { getTours } from '@/lib/data/tours';
+import { SizeBoot } from '@/components/shop/size-block';
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const L = await getL();
@@ -35,6 +36,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
       {settings.maintenance.enabled && (
         <div className="bg-warn-soft px-4 py-1.5 text-center text-xs font-medium text-warn">{L("Texnik xizmat rejimi yoqilgan — sayt faqat xodimlarga ko‘rinmoqda")}</div>
       )}
+      <SizeBoot value={settings.block_sizes} />
       <Header settings={settings} tree={tree} />
       <main id="main" className="mx-auto min-h-[60vh] max-w-7xl px-4 py-5 sm:py-7">{children}</main>
       <Footer settings={settings} t={t} reviewsLabel={L("Mijozlar fikri")} />

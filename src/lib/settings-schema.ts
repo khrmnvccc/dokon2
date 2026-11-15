@@ -95,6 +95,8 @@ export const settingsSchemas = {
       address: z.object({ url: optUrl, duration: z.string().trim().max(8).default('') }).default({ url: null, duration: '' }),
     }).default({}),
   }),
+  // Har sahifadagi bloklar oʻlchami (tahrir rejimidagi S/M/L): {"product.gallery": "lg"}. md — saqlanmaydi.
+  block_sizes: z.record(z.string().regex(/^[a-z0-9_.-]{1,60}$/), z.enum(['sm', 'lg'])).refine((r) => Object.keys(r).length <= 200),
   // Sayt matnlarining ruscha tarjimasi: {"ru": {"announcement.text": "…"}} (Sozlamalar → Tarjimalar).
   translations: z.object({ ru: z.record(z.string().max(120), z.string().max(2000)).default({}) }),
 };
@@ -118,6 +120,7 @@ export const defaultSettings: SiteSettings = {
   advantages: [],
   announcement: { enabled: false, text: '', link: null },
   translations: { ru: {} },
+  block_sizes: {},
   help_center: {
     support_title: 'Telegram qoʻllab-quvvatlash', status: 'Onlayn · hozir javob beradi', reply_time: '~2 daq', hours: '24 / 7',
     phone: '', phone_hours: '',
