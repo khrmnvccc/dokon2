@@ -5,11 +5,11 @@
 import type { TemplateVar } from './templates';
 
 export type CustomerMsgKey =
-  | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'coupon';
+  | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'arrived' | 'deliveryApproved' | 'pickupReady' | 'delivered' | 'cancelled' | 'returned' | 'coupon' | 'referralInvite';
 
 /** Standart rasm (kartochka) uchun yozuvlar va ranglar. */
 export interface CardArt { title: string; subtitle: string; from: string; to: string; icon: CardIcon }
-export type CardIcon = 'cart' | 'check' | 'box' | 'truck' | 'gift' | 'x' | 'undo' | 'ticket' | 'card';
+export type CardIcon = 'cart' | 'check' | 'box' | 'truck' | 'gift' | 'x' | 'undo' | 'ticket' | 'card' | 'pin' | 'users';
 
 export interface CustomerMsgDef {
   key: CustomerMsgKey; title: string; hint: string; vars: TemplateVar[]; text: string; button: string; art: CardArt;
@@ -72,6 +72,27 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
     art: { title: 'BUYURTMA\nYOʻLDA', subtitle: 'Tez orada yetib boradi', from: '#4f46e5', to: '#312e81', icon: 'truck' },
   },
   {
+    key: 'arrived', title: 'Oʻzbekistonga yetib keldi', hint: 'Buyurtma “Oʻzbekistonda” boʻlganda — mijoz yetkazishga ariza qoldiradi yoki oʻzi olib ketadi',
+    vars: [RAQAM, MIJOZ, SONI, DOKON],
+    text: '🇺🇿 *Buyurtmangiz Oʻzbekistonga yetib keldi!*\n\n🧾 Buyurtma: №{{raqam}}\n📦 Mahsulotlar: {{soni}}\n\n🚚 Yetkazib berishga ariza qoldirishingiz yoki 🏬 oʻzingiz olib ketishingiz mumkin.',
+    button: 'Ariza qoldirish',
+    art: { title: 'OʻZBEKISTONGA\nYETIB KELDI', subtitle: 'Yetkazishga ariza qoldiring', from: '#0ea5e9', to: '#075985', icon: 'pin' },
+  },
+  {
+    key: 'deliveryApproved', title: 'Yetkazish arizasi tasdiqlandi', hint: 'Siz mijozning yetkazish arizasini tasdiqlaganingizda',
+    vars: [RAQAM, MIJOZ, { name: 'usul', label: 'Yetkazish usuli', sample: 'Toshkent boʻylab' }, { name: 'manzil', label: 'Manzil', sample: 'Toshkent, Chilonzor 10-38' }, { name: 'narx', label: 'Yetkazish narxi', sample: '25 000 soʻm' }, DOKON],
+    text: '✅ *Arizangiz tasdiqlandi!*\n\n🧾 Buyurtma: №{{raqam}}\n🚚 {{usul}}\n📍 {{manzil}}\n💵 Yetkazish: {{narx}}\n\nKuryer yetib kelganda qoʻngʻiroq qiladi.',
+    button: 'Koʻrish',
+    art: { title: 'ARIZA\nTASDIQLANDI', subtitle: 'Kuryer yoʻlga chiqadi', from: '#4f46e5', to: '#312e81', icon: 'truck' },
+  },
+  {
+    key: 'pickupReady', title: 'Olib ketishga tayyor', hint: 'Mijoz oʻzi olib ketishni tanlaganda, siz tasdiqlaganingizda',
+    vars: [RAQAM, MIJOZ, { name: 'punkt', label: 'Olib ketish joyi', sample: 'Chilonzor filiali' }, { name: 'manzil', label: 'Manzil', sample: 'Toshkent, Chilonzor 10-38' }, { name: 'vaqt', label: 'Ish vaqti', sample: '09:00–20:00' }, DOKON],
+    text: '🏬 *Buyurtmangiz olib ketishga tayyor!*\n\n🧾 Buyurtma: №{{raqam}}\n📍 {{punkt}}: {{manzil}}\n🕘 {{vaqt}}\n\nKelganingizda buyurtma raqamini ayting.',
+    button: 'Manzilni koʻrish',
+    art: { title: 'OLIB KETISHGA\nTAYYOR', subtitle: 'Sizni kutyapmiz', from: '#1fa45a', to: '#0f6a3a', icon: 'pin' },
+  },
+  {
     key: 'delivered', title: 'Yetkazildi', hint: 'Buyurtma yetkazilganda',
     vars: [RAQAM, MIJOZ, DOKON],
     text: '🎉 *Buyurtmangiz yetkazildi!*\n\n🧾 Buyurtma: №{{raqam}}\n\nXaridingiz uchun rahmat! Mahsulotga baho qoldirsangiz, xursand boʻlamiz ⭐️',
@@ -106,6 +127,18 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
     text: '🎟 *Sizga kupon berildi:* {{kupon}} — {{qiymat}}\nKod: *{{kod}}*\nMinimal buyurtma: {{min}}\nAmal qiladi {{muddat}} gacha.',
     button: 'Kupon markazi',
     art: { title: 'KUPON', subtitle: '', from: '#e0192d', to: '#a30c1b', icon: 'ticket' },
+  },
+  {
+    key: 'referralInvite', title: 'Doʻstni taklif qilish (ulashiladigan xabar)', hint: 'Mijoz “Ulashish”ni bosib doʻstiga yuboradigan xabar. Tugma doʻstni uning havolasi orqali roʻyxatdan oʻtkazadi',
+    vars: [
+      MIJOZ,
+      { name: 'bonus', label: 'Doʻstga sovgʻa kupon', sample: '20 000 soʻm' },
+      { name: 'jami', label: 'Taklif qilganga jami kuponlar', sample: '220 000 soʻm' },
+      DOKON,
+    ],
+    text: '🎁 *{{dokon}}*\nMen {{dokon}} hamkorlik dasturida qatnashyapman 🤝 Doʻstlarni taklif qilib, *{{jami}}lik kuponlarni* qoʻlga kiritish mumkin.\n\n💰 *Siz ham boshqalarni taklif qilib pul ishlashingiz mumkin!*\n\nShu tugma orqali roʻyxatdan oʻting va {{bonus}}lik sovgʻa kupon oling 👇',
+    button: 'Roʻyxatdan oʻtib bonus olish',
+    art: { title: 'DOʻSTINGIZDAN\nSOVGʻA', subtitle: 'Roʻyxatdan oʻting va kupon oling', from: '#e0192d', to: '#7a0c18', icon: 'users' },
   },
 ];
 

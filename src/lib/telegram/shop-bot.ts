@@ -152,7 +152,7 @@ async function linkedUser(chatId: number) {
 }
 
 const STATUS_ICON: Partial<Record<OrderStatus, string>> = {
-  new: '🆕', confirmed: '✅', processing: '📦', shipped: '🚚', delivered: '🎉', cancelled: '❌', returned: '↩️',
+  new: '🆕', confirmed: '✅', processing: '📦', shipped: '🚚', arrived: '🇺🇿', delivered: '🎉', cancelled: '❌', returned: '↩️',
 };
 
 export async function handleShopUpdate(config: ShopBotConfig, update: ShopUpdate) {
@@ -369,20 +369,32 @@ export async function sendRich(token: string, chatId: number, msg: RichMessage) 
   await tg(token, 'sendMessage', { chat_id: chatId, text: msg.html, parse_mode: 'HTML', disable_web_page_preview: true, ...markup });
 }
 
-const STATUS_MSG: Partial<Record<'new' | OrderStatus | 'paid' | 'receiptRejected', CustomerMsgKey>> = {
+type NotifyKind = 'new' | OrderStatus | 'paid' | 'receiptRejected' | 'fulfillment';
+const STATUS_MSG: Partial<Record<NotifyKind, CustomerMsgKey>> = {
   paid: 'paid', receiptRejected: 'receiptRejected',
-  new: 'orderNew', confirmed: 'confirmed', processing: 'processing', shipped: 'shipped', delivered: 'delivered', cancelled: 'cancelled', returned: 'returned',
+  new: 'orderNew', confirmed: 'confirmed', processing: 'processing', shipped: 'shipped', arrived: 'arrived', delivered: 'delivered', cancelled: 'cancelled', returned: 'returned',
 };
 
 /** Buyurtma egasining Telegramiga (doʻkon boti orqali) xabar. Hech qachon xato tashlamaydi. */
-export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus | 'paid' | 'receiptRejected', extra: { sabab?: string | null } = {}) {
+export async function notifyCustomer(orderId: string, kind: NotifyKind, extra: { sabab?: string | null } = {}) {
   try {
     let key = STATUS_MSG[kind];
-    if (!key) return;
+    if (!key && kind !== 'fulfillment') return;
     const config = await getShopBot();
     if (!config) return;
-    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count, payment_method_id').eq('id', orderId).maybeSingle();
+    const { data: o } = await db().from('orders').select('id, number, user_id, total, tracking_number, customer_name, items_count, payment_method_id, fulfillment, shipping_method_id, shipping_method_name, address, delivery_fee').eq('id', orderId).maybeSingle();
     if (!o?.user_id) return;
+    // Ariza tasdiqlandi: yetkazish yoki olib ketish
+    let pickup: { pickup_address: string | null; description: string | null; work_hours: string | null } | null = null;
+    if (kind === 'fulfillment') {
+      if (!o.fulfillment) return;
+      key = o.fulfillment === 'pickup' ? 'pickupReady' : 'deliveryApproved';
+      if (o.fulfillment === 'pickup' && o.shipping_method_id) {
+        const { data: sm } = await db().from('shipping_methods').select('pickup_address, description, work_hours').eq('id', o.shipping_method_id).maybeSingle();
+        pickup = sm ?? null;
+      }
+    }
+    if (!key) return;
     // Profilda “Bildirishnomalar” oʻchirilgan boʻlsa Telegramga yozmaymiz (toʻlov kutish xabari bundan mustasno — unda karta raqami bor).
     if (kind !== 'new') {
       const { data: pf } = await db().from('profiles').select('notify_orders').eq('id', o.user_id).maybeSingle();
@@ -398,6 +410,9 @@ export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus 
       raqam: o.number, mijoz: String(o.customer_name ?? '').split(' ')[0], summa: formatPrice(Number(o.total), 'soʻm'),
       soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon', sabab: extra.sabab ?? '',
       karta: card ? formatCardNumber(card.number) : '', egasi: card?.holder ?? '',
+      usul: o.shipping_method_name ?? '', punkt: o.shipping_method_name ?? '',
+      manzil: pickup ? (pickup.pickup_address || pickup.description || '') : addressLine(o.address as Record<string, string | null> | null),
+      vaqt: pickup?.work_hours ?? '', narx: Number(o.delivery_fee) > 0 ? formatPrice(Number(o.delivery_fee), 'soʻm') : 'bepul',
     }, { path: `/account/orders/${o.id}` });
     if (!msg) return;
     // Karta raqamini bir bosishda nusxalash (Telegram tugmasi)
@@ -414,6 +429,8 @@ export async function notifyCustomer(orderId: string, kind: 'new' | OrderStatus 
     console.error('notify customer', e);
   }
 }
+
+const addressLine = (a: Record<string, string | null> | null) => (a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '');
 
 const fmtDate = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`; };
 
@@ -598,4 +615,37 @@ export async function referralAttachedNotice(res: { referrer_id?: string; welcom
 /** Kartaga toʻlov cheki tekshirildi: mijozga botda rasmli xabar (Mijozga xabarlardan boshqariladi). */
 export async function notifyReceiptDecision(orderId: string, approved: boolean, note: string | null) {
   await notifyCustomer(orderId, approved ? 'paid' : 'receiptRejected', { sabab: note });
+}
+
+/**
+ * “Doʻstni taklif qilish”: rasm + matn + tugmali tayyor xabar (Telegram savePreparedInlineMessage).
+ * Mijoz mini-ilovada “Ulashish”ni bossa, Telegram chat tanlash oynasini ochadi va xabar “via @bot” bilan ketadi.
+ * Tugma — mijozning shaxsiy taklif havolasi. Matn, tugma nomi va rasmni ega Xabarlar → Mijozga boʻlimida oʻzgartiradi.
+ */
+export async function prepareReferralShare(opts: { tgUserId: number; link: string; name: string; bonus: number; total: number }): Promise<string | null> {
+  const config = await getShopBot();
+  if (!config) return null;
+  const { brand } = await getSettings();
+  const msg = await customerMessage('referralInvite', {
+    mijoz: opts.name, dokon: brand.name || 'Doʻkon',
+    bonus: opts.bonus > 0 ? formatPrice(opts.bonus, 'soʻm') : '', jami: opts.total > 0 ? formatPrice(opts.total, 'soʻm') : '',
+  }, { path: '/' }, '?jpg=1');
+  if (!msg) return null;
+  const s = (await getCustomerMsgSettings()).referralInvite;
+  const label = (s?.button ?? CUSTOMER_MSG_BY_KEY.referralInvite.button).trim() || 'Roʻyxatdan oʻtish';
+  const reply_markup = { inline_keyboard: [[{ text: label, url: opts.link }]] };
+  const id = `ref${opts.tgUserId}${Date.now().toString(36)}`.slice(0, 64);
+  const isGif = msg.image ? /\.gif(\?|$)/i.test(msg.image) : false;
+  const isVideo = msg.image ? /\.mp4(\?|$)/i.test(msg.image) : false;
+  const result = msg.image && msg.html.length <= CAPTION_MAX
+    ? isGif
+      ? { type: 'gif', id, gif_url: msg.image, thumbnail_url: msg.image, caption: msg.html, parse_mode: 'HTML', reply_markup }
+      : isVideo
+        ? { type: 'mpeg4_gif', id, mpeg4_url: msg.image, thumbnail_url: `${SITE_URL}/api/tg-card/referralInvite?jpg=1`, caption: msg.html, parse_mode: 'HTML', reply_markup }
+        : { type: 'photo', id, photo_url: msg.image, thumbnail_url: msg.image, caption: msg.html, parse_mode: 'HTML', reply_markup }
+    : { type: 'article', id, title: brand.name || 'Doʻkon', input_message_content: { message_text: msg.html, parse_mode: 'HTML', link_preview_options: { is_disabled: true } }, reply_markup };
+  const res = await tg(config.token, 'savePreparedInlineMessage', {
+    user_id: opts.tgUserId, result, allow_user_chats: true, allow_bot_chats: false, allow_group_chats: true, allow_channel_chats: true,
+  }) as { id?: string } | null;
+  return res?.id ?? null;
 }

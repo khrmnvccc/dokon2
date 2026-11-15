@@ -7,6 +7,7 @@ export const STATUS_COLOR: Record<OrderStatus, string> = {
   confirmed: 'var(--pochta)',
   processing: 'var(--yandex)',
   shipped: 'var(--primary)',
+  arrived: 'var(--card)',
   delivered: 'var(--cash)',
   cancelled: 'var(--danger)',
   returned: 'var(--ink-3)',

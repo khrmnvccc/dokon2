@@ -266,6 +266,10 @@ function CheckoutTab({ initial }: { initial: SiteSettings['checkout'] }) {
         <Field label="Bepul yetkazib berish chegarasi (so‘m)" hint="0 — o‘chiq. Yetkazish usulida alohida chegara bo‘lsa, o‘sha ustun"><Input inputMode="numeric" value={v.free_shipping_threshold} onChange={(e) => s.setValue({ ...v, free_shipping_threshold: num(e.target.value) })} /></Field>
         <Field label="Checkout’dagi eslatma" className="sm:col-span-2"><Input value={v.order_note} onChange={(e) => s.setValue({ ...v, order_note: e.target.value })} placeholder="Operator 15 daqiqa ichida qo‘ng‘iroq qiladi" /></Field>
         <Checkbox label="Ro‘yxatdan o‘tmasdan buyurtma berishga ruxsat" checked={v.allow_guest_checkout} onChange={(e) => s.setValue({ ...v, allow_guest_checkout: e.target.checked })} />
+        <div className="sm:col-span-2 rounded-xl border border-line bg-surface-2 p-3">
+          <Checkbox label="Yetkazib berishni oxirida tanlash (kargo yoʻli)" checked={v.delivery_later} onChange={(e) => s.setValue({ ...v, delivery_later: e.target.checked })} />
+          <p className="mt-1.5 pl-7 text-xs text-ink-3">Yoqilganda xaridor buyurtma berishda yetkazishni tanlamaydi. Buyurtma “Oʻzbekistonda” holatiga oʻtganda u yetkazishga ariza qoldiradi yoki oʻzi olib ketishni tanlaydi, siz arizani buyurtma sahifasida tasdiqlaysiz.</p>
+        </div>
       </div>
       <p className="mt-4 text-xs text-ink-3">Yetkazib berish narxlari va to‘lov usullari “Yetkazish va to‘lov” bo‘limida.</p>
       <SaveBar pending={s.pending} onSave={() => s.save()} />

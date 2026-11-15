@@ -1,12 +1,13 @@
 import type { OrderStatus, PaymentStatus } from './types';
 
-export const ORDER_STATUSES: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'];
+export const ORDER_STATUSES: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'arrived', 'delivered', 'cancelled', 'returned'];
 
 export const orderStatusLabel: Record<OrderStatus, string> = {
   new: 'Yangi',
   confirmed: 'Tasdiqlandi',
   processing: 'Yig‘ilmoqda',
   shipped: 'Yo‘lda',
+  arrived: 'Oʻzbekistonda',
   delivered: 'Yetkazildi',
   cancelled: 'Bekor qilindi',
   returned: 'Qaytarildi',
@@ -17,6 +18,7 @@ export const orderStatusTone: Record<OrderStatus, 'blue' | 'violet' | 'amber' | 
   confirmed: 'violet',
   processing: 'amber',
   shipped: 'brand',
+  arrived: 'blue',
   delivered: 'green',
   cancelled: 'red',
   returned: 'gray',
@@ -30,14 +32,15 @@ export const paymentStatusLabel: Record<PaymentStatus, string> = {
 };
 
 /** Mijozga ko'rsatiladigan bosqichlar (bekor/qaytarilgan alohida) */
-export const ORDER_STEPS: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'delivered'];
+export const ORDER_STEPS: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'arrived', 'delivered'];
 
 /** SQL dagi order_transition_allowed bilan bir xil bo'lishi kerak (testlarda tekshiriladi) */
 export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   new: ['confirmed', 'processing', 'cancelled'],
   confirmed: ['processing', 'shipped', 'cancelled'],
   processing: ['shipped', 'cancelled'],
-  shipped: ['delivered', 'returned'],
+  shipped: ['arrived', 'delivered', 'returned'],
+  arrived: ['delivered', 'returned'],
   delivered: ['returned'],
   cancelled: [],
   returned: [],

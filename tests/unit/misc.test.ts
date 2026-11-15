@@ -38,7 +38,11 @@ describe('katalog parametrlari', () => {
 
 describe('buyurtma holatlari', () => {
   it('TypeScript va SQL dagi holat o‘tishlari bir xil', () => {
-    const sql = fs.readFileSync(path.resolve(__dirname, '../../supabase/migrations/20261023000002_functions.sql'), 'utf8');
+    // Funksiyani oxirgi marta qayta yozgan migratsiya hisoblanadi
+    const dir = path.resolve(__dirname, '../../supabase/migrations');
+    const file = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort().reverse()
+      .find((f) => fs.readFileSync(path.join(dir, f), 'utf8').includes('function public.order_transition_allowed'))!;
+    const sql = fs.readFileSync(path.join(dir, file), 'utf8');
     const fn = sql.slice(sql.indexOf('function public.order_transition_allowed'));
     for (const from of ORDER_STATUSES) {
       const m = fn.match(new RegExp(`when '${from}' then p_to in \\(([^)]*)\\)`));

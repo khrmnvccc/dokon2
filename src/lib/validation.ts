@@ -74,7 +74,7 @@ export const checkoutSchema = z
     customer_name: z.string().trim().min(2, 'Ismingizni kiriting').max(120),
     phone: uzPhone,
     email: z.union([emailSchema, z.literal('')]).optional(),
-    shippingMethodId: z.string().uuid('Yetkazib berish usulini tanlang'),
+    shippingMethodId: z.string().uuid('Yetkazib berish usulini tanlang').nullable().optional(),
     paymentMethodId: z.string().uuid('To‘lov usulini tanlang'),
     address: addressSchema.optional().nullable(),
     comment: z.string().trim().max(1000).optional().nullable(),

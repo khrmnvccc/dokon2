@@ -1,7 +1,7 @@
 // Telegram xabar matnlari (kassa tgTemplates.ts uslubida). Server (yuborish uchun) va brauzer
 // (qanday koʻrinishini oldindan koʻrsatish uchun) shu bitta fayldan oʻqiydi — natija bir xil boʻladi.
 
-export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
+export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'deliveryRequest' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
 
 /** Roʻyxatdagi oʻrni: A — buyurtma va pul, B — bekor qilish, C — hisobot. */
 export type TemplateGroup = 'kirim' | 'bekor' | 'hisobot';
@@ -49,6 +49,12 @@ export const TEMPLATES: TemplateDef[] = [
     vars: [RAQAM, MIJOZ, TELEFON, SUMMA, TOLOV, HAVOLA],
     text: '🧾 *Chek yuklandi · №{{raqam}}*\n{{mijoz}} · {{telefon}}\n💰 *{{summa}}* · {{tolov}}\nChekni tekshirib, tasdiqlang 👇',
     button: '🧾 Chekni tekshirish',
+  },
+  {
+    key: 'deliveryRequest', group: 'kirim', groupChat: true, staff: true, title: 'Yetkazishga ariza', hint: 'Oʻzbekistonga kelgan buyurtma uchun mijoz yetkazishga ariza qoldirganda yoki oʻzi olib ketishni tanlaganda',
+    vars: [RAQAM, MIJOZ, TELEFON, { name: 'tur', label: 'Tur', sample: '🚚 Yetkazib berish' }, { name: 'usul', label: 'Usul / punkt', sample: 'Toshkent boʻylab' }, { name: 'manzil', label: 'Manzil', sample: 'Chilonzor, 9-kvartal, 12-uy' }, { name: 'narx', label: 'Yetkazish narxi', sample: '25 000 soʻm' }, HAVOLA],
+    text: '📬 *Ariza · №{{raqam}}*\n{{mijoz}} · {{telefon}}\n{{tur}}: {{usul}}\n📍 {{manzil}}\n💵 {{narx}}\nTasdiqlash uchun buyurtmani oching 👇',
+    button: '✅ Arizani koʻrish',
   },
   {
     key: 'customerMessage', group: 'kirim', groupChat: true, staff: true, title: 'Mijoz botga yozdi', hint: 'Mijoz doʻkon botiga savol yoki xabar yozganda',

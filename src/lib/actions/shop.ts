@@ -7,6 +7,10 @@ import { rateLimit } from '@/lib/rate-limit';
 import { TAGS } from '@/lib/cache-tags';
 import { fieldErrors, profileSchema, reviewSchema, savedAddressSchema } from '@/lib/validation';
 import type { ActionResult } from '@/lib/types';
+import { after } from 'next/server';
+import { z } from 'zod';
+import { addressSchema } from '@/lib/validation';
+import { onDeliveryRequest } from '@/lib/telegram/events';
 
 export async function submitReview(input: unknown): Promise<ActionResult> {
   const user = await getCurrentUser();
@@ -108,4 +112,37 @@ export async function setMyPrefs(input: { notify_orders?: boolean; notify_promo?
   if (error) return { ok: false, error: 'Saqlab boʻlmadi' };
   revalidatePath('/account');
   return { ok: true };
+}
+
+const fulfillmentSchema = z.discriminatedUnion('kind', [
+  z.object({ orderId: z.string().uuid(), kind: z.literal('delivery'), methodId: z.string().uuid('Yetkazish usulini tanlang'), address: addressSchema }),
+  z.object({ orderId: z.string().uuid(), kind: z.literal('pickup'), methodId: z.string().uuid('Olib ketish joyini tanlang') }),
+]);
+
+const FULFILLMENT_ERRORS: Record<string, string> = {
+  NOT_ARRIVED: 'Buyurtma hali Oʻzbekistonga yetib kelmagan',
+  ALREADY_APPROVED: 'Arizangiz allaqachon tasdiqlangan. Oʻzgartirish uchun bizga yozing',
+  METHOD_UNAVAILABLE: 'Bu usul hozir mavjud emas',
+  ADDRESS_REQUIRED: 'Manzilni toʻliq kiriting',
+};
+
+/** “Oʻzbekistonda” boʻlgan buyurtma: yetkazishga ariza yoki oʻzi olib ketish. */
+export async function requestFulfillment(input: unknown): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: 'Tizimga kiring' };
+  const parsed = fulfillmentSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Maʼlumotlar notoʻgʻri', fieldErrors: fieldErrors(parsed.error) };
+  if (!(await rateLimit(`fulfill:${user.id}`, 10, 600))) return { ok: false, error: 'Juda koʻp urinish. Birozdan soʻng qayta urinib koʻring' };
+  const d = parsed.data;
+  const supabase = await getServerSupabase();
+  const { error } = await supabase.rpc('request_fulfillment', {
+    p_order_id: d.orderId, p_kind: d.kind, p_method_id: d.methodId, p_address: d.kind === 'delivery' ? d.address : null,
+  });
+  if (error) {
+    const code = Object.keys(FULFILLMENT_ERRORS).find((k) => error.message.includes(k));
+    return { ok: false, error: code ? FULFILLMENT_ERRORS[code] : 'Arizani yuborib boʻlmadi' };
+  }
+  revalidatePath(`/account/orders/${d.orderId}`);
+  after(() => onDeliveryRequest(d.orderId));
+  return { ok: true, message: d.kind === 'delivery' ? 'Ariza yuborildi — tasdiqlanishini kuting' : 'Tanlovingiz yuborildi — tayyor boʻlganda xabar beramiz' };
 }

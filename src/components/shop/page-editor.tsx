@@ -30,6 +30,8 @@ export function buildFaq(intro: string, items: QA[]): string {
   return [intro.trim(), body].filter(Boolean).join('\n\n');
 }
 
+const INLINE_OFF = true;
+
 export function PageEditButton({ slug, faq }: { slug: string; faq?: boolean }) {
   const L = useL();
   const { isStaff } = useApp();
@@ -40,7 +42,8 @@ export function PageEditButton({ slug, faq }: { slug: string; faq?: boolean }) {
   const [lang, setLang] = useState<Lang>('uz');
   const [loading, setLoading] = useState(false);
   const [pending, start] = useTransition();
-  if (!isStaff || !editing) return null;
+  // Qalam rejimida faqat oʻlchamlar qoladi (egasi talabi) — matn admin → Sahifalar boʻlimida tahrirlanadi.
+  if (INLINE_OFF || !isStaff || !editing) return null;
 
   const open = async () => {
     setLoading(true);

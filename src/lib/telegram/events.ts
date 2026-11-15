@@ -74,6 +74,28 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
 }
 
+/** Mijoz “Oʻzbekistonda” boʻlgan buyurtma uchun yetkazishga ariza qoldirdi yoki olib ketishni tanladi. */
+export async function onDeliveryRequest(orderId: string) {
+  if (!(await getTelegram())?.chatId) return;
+  const { data: o } = await getServiceSupabase().from('orders')
+    .select('id, number, customer_name, customer_phone, total, payment_method_name, fulfillment, shipping_method_id, shipping_method_name, address, delivery_fee')
+    .eq('id', orderId).maybeSingle();
+  if (!o) return;
+  let manzil = '';
+  if (o.fulfillment === 'pickup' && o.shipping_method_id) {
+    const { data: sm } = await getServiceSupabase().from('shipping_methods').select('pickup_address, description').eq('id', o.shipping_method_id).maybeSingle();
+    manzil = sm?.pickup_address || sm?.description || '';
+  } else {
+    const a = o.address as OrderRow['address'];
+    manzil = a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '';
+  }
+  await notify('deliveryRequest', {
+    raqam: o.number, mijoz: o.customer_name, telefon: formatUzPhone(o.customer_phone),
+    tur: o.fulfillment === 'pickup' ? '🏬 Oʻzi olib ketadi' : '🚚 Yetkazib berish', usul: o.shipping_method_name, manzil,
+    narx: Number(o.delivery_fee) > 0 ? money(Number(o.delivery_fee)) : 'bepul', havola: `${ADMIN_URL}/admin/orders/${o.id}`,
+  }, { link: `/admin/orders/${o.id}` });
+}
+
 /** Mijoz chek yukladi: rasm bilan xodimlarga. */
 export async function onReceiptUploaded(orderId: string, photo: TgPhoto) {
   if (!(await getTelegram())?.chatId) return;
@@ -99,7 +121,7 @@ export async function sendDailyReport(storeName: string) {
   const s = getServiceSupabase();
   const [{ data: orders }, { count: open }] = await Promise.all([
     s.from('orders').select('total, status, payment_method_name').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(10_000),
-    s.from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped']),
+    s.from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped', 'arrived']),
   ]);
   const rows = orders ?? [];
   const live = rows.filter((o) => o.status !== 'cancelled' && o.status !== 'returned');

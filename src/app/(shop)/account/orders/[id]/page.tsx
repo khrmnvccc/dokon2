@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
-import { getSettings } from '@/lib/data/public';
+import { getSettings, getShippingMethods } from '@/lib/data/public';
+import { FulfillmentPanel } from '@/components/shop/fulfillment-panel';
+import type { Address } from '@/lib/types';
 import { OrderDetails, type PublicOrder } from '@/components/shop/order-view';
 import { CancelOrderButton } from '@/components/shop/account-forms';
 import { CardPayment } from '@/components/payment/card-payment';
@@ -30,6 +32,10 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     ])
     : [{ data: [] as { id: string }[] }, { data: [] as { product_id: string; rating: number }[] }];
   const payment = await getOrderPayment(raw.id).catch(() => null);
+  const needsChoice = raw.status === 'arrived';
+  const [methods, { data: addrs }] = needsChoice
+    ? await Promise.all([getShippingMethods(), supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false })])
+    : [[], { data: [] }];
   const activeIds = new Set((active ?? []).map((p) => p.id as string));
   const myRating = new Map((mine ?? []).map((r) => [r.product_id as string, r.rating as number]));
   const order: PublicOrder = {
@@ -40,6 +46,15 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     <div>
       <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> {L("Buyurtmalarim")}</Link>
       {payment && <div className="mb-4"><CardPayment data={payment} symbol={settings.localization.currency_symbol} /></div>}
+      {(order.status === 'arrived' || order.status === 'delivered') && (
+        <div className="mb-4">
+          <FulfillmentPanel
+            order={{ id: order.id, status: order.status, fulfillment: order.fulfillment ?? null, fulfillment_status: order.fulfillment_status ?? null, delivery_fee: order.delivery_fee ?? 0, shipping_method_id: order.shipping_method_id ?? null, shipping_method_name: order.shipping_method_name, address: order.address, pickup: order.pickup ?? null, subtotal: order.subtotal, discount_total: order.discount_total }}
+            methods={methods}
+            addresses={(addrs ?? []) as Address[]}
+          />
+        </div>
+      )}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
       {order.status === 'new' && <div className="mt-4"><CancelOrderButton orderId={order.id} /></div>}
     </div>

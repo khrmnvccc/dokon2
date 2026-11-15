@@ -24,6 +24,8 @@ const ICONS: Record<CardIcon, string[]> = {
   x: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'm15 9-6 6', 'm9 9 6 6'],
   undo: ['M9 14 4 9l5-5', 'M4 9h10.5a5.5 5.5 0 0 1 0 11H11'],
   card: ['M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z', 'M2 10h20', 'M6 15h4'],
+  pin: ['M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z', 'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'],
+  users: ['M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2', 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M22 21v-2a4 4 0 0 0-3-3.9', 'M16 3.1a4 4 0 0 1 0 7.8'],
   ticket: ['M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z', 'M13 5v2', 'M13 17v2', 'M13 11v2'],
 };
 
@@ -114,7 +116,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ key:
 
   const art = CUSTOMER_MSG_BY_KEY[key].art;
   const brand = await brandName();
-  return new ImageResponse(
+  const png = new ImageResponse(
     <div style={{ fontFamily: 'Inter', width: W, height: H, display: 'flex', position: 'relative', background: `linear-gradient(135deg, ${art.from} 0%, ${art.to} 100%)`, padding: 72 }}>
       <div style={{ position: 'absolute', right: -160, top: -160, width: 620, height: 620, borderRadius: 620, background: 'rgba(255,255,255,0.08)', display: 'flex' }} />
       <div style={{ position: 'absolute', right: 120, bottom: -220, width: 440, height: 440, borderRadius: 440, background: 'rgba(255,255,255,0.06)', display: 'flex' }} />
@@ -136,4 +138,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ key:
     </div>,
     { width: W, height: H, fonts: await fonts(), headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=86400' } },
   );
+  // Ulashiladigan (inline) xabarlarda Telegram JPEG kutadi
+  return new URL(request.url).searchParams.has('jpg') ? toJpeg(png) : png;
+}
+
+async function toJpeg(png: Response): Promise<Response> {
+  try {
+    const sharp = (await import('sharp')).default;
+    const buf = await sharp(Buffer.from(await png.arrayBuffer())).jpeg({ quality: 88 }).toBuffer();
+    return new Response(new Uint8Array(buf), { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=3600, s-maxage=86400' } });
+  } catch (e) {
+    console.error('tg-card jpeg', e);
+    return png;
+  }
 }

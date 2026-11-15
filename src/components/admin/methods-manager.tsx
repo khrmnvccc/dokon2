@@ -78,9 +78,9 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
 }
 
 function ShippingForm({ method, count, onDone, save }: { method: ShippingMethod | null; count: number; onDone: () => void; save: ReturnType<typeof useCrud>['save'] }) {
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<z.input<typeof shippingMethodSchema>, unknown, z.output<typeof shippingMethodSchema>>({
+  const { register, handleSubmit, setError, watch, formState: { errors, isSubmitting } } = useForm<z.input<typeof shippingMethodSchema>, unknown, z.output<typeof shippingMethodSchema>>({
     resolver: zodResolver(shippingMethodSchema),
-    defaultValues: method ? { ...method, description: method.description ?? '', eta: method.eta ?? '', free_from: method.free_from ?? '' } : { name: '', kind: 'courier', price: 0, free_from: '', requires_address: true, is_active: true, sort_order: count * 10 },
+    defaultValues: method ? { ...method, description: method.description ?? '', eta: method.eta ?? '', free_from: method.free_from ?? '', pickup_address: method.pickup_address ?? '', map_url: method.map_url ?? '', work_hours: method.work_hours ?? '' } : { name: '', kind: 'courier', price: 0, free_from: '', requires_address: true, is_active: true, sort_order: count * 10 },
   });
   return (
     <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={handleSubmit(async (d) => { if (await save(method?.id ?? null, d, setError)) onDone(); })}>
@@ -92,6 +92,14 @@ function ShippingForm({ method, count, onDone, save }: { method: ShippingMethod 
       <Field label="Tavsif" htmlFor="s-desc"><Input id="s-desc" {...register('description')} /></Field>
       <Checkbox label="Manzil talab qilinadi" {...register('requires_address')} />
       <Checkbox label="Faol" {...register('is_active')} />
+      {!watch('requires_address') && (
+        <div className="grid gap-3 rounded-xl border border-line bg-surface-2 p-3 sm:col-span-2 sm:grid-cols-2">
+          <p className="text-sm font-semibold sm:col-span-2">Olib ketish punkti <span className="font-normal text-ink-3">— mijoz “Oʻzim olib ketaman”ni tanlaganda shu manzil chiqadi</span></p>
+          <Field label="Manzil" hint="Masalan: Toshkent, Chilonzor 10-kvartal, 38-uy" className="sm:col-span-2" error={errors.pickup_address?.message} htmlFor="s-paddr"><Input id="s-paddr" {...register('pickup_address')} /></Field>
+          <Field label="Ish vaqti" hint="Masalan: Har kuni 09:00–20:00" error={errors.work_hours?.message} htmlFor="s-hours"><Input id="s-hours" {...register('work_hours')} /></Field>
+          <Field label="Xarita havolasi" hint="Yandex yoki Google xaritadan “Ulashish” havolasi" error={errors.map_url?.message} htmlFor="s-map"><Input id="s-map" inputMode="url" placeholder="https://yandex.uz/maps/…" {...register('map_url')} /></Field>
+        </div>
+      )}
       <input type="hidden" {...register('sort_order')} />
       <div className="flex justify-end gap-2 sm:col-span-2">
         <Button type="button" variant="outline" onClick={onDone}>Bekor qilish</Button>

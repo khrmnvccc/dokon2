@@ -43,13 +43,15 @@ type FormOut = z.output<typeof formSchema>;
 const shipIcon = { courier: Truck, pickup: Store, post: Package } as const;
 const payIcon = { cash: Banknote, card_on_delivery: CreditCard, bank_transfer: CreditCard, online: CreditCard } as const;
 
-export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defaults, isGuest, orderNote }: {
+export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defaults, isGuest, orderNote, deliveryLater = false }: {
   shippingMethods: ShippingMethod[];
   paymentMethods: PaymentMethod[];
   addresses: Address[];
   defaults: { name: string; phone: string; email: string };
   isGuest: boolean;
   orderNote: string;
+  /** Yetkazish buyurtma Oʻzbekistonga kelganda tanlanadi (kargo yoʻli). */
+  deliveryLater?: boolean;
 }) {
   const L = useL();
   const { t, price } = useApp();
@@ -74,7 +76,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       customer_name: defaults.name,
       phone: defaults.phone ? formatUzPhone(defaults.phone) : '',
       email: defaults.email,
-      shippingMethodId: shippingMethods[0]?.id ?? '',
+      shippingMethodId: deliveryLater ? 'later' : shippingMethods[0]?.id ?? '',
       paymentMethodId: paymentMethods[0]?.id ?? '',
       region: L("Toshkent shahri"),
       saveAddress: !isGuest && addresses.length === 0,
@@ -83,8 +85,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
   const { register, handleSubmit, watch, setError, formState: { errors } } = form;
   const shippingId = watch('shippingMethodId');
   const shipping = shippingMethods.find((m) => m.id === shippingId) ?? null;
-  const needsAddress = shipping?.requires_address ?? false;
-  const { quote, loading } = useQuote(cart.items, cart.ready, coupon, shippingId || null);
+  const needsAddress = !deliveryLater && (shipping?.requires_address ?? false);
+  const { quote, loading } = useQuote(cart.items, cart.ready, coupon, deliveryLater ? null : shippingId || null);
   const savedAddress = useMemo(() => addresses.find((a) => a.id === selectedAddress) ?? null, [addresses, selectedAddress]);
 
   if (!cart.ready) return <Skeleton className="h-96 rounded-2xl" />;
@@ -121,7 +123,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
           customer_name: values.customer_name,
           phone: values.phone,
           email: values.email || '',
-          shippingMethodId: values.shippingMethodId,
+          shippingMethodId: deliveryLater ? null : values.shippingMethodId,
           paymentMethodId: values.paymentMethodId,
           address,
           comment: values.comment || null,
@@ -180,6 +182,9 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
             </div>
           </Section>
 
+          {deliveryLater ? (
+            <DeliveryLaterNote />
+          ) : (
           <Section n={2} title={L("Yetkazib berish")}>
             {shippingMethods.length === 0 && <p className="text-sm text-danger">{L("Yetkazib berish usullari sozlanmagan.")}</p>}
             <div className="grid gap-2 sm:grid-cols-2">
@@ -245,8 +250,9 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
               </div>
             )}
           </Section>
+          )}
 
-          <Section n={3} title={L("To‘lov usuli")}>
+          <Section n={deliveryLater ? 2 : 3} title={L("To‘lov usuli")}>
             {paymentMethods.length === 0 && <p className="text-sm text-danger">{L("To‘lov usullari sozlanmagan.")}</p>}
             <div className="grid gap-2 sm:grid-cols-2">
               {paymentMethods.map((m) => {
@@ -270,7 +276,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
                 <p className="mt-3 text-center text-[13px] text-ink-2">{L('Buyurtma berganingizdan keyin shu kartaga summani oʻtkazib, chek rasmini yuklaysiz.')}</p>
               </div>
             )}
-            <Field label={L("Izoh")} hint={L("Kuryer uchun qo‘shimcha ma’lumot")} htmlFor="comment" className="mt-4">
+            <Field label={L("Izoh")} hint={deliveryLater ? L("Qoʻshimcha maʼlumot") : L("Kuryer uchun qo‘shimcha ma’lumot")} htmlFor="comment" className="mt-4">
               <Textarea id="comment" rows={3} maxLength={1000} {...register('comment')} />
             </Field>
           </Section>
@@ -298,7 +304,7 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
               <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
                 <div className="flex justify-between"><dt className="text-ink-3">{t('cart.subtotal')}</dt><dd>{price(quote.subtotal)}</dd></div>
                 {quote.discount > 0 && <div className="flex justify-between text-success"><dt>{t('cart.discount')}</dt><dd>−{price(quote.discount)}</dd></div>}
-                <div className="flex justify-between"><dt className="text-ink-3">{t('cart.shipping')}</dt><dd>{quote.shipping === 0 ? t('cart.free') : price(quote.shipping)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-3">{t('cart.shipping')}</dt><dd>{deliveryLater ? <span className="text-ink-3">{L('Keyin tanlanadi')}</span> : quote.shipping === 0 ? t('cart.free') : price(quote.shipping)}</dd></div>
                 <div className="flex justify-between border-t border-line pt-3 text-lg"><dt className="font-semibold">{t('cart.total')}</dt><dd className="font-semibold">{price(quote.total)}</dd></div>
               </dl>
             )}
@@ -326,6 +332,33 @@ function Section({ n, title, children }: { n: number; title: string; children: R
         {title}
       </h2>
       {children}
+    </section>
+  );
+}
+
+/** Kargo yoʻli: yetkazish hozir tanlanmaydi — qanday davom etishi qisqa koʻrsatiladi. */
+function DeliveryLaterNote() {
+  const L = useL();
+  const steps = [
+    { icon: Package, title: L('Buyurtma yoʻlga chiqadi'), text: L('Holatini Buyurtmalarim boʻlimida va botda kuzatasiz') },
+    { icon: MapPin, title: L('Oʻzbekistonga yetib keladi'), text: L('Sizga xabar beramiz') },
+    { icon: Truck, title: L('Yetkazishga ariza qoldirasiz'), text: L('Yoki oʻzingiz olib ketishni tanlaysiz') },
+  ];
+  return (
+    <section className="rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-6">
+      <h2 className="mb-1 flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary"><Truck className="h-4 w-4" /></span>
+        {L('Yetkazib berish keyin tanlanadi')}
+      </h2>
+      <p className="mb-4 text-sm text-ink-3">{L('Buyurtmangiz Oʻzbekistonga yetib kelgach, yetkazishga ariza qoldirasiz yoki oʻzingiz olib ketasiz.')}</p>
+      <ol className="space-y-2.5">
+        {steps.map((st, i) => (
+          <li key={i} className="flex items-start gap-3 rounded-xl bg-surface-2/70 p-3">
+            <st.icon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <span className="text-sm"><b className="block font-semibold">{st.title}</b><span className="text-ink-3">{st.text}</span></span>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
