@@ -8,6 +8,7 @@ import { CatalogView } from '@/components/shop/catalog-view';
 import { Breadcrumbs } from '@/components/shop/breadcrumbs';
 import { BannerSlide } from '@/components/shop/hero-slider';
 import { EditSpot } from '@/components/shop/site-editor';
+import { SizeBlock } from '@/components/shop/size-block';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -61,13 +62,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <EditSpot inline href="/admin/categories" label="Kategoriyani tahrirlash" className="mb-3" />
       {category.description && <p className="mb-4 max-w-3xl text-sm text-ink-3">{category.description}</p>}
       {children.length > 0 && (
-        <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4">
+        <SizeBlock id="category.children" label="Ichki kategoriyalar" className="mb-5">
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
           {children.map((c) => (
             <Link key={c.id} href={`/category/${c.slug}`} className="shrink-0 rounded-xl bg-surface px-4 py-2 text-sm font-medium shadow-soft hover:text-primary">{c.name}</Link>
           ))}
         </div>
+        </SizeBlock>
       )}
-      {banners[0] && <div className="mb-5 aspect-[16/7] overflow-hidden rounded-[24px] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[28px]"><BannerSlide banner={banners[0]} compact /></div>}
+      {banners[0] && <SizeBlock id="category.banner" label="Banner" className="mb-5"><div className="aspect-[16/7] overflow-hidden rounded-[24px] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[28px]"><BannerSlide banner={banners[0]} compact /></div></SizeBlock>}
       <CatalogView params={catalogParams} page={page} basePath={`/category/${category.slug}`} searchParams={sp} categorySlug={category.slug} />
     </>
   );

@@ -10,6 +10,7 @@ import { Rating } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import { ProductImage } from './product-image';
 import { EditSpot } from './site-editor';
+import { useBlockSize } from './size-block';
 
 export function ProductCard({ product, priority }: { product: ProductCardType; priority?: boolean }) {
   const L = useL();
@@ -101,8 +102,11 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
 }
 
 export function ProductGrid({ products, priorityCount = 0 }: { products: ProductCardType[]; priorityCount?: number }) {
+  // Tahrir rejimidagi oʻlcham: S — mayda kartalar (koʻp ustun), L — yirik (kam ustun)
+  const size = useBlockSize();
+  const cols = size === 'sm' ? 'grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : size === 'lg' ? 'grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5';
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+    <div className={cn('grid', cols)}>
       {products.map((p, i) => (
         <ProductCard key={p.id} product={p} priority={i < priorityCount} />
       ))}

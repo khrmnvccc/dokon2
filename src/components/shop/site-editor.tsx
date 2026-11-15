@@ -18,7 +18,7 @@ let editing = false;
 const listeners = new Set<() => void>();
 const setEditing = (v: boolean) => { editing = v; listeners.forEach((l) => l()); };
 const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
-const useEditing = () => useSyncExternalStore(subscribe, () => editing, () => false);
+export const useEditing = () => useSyncExternalStore(subscribe, () => editing, () => false);
 
 const SIZE_LABEL: Record<SectionSize, string> = { sm: 'S', md: 'M', lg: 'L' };
 

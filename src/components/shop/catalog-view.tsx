@@ -6,6 +6,7 @@ import { getT } from '@/lib/i18n/server';
 import { EmptyState, Pagination } from '@/components/ui/misc';
 import { ProductGrid } from './product-card';
 import { CatalogFilters, SortSelect } from './catalog-controls';
+import { SizeBlock } from './size-block';
 
 export async function CatalogView({ params, page, basePath, searchParams, categorySlug, header }: {
   params: CatalogParams;
@@ -45,7 +46,7 @@ export async function CatalogView({ params, page, basePath, searchParams, catego
         </div>
         {items.length ? (
           <>
-            <ProductGrid products={items} priorityCount={4} />
+            <SizeBlock id={`grid.${(basePath.split('/')[1] || 'catalog').replace(/[^a-z0-9]/g, '')}`} label="Mahsulotlar" mode="grid"><ProductGrid products={items} priorityCount={4} /></SizeBlock>
             <Pagination page={page} total={total} pageSize={PAGE_SIZE} makeHref={makeHref} />
           </>
         ) : (
