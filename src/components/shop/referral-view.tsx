@@ -15,7 +15,7 @@ import { Modal } from '@/components/ui/dialog';
 import { copyText } from '@/lib/client/copy';
 
 import { couponCardProps } from '@/lib/coupon-design';
-import { applyPartner, requestPayout, trackReferral } from '@/lib/actions/referral';
+import { applyPartner, prepareShareMessage, requestPayout, trackReferral } from '@/lib/actions/referral';
 import { PAYOUT_STATUS, REFERRAL_STATUS, type ReferralStep } from '@/lib/referral';
 
 export interface MyReferral {
@@ -40,7 +40,7 @@ export interface MyReferral {
 const num = (v: number) => new Intl.NumberFormat('ru-RU').format(v).replace(/\s/g, ' ');
 const date = (iso: string) => new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-type TgWebApp = { openTelegramLink?: (url: string) => void; initData?: string };
+type TgWebApp = { openTelegramLink?: (url: string) => void; initData?: string; shareMessage?: (id: string, cb?: (sent: boolean) => void) => void; isVersionAtLeast?: (v: string) => boolean };
 const tgApp = () => (typeof window !== 'undefined' ? (window as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp : undefined);
 
 /** Doʻstni taklif qilish: havola, bosqichlar, kuponlar, doʻstlar va (hamkor boʻlsa) balans. */
@@ -71,9 +71,19 @@ export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyRe
     catch { toast(L('Nusxalab boʻlmadi — havolani qoʻlda belgilang'), 'error'); }
     void trackReferral('copy');
   };
+  const [sharing, setSharing] = useState(false);
   const share = async () => {
     void trackReferral('share');
     const tg = tgApp();
+    // Telegram ichida: rasm + matn + tugmali tayyor xabar (ega Xabarlar → Mijozga boʻlimida boshqaradi)
+    if (tg?.initData && typeof tg.shareMessage === 'function' && (!tg.isVersionAtLeast || tg.isVersionAtLeast('8.0'))) {
+      setSharing(true);
+      const prepared = await prepareShareMessage(tg.initData).catch(() => null);
+      setSharing(false);
+      if (prepared) {
+        try { tg.shareMessage(prepared.id, (sent) => { if (sent) toast(L('Yuborildi!'), 'success'); }); return; } catch { /* eski Telegram */ }
+      }
+    }
     const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(shareText)}`;
     if (tg?.initData && tg.openTelegramLink) { tg.openTelegramLink(url); return; }
     if (typeof navigator.share === 'function') {
@@ -122,7 +132,7 @@ export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyRe
               className="flex size-9 items-center justify-center rounded-full bg-white/12 text-white hover:bg-white/20">
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
             </button>
-            <button type="button" onClick={share} className="flex h-9 items-center gap-1.5 rounded-full bg-[#2aa3ef] px-4 text-sm font-semibold text-white shadow-soft active:scale-95">
+            <button type="button" onClick={share} disabled={sharing} className="flex h-9 items-center gap-1.5 rounded-full bg-[#2aa3ef] px-4 text-sm font-semibold text-white shadow-soft active:scale-95">
               <Send className="size-4" /> {L('Ulashish')}
             </button>
           </div>

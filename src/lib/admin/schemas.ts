@@ -162,6 +162,9 @@ export const shippingMethodSchema = z.object({
   requires_address: z.boolean(),
   is_active: z.boolean(),
   sort_order: intField(-1000, 1000),
+  pickup_address: optText(300),
+  map_url: z.preprocess((v) => (typeof v === 'string' && !v.trim() ? null : v), z.string().trim().url('Havola notoʻgʻri').regex(/^https:\/\//i, 'https:// bilan boshlansin').max(500).nullable().optional()),
+  work_hours: optText(120),
 });
 
 export const paymentMethodSchema = z.object({

@@ -1,5 +1,5 @@
 export type AppRole = 'super_admin' | 'manager' | 'operator' | 'warehouse';
-export type OrderStatus = 'new' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
+export type OrderStatus = 'new' | 'confirmed' | 'processing' | 'shipped' | 'arrived' | 'delivered' | 'cancelled' | 'returned';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type DiscountType = 'percent' | 'fixed';
 export type DiscountScope = 'all' | 'category' | 'product';
@@ -160,6 +160,10 @@ export interface ShippingMethod {
   requires_address: boolean;
   is_active: boolean;
   sort_order: number;
+  /** Olib ketish punkti uchun (requires_address oʻchiq boʻlsa). */
+  pickup_address?: string | null;
+  map_url?: string | null;
+  work_hours?: string | null;
 }
 
 export interface PaymentMethod {
@@ -215,6 +219,12 @@ export interface Order {
   shipped_at: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
+  shipping_method_id?: string | null;
+  arrived_at?: string | null;
+  fulfillment?: 'delivery' | 'pickup' | null;
+  fulfillment_status?: 'requested' | 'approved' | null;
+  fulfillment_requested_at?: string | null;
+  delivery_fee?: number;
 }
 
 export interface OrderItem {

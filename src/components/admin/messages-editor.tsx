@@ -4,7 +4,7 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Ban, BarChart3, Bell, Bot, CheckCircle2, ChevronLeft, CreditCard, ExternalLink, Link2, Package, PackageMinus, RefreshCw, RotateCcw, Send,
-  ShoppingCart, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, ReceiptText, BadgeCheck, XCircle, MessageCircle, type LucideIcon } from 'lucide-react';
+  ShoppingCart, MapPin, Store, Trash2, Undo2, Users, Zap, Truck, Gift, Ticket, ReceiptText, BadgeCheck, XCircle, MessageCircle, type LucideIcon } from 'lucide-react';
 import {
   connectBot, checkOwnerChat, linkGroup, disconnectTelegram, setChatPaused, updateTemplate, testTemplate,
   unlinkPerson, syncCustomers, saveBroadcast, updateCustomerMessage, testCustomerMsg, testBroadcast, removeBroadcast, connectShopBot, refreshBots, disconnectShopBot,
@@ -289,7 +289,7 @@ function ShopBotPanel({ data }: { data: MessagesData }) {
 
 // ---------- 2. Xabar matnlari: chapda roʻyxat, oʻngda tahrir ----------
 const TEMPLATE_ICONS: Record<TemplateKey, LucideIcon> = {
-  newOrder: ShoppingCart, paymentReceipt: ReceiptText, customerMessage: MessageCircle, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
+  newOrder: ShoppingCart, paymentReceipt: ReceiptText, deliveryRequest: MapPin, customerMessage: MessageCircle, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
   paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3,
 };
 const GROUP_TONES = ['bg-[#1d4f80]', 'bg-[#2f80c1]', 'bg-[#1f7a4d]', 'bg-[#8a5a12]'];
@@ -459,7 +459,7 @@ function ChatRow({ label, checked, disabled, onChange }: { label: string; checke
 
 // ---------- Mijozga xabarlar (doʻkon boti) ----------
 const CUSTOMER_ICONS: Record<CustomerMsgKey, LucideIcon> = {
-  orderNew: ShoppingCart, awaitPayment: CreditCard, paid: BadgeCheck, receiptRejected: XCircle, confirmed: CheckCircle2, processing: Package, shipped: Truck, delivered: Gift, cancelled: Ban, returned: Undo2, coupon: Ticket,
+  orderNew: ShoppingCart, awaitPayment: CreditCard, paid: BadgeCheck, receiptRejected: XCircle, confirmed: CheckCircle2, processing: Package, shipped: Truck, arrived: MapPin, deliveryApproved: Truck, pickupReady: Store, delivered: Gift, cancelled: Ban, returned: Undo2, coupon: Ticket, referralInvite: Users,
 };
 
 function CustomerTab({ data }: { data: MessagesData }) {

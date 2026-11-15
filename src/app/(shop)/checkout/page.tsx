@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Buyurtmani rasmiylashtirish', robots
 
 export default async function CheckoutPage() {
   const [settings, user, shipping, payments] = await Promise.all([getSettings(), getCurrentUser(), getShippingMethods(), getPaymentMethods()]);
-  if (!user && !settings.checkout.allow_guest_checkout) redirect('/login?next=/checkout');
+  if (!user && (!settings.checkout.allow_guest_checkout || settings.checkout.delivery_later)) redirect('/login?next=/checkout');
 
   let addresses: Address[] = [];
   const profile = user ? await getCurrentProfile() : null;
@@ -31,6 +31,7 @@ export default async function CheckoutPage() {
       defaults={{ name: profile?.full_name ?? '', phone: profile?.phone ?? '', email: visibleEmail(profile?.email ?? user?.email) ?? '' }}
       isGuest={!user}
       orderNote={settings.checkout.order_note}
+      deliveryLater={settings.checkout.delivery_later}
     />
   );
 }

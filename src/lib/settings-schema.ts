@@ -64,6 +64,8 @@ export const settingsSchemas = {
     free_shipping_threshold: z.coerce.number().int().min(0),
     allow_guest_checkout: z.boolean(),
     order_note: z.string().trim().max(300).default(''),
+    /** Kargo yoʻli: yetkazish checkoutda emas, buyurtma Oʻzbekistonga kelganda tanlanadi. */
+    delivery_later: z.boolean().default(true),
   }),
   localization: z.object({
     default_language: z.enum(['uz', 'ru', 'zh']),
@@ -113,7 +115,7 @@ export const defaultSettings: SiteSettings = {
   home_sections: HOME_SECTION_KEYS.map((key) => ({ key, title: '', enabled: true, size: 'md' as const })),
   header_menu: [],
   footer: { about_text: '', copyright: '', columns: [] },
-  checkout: { min_order_amount: 0, free_shipping_threshold: 0, allow_guest_checkout: true, order_note: '' },
+  checkout: { min_order_amount: 0, free_shipping_threshold: 0, allow_guest_checkout: true, order_note: '', delivery_later: true },
   localization: { default_language: 'uz', languages: ['uz'], currency: 'UZS', currency_symbol: 'soʻm' },
   seo: { title: 'Onlayn do‘kon', title_template: '%s', description: '', keywords: '', og_image_url: null },
   maintenance: { enabled: false, message: '' },

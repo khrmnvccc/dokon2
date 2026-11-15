@@ -62,3 +62,39 @@ export async function myActiveCoupons(): Promise<{ code: string; value: number; 
     .sort((a, b) => Number(Boolean(a.starts_at)) - Number(Boolean(b.starts_at)))
     .slice(0, 8);
 }
+
+/**
+ * Telegram ichida “Ulashish”: doʻkon boti orqali rasm + matn + tugmali xabar tayyorlaydi va uning id sini qaytaradi.
+ * Mini-ilova shu id bilan Telegram.WebApp.shareMessage() ni chaqiradi. Boʻlmasa — oddiy havola bilan ulashiladi.
+ */
+export async function prepareShareMessage(initData: string): Promise<{ id: string } | null> {
+  const user = await getCurrentUser();
+  if (!user || typeof initData !== 'string' || initData.length > 4096) return null;
+  try {
+    const [{ getShopBot, prepareReferralShare }, { verifyInitData }, { getServiceSupabase }, { shareLinks }, { SITE_URL }] = await Promise.all([
+      import('@/lib/telegram/shop-bot'), import('@/lib/telegram/webapp-auth'), import('@/lib/supabase/admin'), import('@/lib/referral'), import('@/lib/env'),
+    ]);
+    const bot = await getShopBot();
+    if (!bot) return null;
+    // Kim ulashyapti: avval botga bogʻlangan chat, boʻlmasa mini-ilova maʼlumoti (imzosi tekshiriladi)
+    const { data: sub } = await getServiceSupabase().from('telegram_subscribers').select('chat_id').eq('user_id', user.id).eq('via', 'shop').limit(1).maybeSingle();
+    const tgUserId = sub?.chat_id ? Number(sub.chat_id) : verifyInitData(initData, bot.token, 86400)?.id ?? null;
+    if (!tgUserId) return null;
+    const supabase = await getServerSupabase();
+    const { data } = await supabase.rpc('my_referral');
+    const r = data as { enabled?: boolean; client_no?: number | null; welcome?: { enabled?: boolean; amount?: number }; steps?: { amount?: number }[] } | null;
+    if (!r?.enabled || !r.client_no) return null;
+    const { data: pf } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
+    const id = await prepareReferralShare({
+      tgUserId,
+      link: shareLinks(Number(r.client_no), SITE_URL, bot.botName ?? null).main,
+      name: String(pf?.full_name ?? '').split(' ')[0],
+      bonus: r.welcome?.enabled ? Number(r.welcome.amount ?? 0) : 0,
+      total: (r.steps ?? []).reduce((s, x) => s + Number(x.amount ?? 0), 0),
+    });
+    return id ? { id } : null;
+  } catch (e) {
+    console.error('prepare share', e);
+    return null;
+  }
+}

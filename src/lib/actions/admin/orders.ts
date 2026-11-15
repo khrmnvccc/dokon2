@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { after } from 'next/server';
 import { onOrderUpdate } from '@/lib/telegram/events';
-import { notifyReceiptDecision } from '@/lib/telegram/shop-bot';
+import { notifyCustomer, notifyReceiptDecision } from '@/lib/telegram/shop-bot';
 import { z } from 'zod';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { getStaffContext } from '@/lib/auth';
@@ -13,7 +13,7 @@ import type { ActionResult } from '@/lib/types';
 
 const schema = z.object({
   orderId: z.string().uuid(),
-  status: z.enum(['new', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned']).nullable().optional(),
+  status: z.enum(['new', 'confirmed', 'processing', 'shipped', 'arrived', 'delivered', 'cancelled', 'returned']).nullable().optional(),
   note: z.string().trim().max(500).optional().nullable(),
   tracking_number: z.string().trim().max(80).optional().nullable(),
   admin_note: z.string().trim().max(2000).optional().nullable(),
@@ -76,4 +76,19 @@ export async function reviewReceipt(input: z.input<typeof reviewSchema>): Promis
     if (d.approve) await onOrderUpdate(d.orderId, { payment: 'paid', by });
   });
   return { ok: true, message: d.approve ? 'Toʻlov va buyurtma tasdiqlandi — endi joʻnatish mumkin' : 'Chek rad etildi, mijozga xabar berildi' };
+}
+
+/** Mijozning yetkazish arizasini (yoki olib ketishni) tasdiqlash — mijozga botda xabar boradi. */
+export async function approveFulfillment(orderId: string): Promise<ActionResult> {
+  const ctx = await getStaffContext();
+  if (!ctx || !(ctx.permissions.has('orders.write') || ctx.permissions.has('orders.fulfill'))) return { ok: false, error: 'Bu amal uchun ruxsat yo‘q' };
+  if (!z.string().uuid().safeParse(orderId).success) return { ok: false, error: 'Ma’lumotlar noto‘g‘ri' };
+  const supabase = await getServerSupabase();
+  const { error } = await supabase.rpc('admin_approve_fulfillment', { p_order_id: orderId });
+  if (error) return { ok: false, error: dbErrorText(error, 'Tasdiqlab boʻlmadi') };
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath('/admin/orders');
+  revalidatePath(`/account/orders/${orderId}`);
+  after(() => notifyCustomer(orderId, 'fulfillment'));
+  return { ok: true, message: 'Ariza tasdiqlandi, mijozga xabar yuborildi' };
 }

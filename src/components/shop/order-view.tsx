@@ -17,6 +17,11 @@ export interface PublicOrder {
   status: OrderStatus;
   payment_method_name: string;
   shipping_method_name: string;
+  shipping_method_id?: string | null;
+  fulfillment?: 'delivery' | 'pickup' | null;
+  fulfillment_status?: 'requested' | 'approved' | null;
+  delivery_fee?: number;
+  pickup?: { name: string; address: string | null; map_url: string | null; hours: string | null } | null;
   customer_name: string;
   customer_phone: string;
   customer_email: string | null;
@@ -47,7 +52,7 @@ export function StatusTimeline({ status, history, lang = 'uz' }: { status: Order
   }
   const current = ORDER_STEPS.indexOf(status);
   return (
-    <ol className="grid grid-cols-5 gap-1">
+    <ol className="grid grid-cols-6 gap-0.5 sm:gap-1">
       {ORDER_STEPS.map((step, i) => {
         const reached = i <= current;
         const at = history.find((h) => h.status === step)?.created_at;
@@ -60,7 +65,7 @@ export function StatusTimeline({ status, history, lang = 'uz' }: { status: Order
               </span>
               <span className={cn('h-0.5 flex-1', i === ORDER_STEPS.length - 1 ? 'opacity-0' : i < current ? 'bg-primary' : 'bg-line')} />
             </div>
-            <span className={cn('mt-1.5 text-[11px] font-semibold sm:text-xs', reached ? 'text-ink' : 'text-ink-3')}>{L(orderStatusLabel[step])}</span>
+            <span className={cn('mt-1.5 text-[10px] font-semibold leading-tight sm:text-xs', reached ? 'text-ink' : 'text-ink-3')}>{L(orderStatusLabel[step])}</span>
             {at && <span className="hidden text-[10px] text-ink-3 sm:block">{formatDateTime(at)}</span>}
           </li>
         );
@@ -91,7 +96,7 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
           <h3 className="mb-3 font-semibold">{L("Yetkazib berish")}</h3>
           <dl className="space-y-1.5">
             <div><dt className="inline text-ink-3">Qabul qiluvchi: </dt><dd className="inline">{order.customer_name}, {formatUzPhone(order.customer_phone)}</dd></div>
-            <div><dt className="inline text-ink-3">Usul: </dt><dd className="inline">{order.shipping_method_name}</dd></div>
+            <div><dt className="inline text-ink-3">{L('Usul')}: </dt><dd className="inline">{order.fulfillment === 'pickup' ? `${L('Oʻzi olib ketadi')} · ${order.shipping_method_name}` : L(order.shipping_method_name)}</dd></div>
             {order.address && (
               <div><dt className="inline text-ink-3">Manzil: </dt><dd className="inline">{[order.address.region, order.address.city, order.address.street, order.address.apartment, order.address.landmark].filter(Boolean).join(', ')}</dd></div>
             )}
@@ -104,7 +109,8 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
           <dl className="space-y-1.5">
             <div className="flex justify-between"><dt className="text-ink-3">Mahsulotlar ({order.items_count})</dt><dd>{p(order.subtotal)}</dd></div>
             {order.discount_total > 0 && <div className="flex justify-between text-success"><dt>Chegirma {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total)}</dd></div>}
-            <div className="flex justify-between"><dt className="text-ink-3">{L("Yetkazib berish")}</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : L("Bepul")}</dd></div>
+            <div className="flex justify-between"><dt className="text-ink-3">{L("Yetkazib berish")}</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : order.shipping_method_name === 'Keyin tanlanadi' && !order.fulfillment ? L('Keyin tanlanadi') : L("Bepul")}</dd></div>
+            {!!order.delivery_fee && <div className="flex justify-between text-ink-2"><dt className="text-ink-3">{L('Yetkazish (yetkazganda toʻlanadi)')}</dt><dd>{p(order.delivery_fee)}</dd></div>}
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold"><dt>{L("Jami")}</dt><dd>{p(order.total)}</dd></div>
           </dl>
         </div>

@@ -11,6 +11,7 @@ import { buttonClass } from '@/components/ui/button';
 import { PageHeader, Panel, Table } from '@/components/admin/ui';
 import { OrderControls } from '@/components/admin/order-controls';
 import { ReceiptReview } from '@/components/admin/receipt-review';
+import { FulfillmentReview } from '@/components/admin/fulfillment-review';
 import { getReceiptsForStaff, methodCard } from '@/lib/payments/receipts';
 import { ProductImage } from '@/components/shop/product-image';
 import type { Order, OrderItem, OrderStatus } from '@/lib/types';
@@ -38,6 +39,9 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   const nextStatuses = ORDER_TRANSITIONS[o.status].filter(can);
 
   // Mijozning oldingi buyurtmalari soni (firibgarlik/qayta xaridorni bilish uchun)
+  const { data: pickupPoint } = o.fulfillment === 'pickup' && o.shipping_method_id
+    ? await supabase.from('shipping_methods').select('pickup_address, description, work_hours, map_url').eq('id', o.shipping_method_id).maybeSingle()
+    : { data: null };
   const { count: phoneOrders } = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('customer_phone', o.customer_phone);
   // Kartaga oʻtkazma: chek rasmlari (yopiq bucket, 10 daqiqalik havola)
   const card = process.env.SUPABASE_SERVICE_ROLE_KEY ? await methodCard(o.payment_method_id ?? null).catch(() => null) : null;
@@ -103,6 +107,19 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               <ReceiptReview orderId={o.id} card={card} receipts={receipts} paid={o.payment_status === 'paid'} canWrite={ctx.permissions.has('orders.write')} />
             </Panel>
           )}
+          {o.fulfillment ? (
+            <Panel title={o.fulfillment === 'pickup' ? 'Olib ketish' : 'Yetkazish arizasi'}>
+              <FulfillmentReview orderId={o.id} canApprove={ctx.permissions.has('orders.write') || ctx.permissions.has('orders.fulfill')} info={{
+                kind: o.fulfillment, status: o.fulfillment_status ?? null, method: o.shipping_method_name, fee: Number(o.delivery_fee ?? 0), requestedAt: o.fulfillment_requested_at ?? null,
+                address: o.fulfillment === 'pickup' ? (pickupPoint?.pickup_address || pickupPoint?.description || '') : o.address ? [o.address.region, o.address.city, o.address.street, o.address.apartment, o.address.landmark].filter(Boolean).join(', ') : '',
+                hours: pickupPoint?.work_hours ?? null, mapUrl: pickupPoint?.map_url ?? null,
+              }} />
+            </Panel>
+          ) : o.status === 'arrived' ? (
+            <Panel title="Yetkazish arizasi">
+              <p className="text-sm text-ink-3">Mijoz hali tanlamadi: yetkazishga ariza qoldiradi yoki oʻzi olib ketadi. Unga botda xabar yuborilgan.</p>
+            </Panel>
+          ) : null}
           <Panel title="Boshqaruv">
             <OrderControls
               orderId={o.id}

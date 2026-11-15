@@ -46,13 +46,15 @@ export async function POST(request: Request) {
   const { quote, shippingMethod } = await buildQuote({
     items: input.items,
     couponCode: input.couponCode,
-    shippingMethodId: input.shippingMethodId,
+    shippingMethodId: settings.checkout.delivery_later ? null : input.shippingMethodId,
     withCost: true,
     userId: user?.id ?? null,
   });
 
-  if (!shippingMethod) return fail('Yetkazib berish usulini tanlang', 400, { fieldErrors: { shippingMethodId: 'Yetkazib berish usulini tanlang' } });
-  if (shippingMethod.requires_address && !input.address) {
+  const later = settings.checkout.delivery_later;
+  if (later && !user) return fail('Buyurtma berish uchun tizimga kiring', 401);
+  if (!later && !shippingMethod) return fail('Yetkazib berish usulini tanlang', 400, { fieldErrors: { shippingMethodId: 'Yetkazib berish usulini tanlang' } });
+  if (!later && shippingMethod?.requires_address && !input.address) {
     return fail('Yetkazib berish manzilini kiriting', 400, { fieldErrors: { 'address.street': 'Manzilni kiriting' } });
   }
   const paymentMethod = (await getPaymentMethods()).find((m) => m.id === input.paymentMethodId);
@@ -72,19 +74,19 @@ export async function POST(request: Request) {
     payment_method_id: paymentMethod.id,
     payment_method_name: paymentMethod.name,
     payment_provider: paymentMethod.provider,
-    shipping_method_id: shippingMethod.id,
-    shipping_method_name: shippingMethod.name,
+    shipping_method_id: later ? null : shippingMethod!.id,
+    shipping_method_name: later ? 'Keyin tanlanadi' : shippingMethod!.name,
     customer_name: input.customer_name,
     customer_phone: input.phone,
     customer_email: input.email || null,
-    address: shippingMethod.requires_address ? input.address : null,
+    address: !later && shippingMethod?.requires_address ? input.address : null,
     comment: input.comment || null,
     subtotal: quote.subtotal,
     discount_total: quote.discount,
     coupon_id: quote.coupon?.id ?? null,
     coupon_code: quote.coupon?.code ?? null,
-    shipping_cost: quote.shipping,
-    total: quote.total,
+    shipping_cost: later ? 0 : quote.shipping,
+    total: later ? quote.total - quote.shipping : quote.total,
     cost_total: quote.costTotal,
     items: quote.lines.map((l) => ({
       product_id: l.productId,
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
 
   if (user && !order.duplicate) {
     const supabase = await getServerSupabase();
-    if (input.saveAddress && input.address && shippingMethod.requires_address) {
+    if (!later && input.saveAddress && input.address && shippingMethod?.requires_address) {
       const { count } = await supabase.from('addresses').select('id', { count: 'exact', head: true }).eq('user_id', user.id);
       if ((count ?? 0) < 10) {
         await supabase.from('addresses').insert({
