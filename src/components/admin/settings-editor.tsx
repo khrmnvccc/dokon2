@@ -61,10 +61,12 @@ function SaveBar({ pending, onSave }: { pending: boolean; onSave: () => void }) 
   return <div className="mt-5 flex justify-end border-t border-line pt-4"><Button loading={pending} onClick={onSave}>Saqlash</Button></div>;
 }
 
-export function SettingsEditor({ initial, isOwner, branches }: { initial: SiteSettings; isOwner: boolean; branches: BranchRow[] }) {
+export function SettingsEditor({ initial, isOwner, branches, initialTab }: { initial: SiteSettings; isOwner: boolean; branches: BranchRow[]; initialTab?: string }) {
   // Brend va dizaynni faqat Ega ko'radi va o'zgartiradi.
   const tabs = TABS.filter((t) => isOwner || !OWNER_TABS.includes(t.id));
-  const [tab, setTab] = useState<(typeof TABS)[number]['id']>(isOwner ? 'brand' : 'store');
+  // Saytdagi qalamchadan ?tab=brand kabi havola bilan kelinsa — oʻsha boʻlim ochiladi.
+  const asked = tabs.find((t) => t.id === initialTab)?.id;
+  const [tab, setTab] = useState<(typeof TABS)[number]['id']>(asked ?? (isOwner ? 'brand' : 'store'));
   return (
     <div className="grid gap-4 lg:grid-cols-[220px_1fr] lg:items-start">
       <nav className="no-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-line bg-surface p-2 lg:flex-col" aria-label="Sozlamalar bo‘limlari">

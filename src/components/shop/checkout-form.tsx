@@ -20,6 +20,8 @@ import type { Address, PaymentMethod, ShippingMethod } from '@/lib/types';
 import { ProductImage } from './product-image';
 import { useQuote } from './use-quote';
 import { CouponBox, readSavedCoupon, saveCoupon } from './cart-view';
+import { CardVisual } from '@/components/payment/card-visual';
+import { cleanCard } from '@/lib/payment-card';
 
 const formSchema = z.object({
   customer_name: z.string().trim().min(2, "Ismingizni kiriting").max(120),
@@ -149,6 +151,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
     }
   };
 
+  const selectedMethod = paymentMethods.find((m) => m.id === watch('paymentMethodId'));
+  const selectedCard = selectedMethod?.kind === 'bank_transfer' ? cleanCard(selectedMethod.card) : null;
   const blocked = !quote || quote.hasErrors || quote.belowMinimum || loading;
 
   return (
@@ -260,6 +264,12 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
               })}
             </div>
             {errors.paymentMethodId && <p className="mt-2 text-xs text-danger">{errors.paymentMethodId.message}</p>}
+            {selectedCard && (
+              <div className="mt-4 rounded-xl border border-line bg-surface-2/60 p-3 sm:p-4">
+                <CardVisual card={selectedCard} copyLabel={L('Nusxalash')} copiedLabel={L('Nusxalandi')} className="mx-auto" />
+                <p className="mt-3 text-center text-[13px] text-ink-2">{L('Buyurtma berganingizdan keyin shu kartaga summani oʻtkazib, chek rasmini yuklaysiz.')}</p>
+              </div>
+            )}
             <Field label={L("Izoh")} hint={L("Kuryer uchun qo‘shimcha ma’lumot")} htmlFor="comment" className="mt-4">
               <Textarea id="comment" rows={3} maxLength={1000} {...register('comment')} />
             </Field>

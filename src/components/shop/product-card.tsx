@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/toast';
 import { Rating } from '@/components/ui/misc';
 import { cn } from '@/components/ui/cn';
 import { ProductImage } from './product-image';
+import { EditSpot } from './site-editor';
 
 export function ProductCard({ product, priority }: { product: ProductCardType; priority?: boolean }) {
   const L = useL();
@@ -26,6 +27,7 @@ export function ProductCard({ product, priority }: { product: ProductCardType; p
   // nom 15px, narx katta .num, "Savatga" primary tugma.
   return (
     <article className="group relative flex flex-col rounded-[22px] border border-line/70 bg-surface p-1.5 shadow-soft anim-rise transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lg)] sm:p-2">
+      <EditSpot href={`/admin/products/${product.id}`} label="Tahrirlash" className="left-3 right-auto top-3" />
       <Link href={href} className="relative block aspect-square overflow-hidden rounded-[18px] bg-surface-2" tabIndex={-1} aria-hidden>
         <ProductImage
           src={product.image_url}

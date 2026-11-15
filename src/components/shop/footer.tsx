@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Mail, MapPin, Phone, Clock } from 'lucide-react';
 import type { SiteSettings } from '@/lib/settings-schema';
 import { Logo } from '@/components/brand';
+import { EditSpot } from './site-editor';
 
 const socialLabels: Record<string, string> = { telegram: 'Telegram', instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube', tiktok: 'TikTok' };
 
@@ -10,7 +11,8 @@ export function Footer({ settings, t, reviewsLabel }: { settings: SiteSettings; 
   const socials = Object.entries(social).filter(([, url]) => url) as [string, string][];
   const link = 'text-ink-2 transition-colors hover:text-ink';
   return (
-    <footer className="no-print mt-12 border-t border-line bg-surface glass pb-24 lg:pb-0">
+    <footer className="no-print relative mt-12 border-t border-line bg-surface glass pb-24 lg:pb-0">
+      <EditSpot href="/admin/settings?tab=menu" label="Footer va aloqa" className="right-4 top-4" />
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-4 gap-y-7 px-4 py-8 sm:py-10 lg:grid-cols-5 lg:gap-8">
         <div className="col-span-2">
           <Logo />

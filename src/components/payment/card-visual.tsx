@@ -18,17 +18,21 @@ export function CardVisual({ card, copyLabel = 'Nusxalash', copiedLabel = 'Nusxa
     }
   };
   return (
-    <div className={cn('relative aspect-[1.586] w-full max-w-sm overflow-hidden rounded-2xl p-5 shadow-lg', className)}
+    // overflow-hidden faqat bezak qatlamida: kontent (raqam, egasi, tugma) hech qachon kesilmaydi —
+    // kichik ekran yoki katta shriftda karta pastga choʻziladi (avval pastki qismi kesilib qolardi).
+    <div className={cn('relative flex aspect-[1.586] h-auto min-h-fit w-full max-w-sm flex-col rounded-2xl p-5 shadow-lg', className)}
       style={{ background: `linear-gradient(135deg, ${t.bg[0]}, ${t.bg[1]})`, color: t.ink }}>
-      <span aria-hidden className="pointer-events-none absolute -right-10 -top-12 size-44 rounded-full bg-white/10" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-16 -left-8 size-48 rounded-full bg-white/5" />
-      <div className="relative flex h-full flex-col">
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+        <span className="absolute -right-10 -top-12 size-44 rounded-full bg-white/10" />
+        <span className="absolute -bottom-16 -left-8 size-48 rounded-full bg-white/5" />
+      </span>
+      <div className="relative flex flex-1 flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <span className="text-sm font-semibold tracking-wide opacity-90">{card.bank || ' '}</span>
           <span aria-hidden className="h-7 w-10 rounded-md bg-gradient-to-br from-[#f5d77a] to-[#b98a2e] opacity-90" />
         </div>
         <div className="mt-auto">
-          <button type="button" onClick={copy} title={copyLabel} className="num block select-all whitespace-nowrap text-left text-[clamp(1.05rem,5.6vw,1.45rem)] font-semibold tracking-[0.08em]">{formatCardNumber(card.number)}</button>
+          <button type="button" onClick={copy} title={copyLabel} className="num block select-all text-left text-[clamp(1rem,5.2vw,1.45rem)] font-semibold tracking-[0.06em] [overflow-wrap:anywhere]">{formatCardNumber(card.number)}</button>
           <div className="mt-3 flex items-end justify-between gap-3">
             <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wider opacity-85">{card.holder || ' '}</span>
             <button type="button" onClick={copy}

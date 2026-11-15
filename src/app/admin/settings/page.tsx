@@ -6,7 +6,8 @@ import { SettingsEditor } from '@/components/admin/settings-editor';
 
 export const metadata = { title: 'Sozlamalar' };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
   const ctx = await requirePagePermission('settings.write');
   const supabase = await getServerSupabase();
   // Keshsiz, to'g'ridan-to'g'ri bazadan
@@ -17,7 +18,7 @@ export default async function SettingsPage() {
   return (
     <div>
       <PageHeader title="Sozlamalar" subtitle="Oʻzgarishlar saqlangandan soʻng saytda darhol qoʻllanadi" />
-      <SettingsEditor initial={parseSettings(data ?? [])} isOwner={ctx.roles.includes('super_admin')} branches={branches ?? []} />
+      <SettingsEditor initial={parseSettings(data ?? [])} isOwner={ctx.roles.includes('super_admin')} branches={branches ?? []} initialTab={tab} />
     </div>
   );
 }

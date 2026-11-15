@@ -11,7 +11,7 @@ import { saveSetting } from '@/lib/actions/admin/settings';
 import { BrandMark } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
-import { Alert, Card, Segmented } from '@/components/ui/kit';
+import { Alert, Card, Segmented, Toggle } from '@/components/ui/kit';
 import { useToast } from '@/components/ui/toast';
 
 /** A picked logo, shrunk to at most 256 px so it stays small, as a PNG data URL. */
@@ -54,6 +54,15 @@ export function BrandCard() {
   // The page shows the new colour and corners while they are tried; leaving without saving puts the old ones back.
   useEffect(() => { previewBrand(draft ? cleanBrand(draft) : null); }, [draft]);
   useEffect(() => () => previewBrand(null), []);
+  // Rejimni tanlaganda shu sahifa ham darhol oʻsha rejimda koʻrinadi (saqlanmasa — qaytadi).
+  useEffect(() => {
+    const t = draft?.theme;
+    if (!t || t === 'system') return;
+    const html = document.documentElement;
+    const was = html.classList.contains('dark');
+    html.classList.toggle('dark', t === 'dark');
+    return () => { html.classList.toggle('dark', was); };
+  }, [draft?.theme]);
 
   async function save() {
     setBusy(true);
@@ -122,6 +131,17 @@ export function BrandCard() {
 
           <Field label="Burchaklar">
             <Segmented value={b.corners} onChange={(v) => edit({ corners: v })} options={[{ value: 'sharp', label: 'Tik' }, { value: 'soft', label: 'Oddiy' }, { value: 'round', label: 'Yumaloq' }]} />
+          </Field>
+
+          <Field label="Standart rejim (hamma uchun)" hint="Saytni birinchi ochganda qaysi rejimda chiqishi. “Telefon boʻyicha” — har kimning telefon sozlamasiga qarab">
+            <Segmented value={b.theme} onChange={(v) => edit({ theme: v })}
+              options={[{ value: 'system', label: 'Telefon boʻyicha' }, { value: 'light', label: '☀️ Yorugʻ' }, { value: 'dark', label: '🌙 Qorongʻi' }]} />
+            <div className="mt-3 flex items-center gap-3">
+              <Toggle checked={b.themeLock} onChange={(v) => edit({ themeLock: v })} label="Hammaga majburiy" />
+              <span className="text-[13px] text-ink-2">{b.themeLock
+                ? 'Hammaga majburiy: mijoz oʻzi almashtira olmaydi (oy/quyosh tugmasi yashiriladi)'
+                : 'Mijoz xohlasa oʻzi almashtira oladi (oy/quyosh tugmasi bilan)'}</span>
+            </div>
           </Field>
 
           <Field label="Harakatlanuvchi fon" hint="Sahifa orqasida yengil harakat. Telefonida “kamroq harakat” yoqilgan xodimda chiqmaydi">

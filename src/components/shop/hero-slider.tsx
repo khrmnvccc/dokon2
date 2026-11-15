@@ -9,6 +9,7 @@ import type { Banner } from '@/lib/types';
 import type { SectionSize } from '@/lib/settings-schema';
 import { cn } from '@/components/ui/cn';
 import { isUnoptimizable } from './product-image';
+import { EditSpot } from './site-editor';
 
 const AUTOPLAY_MS = 6000;
 
@@ -58,12 +59,15 @@ export function BannerSlide({ banner, priority, className, compact }: { banner: 
       )}
     </div>
   );
-  return banner.link_url ? (
-    <Link href={banner.link_url} className="block h-full rounded-[inherit]" aria-label={banner.title ?? 'Banner'}>
-      {content}
-    </Link>
-  ) : (
-    content
+  return (
+    <div className="relative h-full w-full rounded-[inherit]">
+      {banner.link_url ? (
+        <Link href={banner.link_url} className="block h-full rounded-[inherit]" aria-label={banner.title ?? 'Banner'}>
+          {content}
+        </Link>
+      ) : content}
+      <EditSpot href="/admin/banners" label="Banner" />
+    </div>
   );
 }
 
