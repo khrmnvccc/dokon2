@@ -6,7 +6,8 @@ import type { TemplateVar } from './templates';
 
 export type CustomerMsgKey =
   | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'arrived' | 'deliveryApproved' | 'pickupReady' | 'delivered' | 'cancelled' | 'returned' | 'coupon' | 'referralInvite'
-  | 'awaitOnline' | 'cartReminder' | 'cartCoupon' | 'backInStock' | 'cargoUpdate';
+  | 'awaitOnline' | 'cartReminder' | 'cartCoupon' | 'backInStock' | 'cargoUpdate'
+  | 'importQuoted' | 'importRejected' | 'bonusEarned' | 'flashSale';
 
 /** Standart rasm (kartochka) uchun yozuvlar va ranglar. */
 export interface CardArt { title: string; subtitle: string; from: string; to: string; icon: CardIcon }
@@ -175,6 +176,34 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
     text: '📍 *Buyurtma №{{raqam}}: {{bosqich}}*\n\n🔎 Trek: {{trek}}\n{{izoh}}',
     button: 'Kuzatish',
     art: { title: 'YUKINGIZ\nYOʻLDA', subtitle: 'Qayerdaligini kuzating', from: '#4f46e5', to: '#312e81', icon: 'truck' },
+  },
+  {
+    key: 'importQuoted', title: 'Buyurtma asosida: narx tayyor', hint: 'Xodim mijozning Xitoydan buyurtma soʻroviga narx berganda (Savdo → Buyurtma asosida)',
+    vars: [MIJOZ, { name: 'sorov', label: 'Soʻrov №', sample: '1024' }, { name: 'nomi', label: 'Mahsulot', sample: 'Krossovka Nike Air' }, { name: 'soni', label: 'Soni', sample: '2 dona' }, SUMMA, { name: 'muddat', label: 'Kelish muddati', sample: '15–25 kun' }, { name: 'izoh', label: 'Izoh', sample: '' }, DOKON],
+    text: '💬 *{{mijoz}}, soʻrovingiz №{{sorov}} uchun narx tayyor!*\n\n📦 {{nomi}} · {{soni}}\n💰 Jami: *{{summa}}*\n🚚 Kelish muddati: {{muddat}}\n{{izoh}}\n\nRozi boʻlsangiz, bir bosishda buyurtma bering 👇',
+    button: 'Koʻrish va buyurtma berish',
+    art: { title: 'NARX\nTAYYOR', subtitle: 'Xitoydan buyurtma', from: '#e2552b', to: '#9c2a0e', icon: 'box' },
+  },
+  {
+    key: 'importRejected', title: 'Buyurtma asosida: rad etildi', hint: 'Xodim soʻrovni rad etganda (masalan, mahsulotni olib kelib boʻlmaydi)',
+    vars: [MIJOZ, { name: 'sorov', label: 'Soʻrov №', sample: '1024' }, { name: 'sabab', label: 'Sabab', sample: 'bu mahsulot kargo orqali taqiqlangan' }, DOKON],
+    text: '😔 *{{mijoz}}, soʻrov №{{sorov}} boʻyicha olib kela olmaymiz*\n\nSabab: {{sabab}}\n\nBoshqa mahsulot uchun yangi soʻrov yuborishingiz mumkin.',
+    button: 'Yangi soʻrov',
+    art: { title: 'SOʻROV\nRAD ETILDI', subtitle: 'Boshqa mahsulotni yuboring', from: '#6b7280', to: '#374151', icon: 'x' },
+  },
+  {
+    key: 'bonusEarned', title: 'Keshbek tushdi', hint: 'Buyurtma yetkazilganda mijozga bonus (keshbek) tushsa (Marketing → Bonuslar)',
+    vars: [MIJOZ, RAQAM, { name: 'bonus', label: 'Tushgan bonus', sample: '25 000 soʻm' }, { name: 'balans', label: 'Jami bonus', sample: '61 000 soʻm' }, DOKON],
+    text: '🎉 *{{mijoz}}, sizga {{bonus}} bonus tushdi!*\n\nBuyurtma №{{raqam}} uchun keshbek.\n💰 Jami bonusingiz: *{{balans}}*\n\nKeyingi xaridda bonus bilan toʻlashingiz mumkin 👇',
+    button: 'Bonuslarim',
+    art: { title: 'KESHBEK\nTUSHDI', subtitle: 'Keyingi xaridda ishlating', from: '#f59e0b', to: '#b45309', icon: 'gift' },
+  },
+  {
+    key: 'flashSale', title: 'Flash sale boshlandi', hint: 'Flash sale aksiyasi boshlanganda aksiya xabarlarini oʻchirmagan obunachilarga (Marketing → Aksiyalar)',
+    vars: [MIJOZ, { name: 'aksiya', label: 'Aksiya nomi', sample: 'Qora juma' }, { name: 'chegirma', label: 'Chegirma', sample: '30%' }, { name: 'tugash', label: 'Tugash vaqti', sample: '20.11 23:59' }, { name: 'tavsif', label: 'Tavsif', sample: '' }, DOKON],
+    text: '⚡ *FLASH SALE: {{aksiya}}*\n\n🔥 *{{chegirma}}* chegirma\n⏰ Faqat {{tugash}} gacha!\n{{tavsif}}\n\nUlgurib qoling 👇',
+    button: 'Aksiyani koʻrish',
+    art: { title: 'FLASH\nSALE', subtitle: 'Vaqt cheklangan', from: '#e0192d', to: '#7c0a14', icon: 'ticket' },
   },
 ];
 

@@ -19,6 +19,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     icon: 'ShoppingBag',
     items: [
       { href: '/admin/orders', label: 'Buyurtmalar', icon: 'ShoppingBag', perm: 'orders.read' },
+      { href: '/admin/import-requests', label: 'Xitoydan buyurtma', icon: 'Globe', perm: 'orders.read' },
       { href: '/admin/cargo', label: 'Kargo', icon: 'Plane', perm: 'orders.write' },
       { href: '/admin/customers', label: 'Mijozlar', icon: 'Users', perm: 'customers.read' },
       { href: '/admin/reviews', label: 'Sharhlar', icon: 'MessageSquare', perm: 'reviews.moderate' },
@@ -40,6 +41,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/promotions', label: 'Aksiyalar', icon: 'Gift', perm: 'promotions.write' },
       { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
       { href: '/admin/cart-reminders', label: 'Savat eslatmasi', icon: 'ShoppingCart', perm: 'coupons.write' },
+      { href: '/admin/bonus', label: 'Bonus va keshbek', icon: 'Coins', perm: 'coupons.write' },
       { href: '/admin/partners', label: 'Hamkorlar', icon: 'Handshake', perm: 'partners.manage' },
       { href: '/admin/referral-stats', label: 'Foydalanish', icon: 'ChartPie', perm: 'partners.manage' },
       { href: '/admin/banners', label: 'Bannerlar', icon: 'Image', perm: 'banners.write' },
@@ -53,6 +55,8 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { href: '/admin/support', label: 'Murojaatlar', icon: 'MessagesSquare', perm: 'customers.read' },
       { href: '/admin/bots', label: 'Botlar', icon: 'Bot', perm: 'messages.manage' },
       { href: '/admin/messages', label: 'Xabarlar va Push', icon: 'BellRing', perm: 'messages.manage' },
+      { href: '/admin/channel', label: 'Kanalga post', icon: 'Radio', perm: 'messages.manage' },
+      { href: '/admin/sms', label: 'SMS (Eskiz)', icon: 'MessageSquareText', perm: 'messages.manage' },
       { href: '/admin/telegram', label: 'Mening Telegramim', icon: 'Send', perm: 'dashboard.view' },
     ],
   },
@@ -82,7 +86,7 @@ export const NAV_RU: Record<string, string> = {
   'Boshqaruv paneli': 'Панель управления', 'Hisobotlar': 'Отчёты', 'Faoliyat jurnali': 'Журнал действий',
   'Savdo': 'Продажи', 'Buyurtmalar': 'Заказы', 'Mijozlar': 'Клиенты', 'Sharhlar': 'Отзывы',
   'Katalog': 'Каталог', 'Mahsulotlar': 'Товары', 'Kategoriyalar': 'Категории', 'Ombor': 'Склад',
-  'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры', 'Hamkorlar': 'Партнёры', 'Savat eslatmasi': 'Брошенные корзины', 'Kargo': 'Карго', 'Foydalanish': 'Использование',
+  'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры', 'Hamkorlar': 'Партнёры', 'Savat eslatmasi': 'Брошенные корзины', 'Xitoydan buyurtma': 'Заказ из Китая', 'Bonus va keshbek': 'Бонусы и кешбэк', 'Kanalga post': 'Постинг в канал', 'SMS (Eskiz)': 'SMS (Eskiz)', 'Kargo': 'Карго', 'Foydalanish': 'Использование',
   'Telegram': 'Telegram', 'Murojaatlar': 'Обращения', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
   'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки', 'Tarjimalar (ruscha)': 'Переводы',
   // Qobiq matnlari
