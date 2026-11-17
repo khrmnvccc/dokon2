@@ -5,7 +5,7 @@ import { formatUzPhone } from '@/lib/phone';
 import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify, type TgPhoto } from './server';
-import { notifyCustomer, notifyReferralRewards } from './shop-bot';
+import { notifyCustomer, notifyReferralRewards, sendToUser } from './shop-bot';
 import { processStockEvents } from '@/lib/jobs/stock';
 import type { OrderStatus } from '@/lib/types';
 
@@ -55,6 +55,7 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   if (change.status) await notifyCustomer(orderId, change.status);
   // Doʻst taklifi: holat oʻzgarishi bilan bazada yaratilgan bosqich kuponlarini egasiga yuborish
   if (change.status) await notifyReferralRewards();
+  if (change.status === 'delivered') await notifyBonusEarned(orderId).catch((e) => console.error('bonus notify', e));
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;
@@ -65,6 +66,16 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   }
   if (change.payment === 'paid') await notify('paymentReceived', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
   if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
+}
+
+/** Yetkazildi: bazada keshbek yozilgan boʻlsa — mijozga “Keshbek tushdi”. */
+async function notifyBonusEarned(orderId: string) {
+  const s = getServiceSupabase();
+  const { data: row } = await s.from('bonus_ledger').select('user_id, amount, created_at').eq('order_id', orderId).eq('kind', 'earn').maybeSingle();
+  if (!row || Date.now() - new Date(row.created_at).getTime() > 15 * 60_000) return;
+  const { data: bal } = await s.rpc('bonus_balance', { p_user: row.user_id });
+  const { data: o } = await s.from('orders').select('number').eq('id', orderId).maybeSingle();
+  await sendToUser(row.user_id, 'bonusEarned', { raqam: o?.number ?? '', bonus: money(Number(row.amount)), balans: money(Number(bal ?? 0)) }, '/account/bonus', `bonus:${o?.number ?? ''}`);
 }
 
 /** Click / Payme toʻlovi tushdi: mijozga “Toʻlov tasdiqlandi”, xodimlarga “Toʻlov qabul qilindi”. */

@@ -80,6 +80,10 @@ export const checkoutSchema = z
     comment: z.string().trim().max(1000).optional().nullable(),
     couponCode: z.string().trim().toUpperCase().max(32).optional().nullable(),
     saveAddress: z.boolean().optional(),
+    /** Bonus balansidan toʻlash (ruxsat etilgan eng koʻp qism) */
+    useBonus: z.boolean().optional(),
+    /** Boʻlib toʻlash: tanlangan muddat (oy) */
+    installmentMonths: z.number().int().min(2).max(36).nullable().optional(),
   });
 
 export const reviewSchema = z.object({

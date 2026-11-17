@@ -122,6 +122,9 @@ export interface Promotion {
   ends_at: string | null;
   is_active: boolean;
   design?: unknown;
+  /** Flash sale: taymer bilan koʻrsatiladi, boshlanganda botga xabar */
+  is_flash?: boolean;
+  flash_notified_at?: string | null;
   sort_order: number;
 }
 

@@ -22,6 +22,8 @@ import { useQuote } from './use-quote';
 import { CouponBox, readSavedCoupon, saveCoupon } from './cart-view';
 import { CardVisual } from '@/components/payment/card-visual';
 import { cleanCard } from '@/lib/payment-card';
+import { fitsAmount, parseInstallment, planCost } from '@/lib/installments';
+import { Toggle } from '@/components/ui/kit';
 
 const formSchema = z.object({
   customer_name: z.string().trim().min(2, "Ismingizni kiriting").max(120),
@@ -43,7 +45,7 @@ type FormOut = z.output<typeof formSchema>;
 const shipIcon = { courier: Truck, pickup: Store, post: Package } as const;
 const payIcon = { cash: Banknote, card_on_delivery: CreditCard, bank_transfer: CreditCard, online: CreditCard } as const;
 
-export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defaults, isGuest, orderNote, deliveryLater = false }: {
+export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defaults, isGuest, orderNote, deliveryLater = false, bonus = null }: {
   shippingMethods: ShippingMethod[];
   paymentMethods: PaymentMethod[];
   addresses: Address[];
@@ -52,6 +54,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
   orderNote: string;
   /** Yetkazish buyurtma Oʻzbekistonga kelganda tanlanadi (kargo yoʻli). */
   deliveryLater?: boolean;
+  /** Mijozning bonus balansi (bonus yoqilgan va yetarli boʻlsa) */
+  bonus?: { balance: number; maxPercent: number; minBalance: number } | null;
 }) {
   const L = useL();
   const { t, price } = useApp();
@@ -63,6 +67,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
   const [serverError, setServerError] = useState<string | null>(null);
   const [coupon, setCoupon] = useState<string | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<string>(addresses[0]?.id ?? 'new');
+  const [useBonus, setUseBonus] = useState(false);
+  const [months, setMonths] = useState<number | null>(null);
   const done = useRef(false);
 
   useEffect(() => {
@@ -129,6 +135,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
           comment: values.comment || null,
           couponCode: coupon,
           saveAddress: Boolean(values.saveAddress && !savedAddress),
+          useBonus: bonusUse > 0,
+          installmentMonths: installment ? plan?.months ?? null : null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -157,7 +165,15 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
 
   const selectedMethod = paymentMethods.find((m) => m.id === watch('paymentMethodId'));
   const selectedCard = selectedMethod?.kind === 'bank_transfer' ? cleanCard(selectedMethod.card) : null;
-  const blocked = !quote || quote.hasErrors || quote.belowMinimum || loading;
+  // Toʻlanadigan summa (yetkazish keyin tanlansa — usiz), bonus va boʻlib toʻlash shundan hisoblanadi
+  const payable = quote ? (deliveryLater ? quote.total - quote.shipping : quote.total) : 0;
+  const bonusMax = bonus && quote ? Math.min(bonus.balance, Math.floor(((quote.total - quote.shipping) * bonus.maxPercent) / 100)) : 0;
+  const bonusUse = useBonus ? Math.max(0, bonusMax) : 0;
+  const finalTotal = Math.max(0, payable - bonusUse);
+  const installment = parseInstallment(selectedMethod?.installment);
+  const plan = installment ? installment.plans.find((p) => p.months === months) ?? installment.plans[0] : null;
+  const instOk = !installment || fitsAmount(installment, payable);
+  const blocked = !quote || quote.hasErrors || quote.belowMinimum || loading || !instOk;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -278,6 +294,30 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
                 <p className="mt-3 text-center text-[13px] text-ink-2">{L('Buyurtma berganingizdan keyin shu kartaga summani oʻtkazib, chek rasmini yuklaysiz.')}</p>
               </div>
             )}
+            {installment && (
+              <div className="mt-4 rounded-xl border border-line bg-surface-2/60 p-3 sm:p-4">
+                <p className="mb-2 text-sm font-semibold">{installment.provider} · {L('muddatni tanlang')}</p>
+                {!instOk ? (
+                  <p className="text-sm text-danger">{L('Boʻlib toʻlash bu summa uchun mavjud emas')} ({price(installment.min_amount)}{installment.max_amount ? ` – ${price(installment.max_amount)}` : '+'})</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {installment.plans.map((p) => {
+                      const c = planCost(finalTotal, p);
+                      const on = plan?.months === p.months;
+                      return (
+                        <button key={p.months} type="button" onClick={() => setMonths(p.months)}
+                          className={cn('rounded-xl border-2 px-3 py-2.5 text-left', on ? 'border-primary bg-primary-soft' : 'border-line hover:border-line-strong')}>
+                          <span className="block text-sm font-semibold">{p.months} {L('oy')}</span>
+                          <span className="num block text-[13px]">{price(c.monthly)}/{L('oy')}</span>
+                          <span className="block text-[11px] text-ink-3">{p.markup ? `+${p.markup}% · ${price(c.total)}` : L('ustamasiz')}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-ink-3">{L('Buyurtmadan soʻng operator shartnomani rasmiylashtirish uchun bogʻlanadi.')}</p>
+              </div>
+            )}
             <Field label={L("Izoh")} hint={deliveryLater ? L("Qoʻshimcha maʼlumot") : L("Kuryer uchun qo‘shimcha ma’lumot")} htmlFor="comment" className="mt-4">
               <Textarea id="comment" rows={3} maxLength={1000} {...register('comment')} />
             </Field>
@@ -287,6 +327,15 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
         <aside className="space-y-3 lg:sticky lg:top-24">
           <CouponBox applied={quote?.coupon?.code ?? null} requested={coupon} error={quote?.couponError ?? null}
             onApply={(c) => { setCoupon(c); saveCoupon(c); }} />
+          {bonus && bonusMax > 0 && (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 shadow-soft">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{L('Bonus bilan toʻlash')}</p>
+                <p className="text-xs text-ink-3">{L('Balans')}: {price(bonus.balance)} · {L('ishlatiladi')}: {price(bonusMax)}</p>
+              </div>
+              <Toggle checked={useBonus} onChange={setUseBonus} label={L('Bonus bilan toʻlash')} />
+            </div>
+          )}
           <div className={cn('rounded-xl border border-line bg-surface p-4 shadow-soft sm:p-5', loading && 'opacity-70')}>
             <h2 className="mb-3 font-semibold">{L("Buyurtmangiz")}</h2>
             <ul className="max-h-72 space-y-3 overflow-auto pr-1">
@@ -307,7 +356,9 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
                 <div className="flex justify-between"><dt className="text-ink-3">{t('cart.subtotal')}</dt><dd>{price(quote.subtotal)}</dd></div>
                 {quote.discount > 0 && <div className="flex justify-between text-success"><dt>{t('cart.discount')}</dt><dd>−{price(quote.discount)}</dd></div>}
                 <div className="flex justify-between"><dt className="text-ink-3">{t('cart.shipping')}</dt><dd>{deliveryLater ? <span className="text-ink-3">{L('Keyin tanlanadi')}</span> : quote.shipping === 0 ? t('cart.free') : price(quote.shipping)}</dd></div>
-                <div className="flex justify-between border-t border-line pt-3 text-lg"><dt className="font-semibold">{t('cart.total')}</dt><dd className="font-semibold">{price(quote.total)}</dd></div>
+                {bonusUse > 0 && <div className="flex justify-between text-success"><dt>{L('Bonus')}</dt><dd>−{price(bonusUse)}</dd></div>}
+                <div className="flex justify-between border-t border-line pt-3 text-lg"><dt className="font-semibold">{t('cart.total')}</dt><dd className="font-semibold">{price(finalTotal)}</dd></div>
+                {installment && plan && instOk && <div className="flex justify-between text-[13px] text-ink-3"><dt>{installment.provider}</dt><dd>{price(planCost(finalTotal, plan).monthly)} × {plan.months} {L('oy')}</dd></div>}
               </dl>
             )}
             {quote?.belowMinimum && <p className="mt-3 text-xs font-medium text-warn">{t('cart.minOrder', { amount: price(quote.minOrderAmount) })}</p>}

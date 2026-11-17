@@ -1,7 +1,12 @@
 import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getBoughtTogether, getCatalog, getCategories, getProduct, getProductReviews, getSettings } from '@/lib/data/public';
+import { getBoughtTogether, getCatalog, getCategories, getPaymentMethods, getProduct, getProductReviews, getSettings } from '@/lib/data/public';
+import { usablePaymentMethods } from '@/lib/payments';
+import { cheapestMonthly, parseInstallment, type InstallmentConfig } from '@/lib/installments';
+import { formatPrice } from '@/lib/format';
+import { FlashCountdown } from '@/components/shop/flash-countdown';
+import { CalendarClock, Coins } from 'lucide-react';
 import { SITE_URL } from '@/lib/env';
 import { formatDate } from '@/lib/format';
 import { Breadcrumbs } from '@/components/shop/breadcrumbs';
@@ -36,8 +41,8 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const data = await getProduct(slug);
   if (!data) notFound();
-  const { product, images, variants } = data;
-  const [categories, reviews, settings] = await Promise.all([getCategories(), getProductReviews(product.id), getSettings()]);
+  const { product, images, variants, promotion } = data;
+  const [categories, reviews, settings, payMethods] = await Promise.all([getCategories(), getProductReviews(product.id), getSettings(), getPaymentMethods()]);
 
   const chain = [];
   let cur = categories.find((c) => c.id === product.category_id);
@@ -58,6 +63,13 @@ export default async function ProductPage({ params }: Props) {
 
   const inStock = product.has_variants ? variants.some((v) => v.stock > 0) : !product.track_stock || product.stock > 0;
   const lowestPrice = variants.length ? Math.min(...variants.map((v) => v.price ?? product.price)) : product.price;
+  // Flash sale taymeri, keshbek va boʻlib toʻlash (Ega sozlamalari boʻyicha)
+  const flash = settings.flash_sale.show_product && promotion?.is_flash && promotion.ends_at && new Date(promotion.ends_at).getTime() > Date.now() ? promotion : null;
+  const cashback = settings.bonus.enabled && settings.bonus.show_on_product && settings.bonus.earn_percent > 0 && lowestPrice >= settings.bonus.min_order
+    ? Math.floor((lowestPrice * settings.bonus.earn_percent) / 100) : 0;
+  const instConfigs = settings.installments.show_on_product
+    ? (await usablePaymentMethods(payMethods)).map((m) => parseInstallment(m.installment)).filter((c): c is InstallmentConfig => Boolean(c)) : [];
+  const monthly = cheapestMonthly(instConfigs, lowestPrice);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -94,6 +106,13 @@ export default async function ProductPage({ params }: Props) {
             {(product.sold_count ?? 0) > 0 && <span>{product.sold_count} marta sotib olingan</span>}
           </div>
           {product.short_description && <p className="mt-3 text-sm text-ink-2">{product.short_description}</p>}
+          {flash && <FlashCountdown endsAt={flash.ends_at!} title={`${settings.flash_sale.title} · ${flash.title}`} href={`/sale`} compact className="mt-4" />}
+          {(cashback > 0 || monthly) && (
+            <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
+              {monthly && <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 font-medium text-primary"><CalendarClock className="size-4" />{L('Oyiga')} {formatPrice(monthly.monthly)} {L('dan')} · {monthly.provider}</span>}
+              {cashback > 0 && <span className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,#f59e0b_16%,transparent)] px-3 py-1.5 font-medium text-[#b45309]"><Coins className="size-4" />+{formatPrice(cashback)} {L('keshbek')}</span>}
+            </div>
+          )}
           <div className="mt-5">
             <ProductPurchase
               product={{ id: product.id, name: product.name, price: product.price, compare_at_price: product.compare_at_price, stock: product.stock, track_stock: product.track_stock, has_variants: product.has_variants }}

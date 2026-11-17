@@ -15,11 +15,17 @@ export default async function CheckoutPage() {
   if (!user && (!settings.checkout.allow_guest_checkout || settings.checkout.delivery_later)) redirect('/login?next=/checkout');
 
   let addresses: Address[] = [];
+  let bonus: { balance: number; maxPercent: number; minBalance: number } | null = null;
   const profile = user ? await getCurrentProfile() : null;
   if (user) {
     const supabase = await getServerSupabase();
-    const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false }).order('created_at');
+    const [{ data }, b] = await Promise.all([
+      supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false }).order('created_at'),
+      settings.bonus.enabled && settings.bonus.spend_enabled ? supabase.rpc('my_bonus') : Promise.resolve({ data: null }),
+    ]);
     addresses = (data ?? []) as Address[];
+    const balance = Number((b.data as { balance?: number } | null)?.balance ?? 0);
+    if (b.data && balance >= Math.max(1, settings.bonus.min_balance)) bonus = { balance, maxPercent: settings.bonus.max_spend_percent, minBalance: settings.bonus.min_balance };
   }
 
   return (
@@ -32,6 +38,7 @@ export default async function CheckoutPage() {
       isGuest={!user}
       orderNote={settings.checkout.order_note}
       deliveryLater={settings.checkout.delivery_later}
+      bonus={bonus}
     />
   );
 }
