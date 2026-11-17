@@ -119,6 +119,14 @@ export async function getActivePromotions(): Promise<Promotion[]> {
   return locAll(await fetchPromotions(), await currentLang());
 }
 
+/** Hozir davom etayotgan flash sale (eng tez tugaydigani). */
+export async function getActiveFlash(): Promise<Promotion | null> {
+  const now = Date.now();
+  const live = (await getActivePromotions()).filter((p) => p.is_flash && p.is_active && p.ends_at
+    && new Date(p.ends_at).getTime() > now && (!p.starts_at || new Date(p.starts_at).getTime() <= now));
+  return live.sort((a, b) => new Date(a.ends_at!).getTime() - new Date(b.ends_at!).getTime())[0] ?? null;
+}
+
 const fetchBanners = unstable_cache(
   async (placement: Banner['placement']): Promise<Banner[]> => {
     if (!isSupabaseConfigured) return [];

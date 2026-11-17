@@ -5,6 +5,7 @@ import { deliverDue } from '@/lib/telegram/broadcast';
 import { runCartReminders } from '@/lib/jobs/cart-reminders';
 import { processStockEvents } from '@/lib/jobs/stock';
 import { runScheduledReports } from '@/lib/jobs/reports';
+import { runFlashSales } from '@/lib/jobs/flash';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
   await step('broadcasts', () => deliverDue(true));
   await step('stock', () => processStockEvents());
   await step('cart', () => runCartReminders());
+  await step('flash', () => runFlashSales());
   await step('reports', () => runScheduledReports());
   return NextResponse.json({ ok: true, ...out });
 }

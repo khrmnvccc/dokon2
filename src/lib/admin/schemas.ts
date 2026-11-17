@@ -129,8 +129,10 @@ export const promotionSchema = discountRefine(z.object({
   description: optText(1000),
   image_url: optText(1000),
   sort_order: intField(-10000, 10000),
+  /** Flash sale: taymer bilan, boshlanganda botga va kanalga bir marta xabar */
+  is_flash: z.boolean().default(false),
   ...discountBase,
-}));
+})).refine((d) => !d.is_flash || Boolean(d.ends_at), { path: ['ends_at'], message: 'Flash sale uchun tugash vaqtini kiriting' });
 
 export const couponSchema = discountRefine(z.object({
   code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,32}$/, '3-32 belgi: lotin harf, raqam, - yoki _'),

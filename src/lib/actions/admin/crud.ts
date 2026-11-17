@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { after } from 'next/server';
+import { runFlashSales } from '@/lib/jobs/flash';
 import { z } from 'zod';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { dbErrorText, withPermission } from '@/lib/admin/action';
@@ -45,6 +47,8 @@ export async function saveEntity(name: EntityName, id: string | null, input: unk
       : await supabase.from(cfg.table).insert(data).select('id').single();
     if (res.error || !res.data) return { ok: false, error: dbErrorText(res.error) };
     refresh(n);
+    // Flash sale hozir boshlangan boʻlsa — xabarni fon ishini kutmasdan yuborish
+    if (n === 'promotions' && data.is_flash) after(() => runFlashSales().catch((e) => console.error('flash', e)));
     return { ok: true, data: { id: res.data.id as string }, message: 'Saqlandi' };
   });
 }
