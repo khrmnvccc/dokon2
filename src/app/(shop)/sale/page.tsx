@@ -2,7 +2,8 @@ import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { parseCatalogParams } from '@/lib/catalog-params';
-import { getActivePromotions, getBanners, getPublicCoupons } from '@/lib/data/public';
+import { getActiveFlash, getActivePromotions, getBanners, getPublicCoupons, getSettings } from '@/lib/data/public';
+import { FlashCountdown } from '@/components/shop/flash-countdown';
 import { CouponCard } from '@/components/coupon/coupon-card';
 import { CopyCoupon } from '@/components/coupon/copy-coupon';
 import { couponCardProps } from '@/lib/coupon-design';
@@ -18,12 +19,13 @@ export default async function SalePage({ searchParams }: { searchParams: Promise
   const L = await getL();
   const sp = await searchParams;
   const { params, page } = parseCatalogParams({ ...sp, discount: '1', sort: typeof sp.sort === 'string' ? sp.sort : 'discount' });
-  const [banners, promotions, coupons] = await Promise.all([getBanners('sale_page'), getActivePromotions(), getPublicCoupons()]);
+  const [banners, promotions, coupons, flash, settings] = await Promise.all([getBanners('sale_page'), getActivePromotions(), getPublicCoupons(), getActiveFlash(), getSettings()]);
 
   return (
     <>
       <Breadcrumbs items={[{ name: 'Chegirmalar' }]} />
       <h1 className="mb-4 text-[22px] font-semibold tracking-tight sm:text-2xl tracking-tight sm:text-3xl">{L("Chegirmalar va aksiyalar")}</h1>
+      {flash?.ends_at && <FlashCountdown endsAt={flash.ends_at} title={`${settings.flash_sale.title} · ${flash.title}`} subtitle={flash.description ?? undefined} className="mb-6" />}
       {banners[0] && <div className="mb-6 aspect-[16/9] overflow-hidden rounded-[28px] shadow-[0_18px_40px_-24px_rgba(15,23,42,.55)] ring-1 ring-black/5 sm:aspect-[16/5] sm:rounded-[32px]"><BannerSlide banner={banners[0]} priority /></div>}
       {coupons.length > 0 && (
         <section className="mb-8">

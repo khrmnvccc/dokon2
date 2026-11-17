@@ -5,6 +5,7 @@ import { loadProductForEdit } from '@/lib/admin/products';
 import { formatDateTime } from '@/lib/format';
 import { PageHeader, Panel, Table } from '@/components/admin/ui';
 import { ProductForm } from '@/components/admin/product-form';
+import { PostToChannelButton } from '@/components/admin/channel-ui';
 
 export const metadata = { title: 'Mahsulotni tahrirlash' };
 
@@ -18,14 +19,16 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const product = await loadProductForEdit(id, canWrite || ctx.permissions.has('reports.view'));
   if (!product) notFound();
   const supabase = await getServerSupabase();
-  const [{ data: categories }, { data: movements }] = await Promise.all([
+  const [{ data: categories }, { data: movements }, { data: posted }] = await Promise.all([
     supabase.from('categories').select('id, name, parent_id').order('sort_order').order('name'),
     supabase.from('inventory_movements').select('id, delta, stock_after, reason, note, created_at, variant_id').eq('product_id', id).order('created_at', { ascending: false }).limit(20),
+    supabase.from('products').select('channel_posted_at').eq('id', id).maybeSingle(),
   ]);
 
   return (
     <div>
-      <PageHeader title={String(product.name)} back={{ href: '/admin/products', label: 'Mahsulotlar' }} description={canWrite ? undefined : 'Faqat ko‘rish rejimi'} />
+      <PageHeader title={String(product.name)} back={{ href: '/admin/products', label: 'Mahsulotlar' }} description={canWrite ? undefined : 'Faqat ko‘rish rejimi'}
+        actions={canWrite ? <PostToChannelButton productId={id} postedAt={(posted?.channel_posted_at as string | null) ?? null} /> : undefined} />
       <fieldset disabled={!canWrite} className="contents">
         <ProductForm id={id} defaults={product} categories={categories ?? []} canStock={ctx.permissions.has('inventory.write')}
           canDelete={ctx.permissions.has('products.delete')} canSeeCost={canWrite || ctx.permissions.has('reports.view')} />

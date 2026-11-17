@@ -122,6 +122,9 @@ export interface Promotion {
   ends_at: string | null;
   is_active: boolean;
   design?: unknown;
+  /** Flash sale: taymer bilan koʻrsatiladi, boshlanganda botga xabar */
+  is_flash?: boolean;
+  flash_notified_at?: string | null;
   sort_order: number;
 }
 
@@ -178,6 +181,8 @@ export interface PaymentMethod {
   sort_order: number;
   /** Kartaga oʻtkazma: { number, holder, bank, theme } */
   card?: unknown;
+  /** Boʻlib toʻlash rejalari (Uzum Nasiya, Alif…): { provider, plans: [{ months, markup }], min_amount, max_amount } */
+  installment?: unknown;
 }
 
 export interface OrderAddress {
@@ -198,6 +203,8 @@ export interface Order {
   payment_method_name: string;
   payment_provider: string | null;
   cargo_stage?: string | null;
+  bonus_used?: number;
+  installment?: unknown;
   shipping_method_name: string;
   customer_name: string;
   customer_phone: string;

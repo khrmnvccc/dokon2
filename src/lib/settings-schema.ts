@@ -176,6 +176,63 @@ export const settingsSchemas = {
     auto_confirm: z.boolean().default(true),
     redirect_after_checkout: z.boolean().default(true),
   }),
+  // Xitoydan buyurtma asosida olib kelish (mijoz havola/rasm yuboradi). Savdo → Buyurtma asosida.
+  import_requests: z.object({
+    enabled: z.boolean().default(true),
+    title: z.string().trim().min(1).max(60).default('Xitoydan buyurtma'),
+    intro: z.string().trim().max(600).default('1688, Taobao, Pinduoduo yoki boshqa saytdan mahsulot havolasini yoki rasmini yuboring — narxini hisoblab, botga yozamiz.'),
+    /** Narx berishda avtomatik qoʻyiladigan xizmat haqi foizi (xodim oʻzgartira oladi) */
+    service_percent: z.coerce.number().min(0).max(100).default(10),
+    /** Yuan kursi (soʻm) — xodim narx hisoblashi uchun yordamchi */
+    cny_rate: z.coerce.number().int().min(0).max(100_000).default(1750),
+    default_days: z.string().trim().max(40).default('15–25 kun'),
+    quote_valid_days: z.coerce.number().int().min(1).max(30).default(3),
+    max_open: z.coerce.number().int().min(1).max(50).default(5),
+  }),
+  // Keshbek va bonus ballar. Marketing → Bonuslar.
+  bonus: z.object({
+    enabled: z.boolean().default(false),
+    /** Yetkazilgan buyurtmadan keshbek foizi */
+    earn_percent: z.coerce.number().min(0).max(100).default(2),
+    /** Keshbek beriladigan minimal buyurtma (soʻm) */
+    min_order: z.coerce.number().int().min(0).default(0),
+    spend_enabled: z.boolean().default(true),
+    /** Buyurtmaning necha foizini bonus bilan toʻlash mumkin */
+    max_spend_percent: z.coerce.number().int().min(1).max(100).default(50),
+    /** Bonus kamida shuncha boʻlsa ishlatiladi */
+    min_balance: z.coerce.number().int().min(0).default(1000),
+    /** Mahsulot sahifasida “+X soʻm bonus” */
+    show_on_product: z.boolean().default(true),
+  }),
+  // Telegram kanalga avtomatik post. Telegram → Kanal.
+  channel_post: z.object({
+    enabled: z.boolean().default(false),
+    /** @kanal_nomi yoki -100… raqami */
+    chat: z.string().trim().max(64).regex(/^$|^@[A-Za-z0-9_]{4,32}$|^-100\d{5,16}$/).default(''),
+    new_products: z.boolean().default(true),
+    flash_sales: z.boolean().default(true),
+    text: z.string().trim().min(1).max(900).default('🆕 *{{nomi}}*\n\n💰 {{narx}} {{eski_narx}}\n{{tavsif}}\n\n🛒 Buyurtma: {{havola}}'),
+    flash_text: z.string().trim().min(1).max(900).default('⚡ *FLASH SALE: {{nomi}}*\n\n🔥 {{chegirma}} chegirma\n⏰ {{tugash}} gacha\n\n{{tavsif}}'),
+    button: z.string().trim().max(30).default('🛒 Sotib olish'),
+  }),
+  // Flash sale (taymerli aksiya). Marketing → Aksiyalar → “Flash sale”.
+  flash_sale: z.object({
+    show_home: z.boolean().default(true),
+    show_product: z.boolean().default(true),
+    notify_bot: z.boolean().default(true),
+    title: z.string().trim().min(1).max(40).default('⚡ Flash sale'),
+  }),
+  // Boʻlib toʻlash: mahsulot sahifasida “oyiga …” koʻrsatish. Rejalar — toʻlov usulining oʻzida.
+  installments: z.object({
+    show_on_product: z.boolean().default(true),
+  }),
+  // SMS (Eskiz.uz). Login/parol — app_meta 'sms' da (faqat Ega). Telegram → SMS.
+  sms: z.object({
+    enabled: z.boolean().default(false),
+    /** Faqat doʻkon botiga ulanmagan mijozlarga */
+    only_without_telegram: z.boolean().default(true),
+    events: z.record(z.string().regex(/^[a-zA-Z]{2,30}$/), z.object({ on: z.boolean().default(false), text: z.string().trim().max(400).default('') })).default({}),
+  }),
   // Sayt matnlarining ruscha tarjimasi: {"ru": {"announcement.text": "…"}} (Sozlamalar → Tarjimalar).
   translations: z.object({ ru: z.record(z.string().max(120), z.string().max(2000)).default({}) }),
 };
@@ -224,6 +281,21 @@ export const defaultSettings: SiteSettings = {
   },
   reports_auto: { daily: true, daily_hour: 21, weekly: false, monthly: true, top_count: 3 },
   online_payments: { auto_confirm: true, redirect_after_checkout: true },
+  import_requests: {
+    enabled: true, title: 'Xitoydan buyurtma',
+    intro: '1688, Taobao, Pinduoduo yoki boshqa saytdan mahsulot havolasini yoki rasmini yuboring — narxini hisoblab, botga yozamiz.',
+    service_percent: 10, cny_rate: 1750, default_days: '15–25 kun', quote_valid_days: 3, max_open: 5,
+  },
+  bonus: { enabled: false, earn_percent: 2, min_order: 0, spend_enabled: true, max_spend_percent: 50, min_balance: 1000, show_on_product: true },
+  channel_post: {
+    enabled: false, chat: '', new_products: true, flash_sales: true,
+    text: '🆕 *{{nomi}}*\n\n💰 {{narx}} {{eski_narx}}\n{{tavsif}}\n\n🛒 Buyurtma: {{havola}}',
+    flash_text: '⚡ *FLASH SALE: {{nomi}}*\n\n🔥 {{chegirma}} chegirma\n⏰ {{tugash}} gacha\n\n{{tavsif}}',
+    button: '🛒 Sotib olish',
+  },
+  flash_sale: { show_home: true, show_product: true, notify_bot: true, title: '⚡ Flash sale' },
+  installments: { show_on_product: true },
+  sms: { enabled: false, only_without_telegram: true, events: {} },
   block_sizes: {},
   help_center: {
     support_title: 'Telegram qoʻllab-quvvatlash', status: 'Onlayn · hozir javob beradi', reply_time: '~2 daq', hours: '24 / 7',

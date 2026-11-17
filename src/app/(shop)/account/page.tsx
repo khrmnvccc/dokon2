@@ -13,6 +13,7 @@ export default async function AccountPage() {
   const L = await getL();
   const supabase = await getServerSupabase();
   const [profile, staff, settings, { data: ref }] = await Promise.all([getCurrentProfile(), getStaffContext(), getSettings(), supabase.rpc('my_referral')]);
+  const bonus = settings.bonus.enabled ? await supabase.rpc('my_bonus').then(({ data }) => Number((data as { balance?: number } | null)?.balance ?? 0)) : null;
   const r = (ref ?? null) as MyReferral | null;
   const bal = r?.partner?.balance;
   const wallet = bal ? Math.max(0, Number(bal.available_total) - Number(bal.paid) - Number(bal.requested)) : 0;
@@ -33,6 +34,8 @@ export default async function AccountPage() {
       notifyPromo={profile?.notify_promo !== false}
       languages={settings.localization.languages}
       isStaff={Boolean(staff)}
+      importTitle={settings.import_requests.enabled ? settings.import_requests.title : null}
+      bonus={bonus}
     />
   );
 }

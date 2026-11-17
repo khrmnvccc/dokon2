@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Check, ChevronRight, CircleHelp, Globe, Handshake, Headset, LayoutDashboard, LogOut, MapPin, Megaphone, Package, Wallet, type LucideIcon } from 'lucide-react';
+import { Bell, Check, ChevronRight, CircleHelp, Coins, Globe, Handshake, Headset, LayoutDashboard, LogOut, MapPin, Megaphone, Package, Wallet, type LucideIcon } from 'lucide-react';
 import { useApp, useL } from '@/components/providers';
 import { useToast } from '@/components/ui/toast';
 import { Toggle } from '@/components/ui/kit';
@@ -19,6 +19,8 @@ interface Props {
   name: string; clientNo: number | null; avatar: string | null; partner: boolean;
   wallet: number; friends: number; goal: number; referralOn: boolean;
   notifyOrders: boolean; notifyPromo: boolean; languages: string[]; isStaff: boolean;
+  /** Xitoydan buyurtma xizmati nomi (oʻchiq — null) va bonus balansi (oʻchiq — null) */
+  importTitle: string | null; bonus: number | null;
 }
 
 /** Telegram ilovasidagi kabi profil: yuqorida koʻk karta, pastda bitta roʻyxat. */
@@ -95,6 +97,8 @@ export function ProfileHome(p: Props) {
       <ul className="overflow-hidden rounded-[24px] border border-line bg-surface shadow-soft">
         <Row href="/account/addresses" icon={MapPin} title={L('Mening manzillarim')} sub={L('Yetkazish manzillaringiz')} />
         <Row href="/account/orders" icon={Package} title={L('Mening buyurtmalarim')} sub={L('Barcha buyurtmalar tarixi')} />
+        {p.importTitle && <Row href="/account/requests" icon={Globe} tone="orange" title={L(p.importTitle)} sub={L('Havola yoki rasm yuboring — narxini aytamiz')} />}
+        {p.bonus !== null && <Row href="/account/bonus" icon={Coins} tone="amber" title={L('Bonuslarim')} sub={L('Keshbek va bonus ballar')} end={<span className="num text-[15px] font-semibold text-ink-2">{price(p.bonus)}</span>} />}
         {p.languages.length > 1 && (
           <Row icon={Globe} title={L('Til')} onClick={() => setLangOpen(true)} end={<span className="text-[15px] font-medium text-ink-3">{LANG_NAMES[lang] ?? lang}</span>} />
         )}
@@ -130,7 +134,7 @@ export function ProfileHome(p: Props) {
   );
 }
 
-const TONES = { default: 'bg-surface-2 text-[color-mix(in_srgb,var(--primary)_70%,#0b1f3a)] dark:text-primary', green: 'bg-success-soft text-success', purple: 'bg-[color-mix(in_srgb,#8a3ffc_14%,transparent)] text-[#8a3ffc]' } as const;
+const TONES = { orange: 'bg-[color-mix(in_srgb,#e2552b_14%,transparent)] text-[#e2552b]', amber: 'bg-[color-mix(in_srgb,#f59e0b_16%,transparent)] text-[#d97706]', default: 'bg-surface-2 text-[color-mix(in_srgb,var(--primary)_70%,#0b1f3a)] dark:text-primary', green: 'bg-success-soft text-success', purple: 'bg-[color-mix(in_srgb,#8a3ffc_14%,transparent)] text-[#8a3ffc]' } as const;
 
 function Row({ href, onClick, icon: Icon, title, sub, end, tone = 'default' }: {
   href?: string; onClick?: () => void; icon: LucideIcon; title: string; sub?: string; end?: ReactNode; tone?: keyof typeof TONES;

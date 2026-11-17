@@ -1,6 +1,7 @@
 import { getL } from '@/lib/i18n/server';
 import { SITE_URL } from '@/lib/env';
-import { getBanners, getCatalog, getShopCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
+import { getActiveFlash, getBanners, getCatalog, getShopCategories, getReviewStats, getReviewsPage, getSettings } from '@/lib/data/public';
+import { FlashCountdown } from '@/components/shop/flash-countdown';
 import { HeroSlider, BannerSlide } from '@/components/shop/hero-slider';
 import { Advantages, CategoryGrid, ProductSection, ReviewsSection } from '@/components/shop/home-blocks';
 import { HomeLayout } from '@/components/shop/site-editor';
@@ -18,7 +19,8 @@ export default async function HomePage() {
     z === 'sm' ? 'aspect-[21/8] sm:aspect-[16/4]' : z === 'lg' ? 'aspect-[4/3] sm:aspect-[16/6]' : 'aspect-[16/9] sm:aspect-[16/5]';
 
   // Faqat yoqilgan bloklar uchun ma'lumot so'raladi
-  const [hero, middle, promo, categories, bestsellers, fresh, sale, featured, reviews, reviewStats] = await Promise.all([
+  const [flash, hero, middle, promo, categories, bestsellers, fresh, sale, featured, reviews, reviewStats] = await Promise.all([
+    settings.flash_sale.show_home ? getActiveFlash() : null,
     has('hero') ? getBanners('home_hero') : [],
     has('middle_banner') ? getBanners('home_middle') : [],
     has('promo') ? getBanners('home_promo') : [],
@@ -76,6 +78,7 @@ export default async function HomePage() {
           ]).replace(/</g, '\\u003c'),
         }}
       />
+      {flash?.ends_at && <FlashCountdown endsAt={flash.ends_at} title={`${settings.flash_sale.title} · ${flash.title}`} subtitle={flash.description ?? undefined} href="/sale" />}
       <HomeLayout sections={settings.home_sections} blocks={blocks} />
     </div>
   );

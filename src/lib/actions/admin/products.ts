@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { after } from 'next/server';
+import { autoPostProduct } from '@/lib/telegram/channel';
 import { z } from 'zod';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { dbErrorText, withPermission } from '@/lib/admin/action';
@@ -94,6 +96,8 @@ export async function saveProduct(id: string | null, input: unknown): Promise<Ac
 
     refresh();
     revalidatePath(`/admin/products/${pid}`);
+    // Telegram kanal: yangi faol mahsulot bir marta avtomatik chiqadi (Telegram → Kanalga post)
+    if (fields.is_active) after(() => autoPostProduct(pid));
     return { ok: true, data: { id: pid, warnings }, message: id ? 'Mahsulot saqlandi' : 'Mahsulot yaratildi' };
   });
 }

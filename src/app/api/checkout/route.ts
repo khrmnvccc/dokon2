@@ -14,6 +14,7 @@ import { formatPrice } from '@/lib/format';
 import { TAGS } from '@/lib/cache-tags';
 import { onNewOrder } from '@/lib/telegram/events';
 import { attachFromCookie } from '@/lib/referral-server';
+import { fitsAmount, parseInstallment, planCost, type OrderInstallment } from '@/lib/installments';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,15 @@ export async function POST(request: Request) {
   }
   const paymentMethod = (await getPaymentMethods()).find((m) => m.id === input.paymentMethodId);
   if (!paymentMethod || !isPaymentMethodUsable(paymentMethod, await getPaymentKeys())) return fail('Bu to‘lov usuli hozir mavjud emas', 400);
+
+  // Boʻlib toʻlash: muddat usul rejalaridan boʻlishi va summa chegarada boʻlishi shart
+  const inst = parseInstallment(paymentMethod.installment);
+  const plan = inst ? inst.plans.find((p) => p.months === input.installmentMonths) ?? null : null;
+  if (inst && !plan) return fail('Boʻlib toʻlash muddatini tanlang', 400);
+  const payable = later ? quote.total - quote.shipping : quote.total;
+  if (inst && !fitsAmount(inst, payable)) {
+    return fail(`Boʻlib toʻlash ${formatPrice(inst.min_amount)}${inst.max_amount ? ` – ${formatPrice(inst.max_amount)}` : ''} oraligʻidagi buyurtmalar uchun`, 409);
+  }
 
   const lineError = quote.lines.find((l) => l.error);
   if (lineError) {
@@ -118,6 +128,21 @@ export async function POST(request: Request) {
     return fail('Buyurtmani saqlab bo‘lmadi. Qayta urinib ko‘ring', 500);
   }
   const order = data as { id: string; number: number; token: string; duplicate: boolean };
+
+  // Bonus bilan toʻlash (bazada balans va chegara qayta tekshiriladi), keyin boʻlib toʻlash rejasi yakuniy summadan
+  if (!order.duplicate) {
+    let bonusUsed = 0;
+    if (user && input.useBonus && settings.bonus.enabled && settings.bonus.spend_enabled) {
+      const { data: used, error: bErr } = await service.rpc('_bonus_apply', { p_order: order.id, p_amount: payload.total });
+      if (bErr) console.error('bonus apply', bErr.message);
+      else bonusUsed = Number(used ?? 0);
+    }
+    if (inst && plan) {
+      const cost = planCost(payload.total - bonusUsed, plan);
+      const installment: OrderInstallment = { provider: inst.provider, months: plan.months, markup: plan.markup, monthly: cost.monthly, total: cost.total };
+      await service.from('orders').update({ installment }).eq('id', order.id);
+    }
+  }
 
   if (user && !order.duplicate) {
     const supabase = await getServerSupabase();

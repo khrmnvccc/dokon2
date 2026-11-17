@@ -1,7 +1,7 @@
 // Telegram xabar matnlari (kassa tgTemplates.ts uslubida). Server (yuborish uchun) va brauzer
 // (qanday koʻrinishini oldindan koʻrsatish uchun) shu bitta fayldan oʻqiydi — natija bir xil boʻladi.
 
-export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'deliveryRequest' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport' | 'periodReport';
+export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'deliveryRequest' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport' | 'periodReport' | 'importRequest';
 
 /** Roʻyxatdagi oʻrni: A — buyurtma va pul, B — bekor qilish, C — hisobot. */
 export type TemplateGroup = 'kirim' | 'bekor' | 'hisobot';
@@ -94,6 +94,20 @@ export const TEMPLATES: TemplateDef[] = [
     vars: [RAQAM, MIJOZ, SUMMA, TOLOV, KIM],
     text: '↩️ *Toʻlov qaytarildi*\n№{{raqam}} · {{mijoz}} · {{summa}} · {{tolov}}\nKim: {{kim}}',
     button: 'Buyurtmani ochish',
+  },
+  {
+    key: 'importRequest', group: 'kirim', groupChat: true, staff: true, title: 'Buyurtma asosida soʻrov', hint: 'Mijoz Xitoydan olib kelish uchun havola yoki rasm yuborganda (rasm bilan)',
+    vars: [
+      MIJOZ, TELEFON,
+      { name: 'sorov', label: 'Soʻrov №', sample: '1024' },
+      { name: 'nomi', label: 'Mahsulot', sample: 'Krossovka Nike Air' },
+      { name: 'soni', label: 'Soni', sample: '2 dona' },
+      { name: 'havolalar', label: 'Havolalar', sample: 'https://detail.1688.com/offer/…' },
+      { name: 'izoh', label: 'Izoh', sample: '42-razmer, oq rang' },
+      HAVOLA,
+    ],
+    text: '🇨🇳 *Yangi soʻrov №{{sorov}}*\n{{mijoz}} · {{telefon}}\n📦 {{nomi}} · {{soni}}\n🔗 {{havolalar}}\n📝 {{izoh}}\nNarxini hisoblab bering 👇',
+    button: '💬 Narx berish',
   },
   {
     key: 'lowStock', group: 'hisobot', groupChat: true, staff: true, title: 'Mahsulot tugayapti', hint: 'Qoldiq chegaradan tushganda yoki tugaganda (variantlar ham). Sozlama: Katalog → Ombor',

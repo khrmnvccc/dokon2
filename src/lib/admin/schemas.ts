@@ -1,3 +1,4 @@
+import { installmentSchema } from '@/lib/installments';
 import { z } from 'zod';
 import { cardSchema } from '@/lib/payment-card';
 import { designSchema } from '@/lib/coupon-design';
@@ -129,8 +130,10 @@ export const promotionSchema = discountRefine(z.object({
   description: optText(1000),
   image_url: optText(1000),
   sort_order: intField(-10000, 10000),
+  /** Flash sale: taymer bilan, boshlanganda botga va kanalga bir marta xabar */
+  is_flash: z.boolean().default(false),
   ...discountBase,
-}));
+})).refine((d) => !d.is_flash || Boolean(d.ends_at), { path: ['ends_at'], message: 'Flash sale uchun tugash vaqtini kiriting' });
 
 export const couponSchema = discountRefine(z.object({
   code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{3,32}$/, '3-32 belgi: lotin harf, raqam, - yoki _'),
@@ -181,5 +184,16 @@ export const paymentMethodSchema = z.object({
     (v) => (v && typeof v === 'object' && String((v as { number?: unknown }).number ?? '').replace(/\D/g, '') ? v : null),
     cardSchema.nullable(),
   ).optional(),
+  // Boʻlib toʻlash (Uzum Nasiya, Alif…): yoqilmagan boʻlsa null. Boʻsh muddat qatorlari tashlanadi.
+  installment: z.preprocess((v) => {
+    if (!v || typeof v !== 'object' || !(v as { enabled?: unknown }).enabled) return null;
+    const x = v as { provider?: unknown; plans?: { months?: unknown; markup?: unknown }[]; min_amount?: unknown; max_amount?: unknown };
+    const num = (n: unknown) => Number(String(n ?? '').replace(/[^\d.]/g, '')) || 0;
+    return {
+      provider: String(x.provider ?? '').trim(),
+      plans: (x.plans ?? []).filter((p) => num(p.months) > 0).map((p) => ({ months: num(p.months), markup: num(p.markup) })),
+      min_amount: num(x.min_amount), max_amount: num(x.max_amount),
+    };
+  }, installmentSchema.nullable()).optional(),
 }).refine((d) => d.kind !== 'online' || d.provider, { path: ['provider'], message: 'Onlayn to‘lov uchun provayderni tanlang' })
-  .transform((d) => ({ ...d, card: d.kind === 'bank_transfer' ? d.card ?? null : null }));
+  .transform((d) => ({ ...d, card: d.kind === 'bank_transfer' ? d.card ?? null : null, installment: d.kind === 'online' || d.kind === 'bank_transfer' ? null : d.installment ?? null }));

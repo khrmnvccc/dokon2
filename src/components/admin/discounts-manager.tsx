@@ -87,6 +87,7 @@ export function DiscountsManager({ kind, items, categories, products }: { kind: 
                       {isCoupon ? <TicketPercent className="size-3.5" /> : <PartyPopper className="size-3.5" />}
                       {valueText(x)}
                       {'is_public' in x && x.is_public && <Badge tone="card">saytda</Badge>}
+                      {'is_flash' in x && x.is_flash && <Badge tone="danger">⚡ flash</Badge>}
                     </div>
                     <div className="mt-0.5 text-xs text-ink-3 xl:hidden">{scopeText[x.scope]}
                     </div>
@@ -243,9 +244,9 @@ function DiscountForm({ kind, item, categories, products, onDone, save }: { kind
     if (!item) {
       return isCoupon
         ? { code: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], min_order_amount: 0, max_discount: '', usage_limit: '', per_user_limit: 1, starts_at: '', ends_at: '', is_active: true, is_public: false, design: { theme: 'red', badge: '' } }
-        : { title: '', slug: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], sort_order: 0, starts_at: '', ends_at: '', is_active: true, design: { theme: 'red', badge: '' } };
+        : { title: '', slug: '', discount_type: 'percent', value: 10, scope: 'all', category_ids: [], product_ids: [], sort_order: 0, starts_at: '', ends_at: '', is_active: true, is_flash: false, design: { theme: 'red', badge: '' } };
     }
-    return Object.fromEntries(Object.entries({ ...item, starts_at: toLocalInput(item.starts_at), ends_at: toLocalInput(item.ends_at), design: cleanDesign(item.design), ...(isCoupon ? { is_public: Boolean((item as Coupon).is_public) } : {}) }).map(([k, v]) => [k, Array.isArray(v) || (v && typeof v === 'object') || typeof v === 'boolean' ? v : s(v)]));
+    return Object.fromEntries(Object.entries({ ...item, starts_at: toLocalInput(item.starts_at), ends_at: toLocalInput(item.ends_at), design: cleanDesign(item.design), ...(isCoupon ? { is_public: Boolean((item as Coupon).is_public) } : { is_flash: Boolean((item as Promotion).is_flash) }) }).map(([k, v]) => [k, Array.isArray(v) || (v && typeof v === 'object') || typeof v === 'boolean' ? v : s(v)]));
   }, [item, isCoupon]);
   const { register, handleSubmit, control, watch, setValue, setError, formState: { errors, isSubmitting } } = useForm<Record<string, unknown>>({
     resolver: zodResolver(schema as unknown as z.ZodType<Record<string, unknown>>),
@@ -289,6 +290,7 @@ function DiscountForm({ kind, item, categories, products, onDone, save }: { kind
       <Field label="Tugash" error={err('ends_at')} htmlFor="d-end"><Input id="d-end" type="datetime-local" {...register('ends_at')} /></Field>
       <Checkbox label="Faol" {...register('is_active')} />
       {isCoupon && <Checkbox label="Saytda “Kuponlar” boʻlimida koʻrsatish (kod hammaga koʻrinadi)" {...register('is_public')} />}
+      {!isCoupon && <Checkbox label="⚡ Flash sale — saytda taymer, boshlanganda botga va kanalga xabar (tugash vaqti shart)" {...register('is_flash')} className="sm:col-span-2" />}
       {!isCoupon && <input type="hidden" {...register('sort_order')} />}
     </div>
     <DesignPanel control={control} watchAll={all} isCoupon={isCoupon} />
