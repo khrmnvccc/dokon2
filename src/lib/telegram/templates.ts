@@ -1,7 +1,7 @@
 // Telegram xabar matnlari (kassa tgTemplates.ts uslubida). Server (yuborish uchun) va brauzer
 // (qanday koʻrinishini oldindan koʻrsatish uchun) shu bitta fayldan oʻqiydi — natija bir xil boʻladi.
 
-export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'deliveryRequest' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport';
+export type TemplateKey = 'newOrder' | 'paymentReceipt' | 'deliveryRequest' | 'customerMessage' | 'paymentReceived' | 'orderStatus' | 'orderCancel' | 'paymentVoid' | 'lowStock' | 'dailyReport' | 'periodReport';
 
 /** Roʻyxatdagi oʻrni: A — buyurtma va pul, B — bekor qilish, C — hisobot. */
 export type TemplateGroup = 'kirim' | 'bekor' | 'hisobot';
@@ -102,7 +102,7 @@ export const TEMPLATES: TemplateDef[] = [
     button: 'Ombor',
   },
   {
-    key: 'dailyReport', group: 'hisobot', title: 'Kechki hisobot', hint: 'Har kuni 21:00 da, faqat sizga',
+    key: 'dailyReport', group: 'hisobot', title: 'Kechki hisobot', hint: 'Har kuni belgilangan soatda (Hisobotlar → Avtomatik hisobot), faqat sizga',
     vars: [
       { name: 'dokon', label: 'Doʻkon', sample: 'Mening doʻkonim' },
       { name: 'sana', label: 'Sana', sample: '13-noyabr, 2026' },
@@ -111,8 +111,26 @@ export const TEMPLATES: TemplateDef[] = [
       { name: 'turlar', label: 'Toʻlov turlari', sample: '   Naqd: 6 650 000 soʻm\n   Click: 7 730 000 soʻm' },
       { name: 'bekor', label: 'Bekor qilingan', sample: '2 ta' },
       { name: 'yetkazilmagan', label: 'Yetkazilmagan', sample: '11 ta' },
+      { name: 'foyda', label: 'Yalpi foyda', sample: '3 120 000 soʻm' },
+      { name: 'top', label: 'Eng koʻp sotilganlar', sample: '1. Simsiz quloqchin — 12 dona\n2. Telefon gʻilofi — 9 dona' },
+      { name: 'kam', label: 'Kam qolgan mahsulotlar', sample: '• Simsiz quloqchin — 2 dona' },
     ],
-    text: '📊 *{{dokon}} · {{sana}}*\n\n💰 Jami: *{{jami}}* ({{soni}} ta buyurtma)\n{{turlar}}\n⚠️ Bekor qilingan: {{bekor}}\n🚚 Yetkazilmagan: {{yetkazilmagan}}',
+    text: '📊 *{{dokon}} · {{sana}}*\n\n💰 Jami: *{{jami}}* ({{soni}} ta buyurtma)\n📈 Yalpi foyda: {{foyda}}\n{{turlar}}\n⚠️ Bekor qilingan: {{bekor}}\n🚚 Yetkazilmagan: {{yetkazilmagan}}\n\n🏆 *Eng koʻp sotilgan:*\n{{top}}\n\n📉 *Kam qolgan:*\n{{kam}}',
+  },
+  {
+    key: 'periodReport', group: 'hisobot', title: 'Haftalik / oylik hisobot', hint: 'Dushanba kuni (oʻtgan hafta) va oyning 1-kuni (oʻtgan oy), faqat sizga',
+    vars: [
+      { name: 'dokon', label: 'Doʻkon', sample: 'Mening doʻkonim' },
+      { name: 'davr', label: 'Davr', sample: 'Oktabr, 2026' },
+      { name: 'jami', label: 'Jami savdo', sample: '214 380 000 soʻm' },
+      { name: 'soni', label: 'Buyurtmalar soni', sample: '537' },
+      { name: 'ortacha', label: 'Oʻrtacha chek', sample: '399 000 soʻm' },
+      { name: 'foyda', label: 'Yalpi foyda', sample: '48 120 000 soʻm' },
+      { name: 'ozgarish', label: 'Oldingi davrga nisbatan', sample: '+12%' },
+      { name: 'top', label: 'Eng koʻp sotilganlar', sample: '1. Simsiz quloqchin — 120 dona' },
+      { name: 'bekor', label: 'Bekor qilingan', sample: '14 ta' },
+    ],
+    text: '🗓 *{{dokon}} · {{davr}}*\n\n💰 Jami: *{{jami}}* ({{soni}} ta buyurtma)\n📊 Oldingi davrga nisbatan: {{ozgarish}}\n🧾 Oʻrtacha chek: {{ortacha}}\n📈 Yalpi foyda: {{foyda}}\n⚠️ Bekor qilingan: {{bekor}}\n\n🏆 *Eng koʻp sotilgan:*\n{{top}}',
   },
 ];
 

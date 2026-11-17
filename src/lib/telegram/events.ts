@@ -117,27 +117,56 @@ function tashkentDay(now = new Date()) {
 
 const MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 
-/** Kechki hisobot: bugungi savdo, toʻlov turlari, bekor qilingan va yetkazilmaganlar. Faqat Egaga. */
-export async function sendDailyReport(storeName: string) {
-  if (!(await getTelegram())?.chatId) return false;
-  const { start, end, local } = tashkentDay();
+/** Davr statistikasi (Toshkent vaqti chegaralari bilan): savdo, foyda, eng koʻp sotilganlar. */
+export async function periodStats(start: Date, end: Date, topCount = 3) {
   const s = getServiceSupabase();
-  const [{ data: orders }, { count: open }] = await Promise.all([
-    s.from('orders').select('total, status, payment_method_name').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(10_000),
-    s.from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped', 'arrived']),
-  ]);
+  const { data: orders } = await s.from('orders').select('id, total, status, payment_method_name')
+    .gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(20_000);
   const rows = orders ?? [];
   const live = rows.filter((o) => o.status !== 'cancelled' && o.status !== 'returned');
+  const liveIds = live.map((o) => o.id as string);
+  const items: { product_name: string; quantity: number; line_total: number; cost_price: number | null }[] = [];
+  for (let i = 0; i < liveIds.length; i += 300) {
+    const { data } = await s.from('order_items').select('product_name, quantity, line_total, cost_price').in('order_id', liveIds.slice(i, i + 300));
+    items.push(...((data ?? []) as typeof items));
+  }
+  const byName = new Map<string, number>();
+  let profit = 0;
+  for (const it of items) {
+    byName.set(it.product_name, (byName.get(it.product_name) ?? 0) + Number(it.quantity));
+    if (it.cost_price !== null) profit += Number(it.line_total) - Number(it.cost_price) * Number(it.quantity);
+  }
   const byPay = new Map<string, number>();
   for (const o of live) byPay.set(o.payment_method_name, (byPay.get(o.payment_method_name) ?? 0) + Number(o.total));
+  const total = live.reduce((a, o) => a + Number(o.total), 0);
+  return {
+    total, count: live.length, cancelled: rows.length - live.length, profit,
+    payTypes: [...byPay].sort((a, b) => b[1] - a[1]),
+    top: [...byName].sort((a, b) => b[1] - a[1]).slice(0, topCount).map(([n, q], i) => `${i + 1}. ${n} — ${q} dona`),
+  };
+}
+
+/** Kechki hisobot: bugungi savdo, foyda, toʻlov turlari, eng koʻp sotilganlar, kam qolganlar. Faqat Egaga. */
+export async function sendDailyReport(storeName: string, opts: { topCount?: number; lowStock?: string[] } = {}) {
+  if (!(await getTelegram())?.chatId) return false;
+  const { start, end, local } = tashkentDay();
+  const [st, { count: open }] = await Promise.all([
+    periodStats(start, end, opts.topCount ?? 3),
+    getServiceSupabase().from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped', 'arrived']),
+  ]);
   await notify('dailyReport', {
     dokon: storeName,
     sana: `${local.getUTCDate()}-${MONTHS[local.getUTCMonth()]}, ${local.getUTCFullYear()}`,
-    jami: money(live.reduce((a, o) => a + Number(o.total), 0)),
-    soni: live.length,
-    turlar: [...byPay].sort((a, b) => b[1] - a[1]).map(([k, v]) => `   ${k}: ${money(v)}`).join('\n'),
-    bekor: `${rows.length - live.length} ta`,
+    jami: money(st.total),
+    soni: st.count,
+    foyda: st.profit ? money(st.profit) : '',
+    turlar: st.payTypes.map(([k, v]) => `   ${k}: ${money(v)}`).join('\n'),
+    bekor: `${st.cancelled} ta`,
     yetkazilmagan: `${open ?? 0} ta`,
+    top: st.top.join('\n'),
+    kam: (opts.lowStock ?? []).join('\n'),
   }, { personalOnly: true });
   return true;
 }
+
+export { MONTHS, tashkentDay };

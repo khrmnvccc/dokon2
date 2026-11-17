@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { deliverDue } from '@/lib/telegram/broadcast';
-import { sendDailyReport } from '@/lib/telegram/events';
-import { getSettings } from '@/lib/data/public';
+import { dailyReportIfDue } from '@/lib/jobs/reports';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -20,9 +19,7 @@ export async function GET(request: Request) {
   }
   await deliverDue(true);
   let report = false;
-  if (new URL(request.url).searchParams.get('report') === '1') {
-    const settings = await getSettings();
-    report = await sendDailyReport(settings.brand.name || settings.store.name);
-  }
+  // Kechki hisobot bugun hali yuborilmagan boʻlsa (fon ishi allaqachon yuborgan boʻlsa — takrorlanmaydi)
+  if (new URL(request.url).searchParams.get('report') === '1') report = await dailyReportIfDue();
   return NextResponse.json({ ok: true, report });
 }

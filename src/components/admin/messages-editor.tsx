@@ -290,7 +290,7 @@ function ShopBotPanel({ data }: { data: MessagesData }) {
 // ---------- 2. Xabar matnlari: chapda roʻyxat, oʻngda tahrir ----------
 const TEMPLATE_ICONS: Record<TemplateKey, LucideIcon> = {
   newOrder: ShoppingCart, paymentReceipt: ReceiptText, deliveryRequest: MapPin, customerMessage: MessageCircle, paymentReceived: CreditCard, orderStatus: Package, orderCancel: Ban,
-  paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3,
+  paymentVoid: Undo2, lowStock: PackageMinus, dailyReport: BarChart3, periodReport: BarChart3,
 };
 const GROUP_TONES = ['bg-[#1d4f80]', 'bg-[#2f80c1]', 'bg-[#1f7a4d]', 'bg-[#8a5a12]'];
 
@@ -424,7 +424,7 @@ function TemplateEditor({ k, data, people, onBack }: { k: TemplateKey; data: Mes
             </>
           )}
 
-          {k !== 'dailyReport' && (
+          {k !== 'dailyReport' && k !== 'periodReport' && (
             <>
               <SectionLabel>Kimga yuboriladi</SectionLabel>
               <div className="divide-y divide-line rounded-2xl border border-line">

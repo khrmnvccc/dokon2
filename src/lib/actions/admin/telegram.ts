@@ -206,7 +206,7 @@ export async function updateTemplate(key: string, change: { text?: string | null
     if (change.chats) {
       const parsed = chatsSchema.safeParse(change.chats);
       if (!parsed.success) return { ok: false, error: 'Notoʻgʻri soʻrov' };
-      if (key === 'dailyReport') return { ok: false, error: 'Kechki hisobot faqat sizga keladi' };
+      if (key === 'dailyReport' || key === 'periodReport') return { ok: false, error: 'Hisobot faqat sizga keladi' };
       if (parsed.data.staff && !TEMPLATE_BY_KEY[key].staff) return { ok: false, error: 'Bu xabar xodimlarga yuborilmaydi' };
       clean.chats = parsed.data;
     }

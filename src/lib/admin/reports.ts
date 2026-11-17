@@ -4,6 +4,10 @@ import { getServerSupabase } from '@/lib/supabase/server';
 export interface SalesRow { period: string; orders_count: number; items_sold: number; revenue: number; goods_revenue: number; discounts: number; shipping: number; cost_known: number; gross_profit: number; cancelled_count: number; returned_count: number }
 export interface ProductRow { product_id: string | null; product_name: string; sku: string | null; quantity: number; revenue: number; cost: number | null; gross_profit: number | null }
 
+export interface CategoryRow { category_id: string | null; category_name: string; quantity: number; revenue: number; gross_profit: number | null }
+export interface PaymentRow { payment_method_name: string; orders_count: number; amount: number; paid_amount: number }
+export interface CustomerRow { user_id: string | null; customer_name: string; customer_phone: string; orders_count: number; amount: number }
+
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function reportRange(sp: { from?: string; to?: string; g?: string; preset?: string }) {
@@ -23,13 +27,20 @@ export function reportRange(sp: { from?: string; to?: string; g?: string; preset
 
 export async function loadReports(from: string, to: string, g: 'day' | 'week' | 'month') {
   const supabase = await getServerSupabase();
-  const [sales, products, statuses] = await Promise.all([
+  const [sales, products, statuses, categories, payments, customers] = await Promise.all([
     supabase.rpc('report_sales', { p_from: from, p_to: to, p_granularity: g }),
     supabase.rpc('report_products', { p_from: from, p_to: to }),
     supabase.rpc('report_status_breakdown', { p_from: from, p_to: to }),
+    supabase.rpc('report_categories', { p_from: from, p_to: to }),
+    supabase.rpc('report_payments', { p_from: from, p_to: to }),
+    supabase.rpc('report_customers', { p_from: from, p_to: to, p_limit: 20 }),
   ]);
   return {
     error: sales.error ?? products.error ?? statuses.error,
+    // Yangi hisobotlar (migratsiya qoʻllanmagan boʻlsa — boʻsh)
+    categories: (categories.data ?? []) as CategoryRow[],
+    payments: (payments.data ?? []) as PaymentRow[],
+    customers: (customers.data ?? []) as CustomerRow[],
     sales: (sales.data ?? []) as SalesRow[],
     products: (products.data ?? []) as ProductRow[],
     statuses: (statuses.data ?? []) as { status: string; orders_count: number; amount: number }[],
