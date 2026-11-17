@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heart, Minus, Plus, ShoppingCart, Truck, ShieldCheck } from 'lucide-react';
+import { Bell, BellRing, Heart, Minus, Plus, ShoppingCart, Truck, ShieldCheck } from 'lucide-react';
 import type { ProductVariant } from '@/lib/types';
 import { discountPercent } from '@/lib/format';
 import { useApp, useCart, useWishlist, useL } from '@/components/providers';
@@ -14,9 +14,11 @@ interface Props {
   product: { id: string; name: string; price: number; compare_at_price: number | null; stock: number; track_stock: boolean; has_variants: boolean };
   variants: ProductVariant[];
   freeShippingFrom: number;
+  /** “Kelganda xabar ber” tugmasi (Ombor sozlamasi) */
+  restockButton?: boolean;
 }
 
-export function ProductPurchase({ product, variants, freeShippingFrom }: Props) {
+export function ProductPurchase({ product, variants, freeShippingFrom, restockButton = false }: Props) {
   const L = useL();
   const { t, price } = useApp();
   const cart = useCart();
@@ -129,6 +131,10 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
         </button>
       </div>
 
+      {restockButton && (outOfStock || (product.has_variants && variants.length > 0 && variants.every((v) => v.stock <= 0))) && (
+        <RestockButton productId={product.id} variantId={variant?.id ?? null} />
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2" data-tour="add-to-cart">
         <Button size="lg" onClick={() => add(false)} disabled={outOfStock}>
           <ShoppingCart className="h-5 w-5" /> {t('product.addToCart')}
@@ -143,5 +149,42 @@ export function ProductPurchase({ product, variants, freeShippingFrom }: Props) 
         <li className="flex gap-2"><ShieldCheck className="h-5 w-5 shrink-0 text-primary" />{L("Sifat kafolati va 14 kun ichida qaytarish")}</li>
       </ul>
     </div>
+  );
+}
+
+/** Tugagan mahsulot: mahsulot qayta kelganda botga (va saytdagi qoʻngʻiroqchaga) xabar. */
+function RestockButton({ productId, variantId }: { productId: string; variantId: string | null }) {
+  const L = useL();
+  const toast = useToast();
+  const router = useRouter();
+  const [subscribed, setSubscribed] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    fetch(`/api/stock-alert?productId=${productId}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { variants: [] }))
+      .then((d: { variants: string[] }) => setSubscribed(new Set(d.variants)))
+      .catch(() => {});
+  }, [productId]);
+  const key = variantId ?? '';
+  const on = subscribed.has(key);
+  const toggle = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch('/api/stock-alert', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ productId, variantId, add: !on }) });
+      if (res.status === 401) { router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`); return; }
+      if (!res.ok) { toast(L('Xatolik yuz berdi'), 'error'); return; }
+      const next = new Set(subscribed);
+      if (on) next.delete(key); else next.add(key);
+      setSubscribed(next);
+      toast(on ? L('Bekor qilindi') : L('Mahsulot kelishi bilan xabar beramiz'));
+    } finally { setBusy(false); }
+  };
+  return (
+    <button type="button" onClick={toggle} disabled={busy} aria-pressed={on}
+      className={cn('flex w-full items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-60',
+        on ? 'border-success bg-success/10 text-success' : 'border-primary text-primary hover:bg-primary-soft')}>
+      {on ? <BellRing className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
+      {on ? L('Kelganda xabar beramiz ✓') : L('Kelganda xabar ber')}
+    </button>
   );
 }

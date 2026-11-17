@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { getCatalog } from '@/lib/data/public';
+import { getCatalog, getSettings } from '@/lib/data/public';
 import { EmptyState } from '@/components/ui/misc';
 import { buttonClass } from '@/components/ui/button';
 import { ProductGrid } from '@/components/shop/product-card';
@@ -22,7 +22,8 @@ export default async function WishlistPage() {
   const supabase = await getServerSupabase();
   const { data } = await supabase.from('wishlists').select('product_id').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100);
   const ids = (data ?? []).map((r) => r.product_id as string);
-  const { items } = ids.length ? await getCatalog({ ids, limit: 100 }) : { items: [] };
+  const [{ items }, settings] = await Promise.all([ids.length ? getCatalog({ ids, limit: 100 }) : Promise.resolve({ items: [] }), getSettings()]);
+  const restockHint = settings.stock_alerts.restock_enabled && settings.stock_alerts.restock_wishlist;
   const ordered = ids.map((id) => items.find((p) => p.id === id)).filter((p) => p !== undefined);
 
   return (
@@ -32,7 +33,10 @@ export default async function WishlistPage() {
         <EmptyState icon={<Heart className="h-8 w-8" />} title={L("Hozircha bo‘sh")} text={L("Mahsulot kartasidagi yurakchani bosing — u shu yerda saqlanadi.")}
           action={<Link href="/catalog" className={buttonClass('primary')}>{L("Katalogga o‘tish")}</Link>} />
       ) : (
-        <SizeBlock id="grid.wishlist" label="Mahsulotlar" mode="grid"><ProductGrid products={ordered} /></SizeBlock>
+        <>
+          {restockHint && <p className="mb-3 rounded-lg bg-primary-soft/50 px-3 py-2 text-sm text-ink-2">🔔 {L("Tugagan mahsulot qayta kelsa, Telegram botimiz orqali xabar beramiz")}</p>}
+          <SizeBlock id="grid.wishlist" label="Mahsulotlar" mode="grid"><ProductGrid products={ordered} /></SizeBlock>
+        </>
       )}
     </div>
   );

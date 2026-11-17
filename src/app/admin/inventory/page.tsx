@@ -6,12 +6,14 @@ import { formatDateTime } from '@/lib/format';
 import { Pagination } from '@/components/ui/misc';
 import { PageHeader, Panel, FilterBar, FilterField, Table, EmptyRow, inputSm } from '@/components/admin/ui';
 import { StockEditor } from '@/components/admin/stock-editor';
+import { StockSettings } from '@/components/admin/stock-settings';
+import { parseSettings } from '@/lib/settings-schema';
 
 export const metadata = { title: 'Ombor' };
 const PAGE = 40;
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ q?: string; low?: string; page?: string }> }) {
-  await requirePagePermission('inventory.write');
+  const ctx = await requirePagePermission('inventory.write');
   const sp = await searchParams;
   const page = pageParam(sp.page);
   const supabase = await getServerSupabase();
@@ -19,10 +21,20 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   if (sp.q) { const t = likeTerm(sp.q); q = q.or(`name.ilike.${t},sku.ilike.${t}`); }
   // "Kam qoldiq": PostgREST ustunlarni o'zaro solishtira olmaydi — avval taxminiy, keyin aniq filtr
   if (sp.low) q = q.lte('stock', 50);
-  const [{ data, count }, { data: movements }] = await Promise.all([
+  const [{ data, count }, { data: movements }, { data: setRows }, { data: waiting }] = await Promise.all([
     q.order('stock').range((page - 1) * PAGE, page * PAGE - 1),
     supabase.from('inventory_movements').select('id, delta, stock_after, reason, note, created_at, products(name)').order('created_at', { ascending: false }).limit(15),
+    supabase.from('site_settings').select('key, value').eq('key', 'stock_alerts'),
+    supabase.from('stock_alerts').select('product_id, products(name)').is('notified_at', null).limit(2000),
   ]);
+  // “Kelganda xabar ber” — qaysi mahsulotni nechta mijoz kutyapti
+  const waitMap = new Map<string, { name: string; n: number }>();
+  for (const w of waiting ?? []) {
+    const name = (Array.isArray(w.products) ? w.products[0] : w.products as { name: string } | null)?.name ?? '—';
+    const cur = waitMap.get(w.product_id as string) ?? { name, n: 0 };
+    waitMap.set(w.product_id as string, { name, n: cur.n + 1 });
+  }
+  const waitList = [...waitMap].sort((a, b) => b[1].n - a[1].n).slice(0, 15);
   const rows = (data ?? []).filter((p) => !sp.low || p.stock <= p.low_stock_threshold);
   return (
     <div>
@@ -61,6 +73,20 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             </tbody>
           </Table>
         </div>
+        <div className="grid gap-4">
+        <StockSettings initial={parseSettings(setRows ?? []).stock_alerts} canEdit={ctx.permissions.has('settings.write')} />
+        <Panel title="Kelishini kutishyapti" subtitle="“Kelganda xabar ber” bosgan mijozlar">
+          {waitList.length ? (
+            <ul className="space-y-2 text-sm">
+              {waitList.map(([id, w]) => (
+                <li key={id} className="flex justify-between gap-2">
+                  <Link href={`/admin/products/${id}`} className="min-w-0 truncate hover:text-primary">{w.name}</Link>
+                  <span className="shrink-0 font-semibold tabular-nums">{w.n} kishi</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="text-sm text-ink-3">Hozircha hech kim kutmayapti.</p>}
+        </Panel>
         <Panel title="Oxirgi harakatlar">
           <ul className="space-y-2.5 text-sm">
             {(movements ?? []).map((m) => (
@@ -71,6 +97,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             ))}
           </ul>
         </Panel>
+        </div>
       </div>
       <Pagination page={page} total={count ?? 0} pageSize={PAGE} makeHref={(p) => buildHref('/admin/inventory', sp, { page: p })} />
     </div>

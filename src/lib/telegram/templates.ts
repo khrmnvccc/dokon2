@@ -96,7 +96,7 @@ export const TEMPLATES: TemplateDef[] = [
     button: 'Buyurtmani ochish',
   },
   {
-    key: 'lowStock', group: 'hisobot', groupChat: true, staff: true, title: 'Mahsulot tugayapti', hint: 'Buyurtmadan keyin qoldiq chegaradan tushsa',
+    key: 'lowStock', group: 'hisobot', groupChat: true, staff: true, title: 'Mahsulot tugayapti', hint: 'Qoldiq chegaradan tushganda yoki tugaganda (variantlar ham). Sozlama: Katalog → Ombor',
     vars: [{ name: 'royxat', label: 'Roʻyxat', sample: '• Simsiz quloqchin — 2 dona\n• Telefon gʻilofi (qora) — 0 dona' }],
     text: '📉 *Tugayotgan mahsulotlar*\n{{royxat}}',
     button: 'Ombor',

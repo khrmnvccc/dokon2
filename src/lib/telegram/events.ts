@@ -6,6 +6,7 @@ import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify, type TgPhoto } from './server';
 import { notifyCustomer, notifyReferralRewards } from './shop-bot';
+import { processStockEvents } from '@/lib/jobs/stock';
 import type { OrderStatus } from '@/lib/types';
 
 // Doʻkon hodisalari → Telegram. Hammasi after() ichida chaqiriladi: xaridor va xodim kutmaydi,
@@ -33,6 +34,8 @@ const base = (o: OrderRow) => ({
 
 export async function onNewOrder(orderId: string) {
   await notifyCustomer(orderId, 'new');
+  // Buyurtmadan keyin qoldiq kamaygan boʻlsa — darhol ogohlantirish (fon ishini kutmasdan)
+  await processStockEvents().catch((e) => console.error('stock events', e));
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;
@@ -46,16 +49,6 @@ export async function onNewOrder(orderId: string) {
     manzil: a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '',
     havola: `${ADMIN_URL}/admin/orders/${o.id}`,
   }, { link: `/admin/orders/${o.id}` });
-  await checkLowStock((items ?? []).map((i) => i.product_id).filter(Boolean));
-}
-
-/** Buyurtmadagi mahsulotlardan qoldigʻi chegaradan tushganlari. */
-async function checkLowStock(productIds: string[]) {
-  if (!productIds.length) return;
-  const { data } = await getServiceSupabase().from('products')
-    .select('name, stock, low_stock_threshold, track_stock, has_variants').in('id', productIds);
-  const low = (data ?? []).filter((p) => p.track_stock && !p.has_variants && p.stock <= p.low_stock_threshold);
-  if (low.length) await notify('lowStock', { royxat: low.map((p) => `• ${p.name} — ${p.stock} dona`).join('\n') }, { link: '/admin/inventory' });
 }
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {

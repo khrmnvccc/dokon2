@@ -91,6 +91,7 @@ export default async function ProductPage({ params }: Props) {
               product={{ id: product.id, name: product.name, price: product.price, compare_at_price: product.compare_at_price, stock: product.stock, track_stock: product.track_stock, has_variants: product.has_variants }}
               variants={variants}
               freeShippingFrom={settings.checkout.free_shipping_threshold}
+              restockButton={settings.stock_alerts.restock_enabled && settings.stock_alerts.restock_button}
             />
           </div>
         </SizeBlock>

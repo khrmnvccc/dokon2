@@ -35,7 +35,13 @@ export function CartView() {
   const { t } = useApp();
   const cart = useCart();
   const confirm = useConfirm();
-  const [coupon, setCoupon] = useState<string | null>(() => (typeof window === 'undefined' ? null : readSavedCoupon()));
+  // Botdagi “Chegirma bilan olish” tugmasi: /cart?coupon=KOD — kod avtomatik qoʻllanadi
+  const [coupon, setCoupon] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const fromLink = new URLSearchParams(window.location.search).get('coupon')?.trim().toUpperCase();
+    if (fromLink && /^[A-Z0-9_-]{3,32}$/.test(fromLink)) { saveCoupon(fromLink); return fromLink; }
+    return readSavedCoupon();
+  });
   const { quote, loading, error } = useQuote(cart.items, cart.ready, coupon, null);
 
   if (!cart.ready || (loading && !quote && cart.items.length)) return <CartSkeleton />;
