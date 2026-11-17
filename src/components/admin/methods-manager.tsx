@@ -52,7 +52,7 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{m.name} <Badge className="ml-1">{payKindLabel[m.kind]}</Badge></p>
                   {notConnected ? (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (README: to‘lov integratsiyasi)</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (pastdagi “Click / Payme” boʻlimida kalitlarni kiriting)</p>
                   ) : (() => {
                     const card = m.kind === 'bank_transfer' ? cleanCard(m.card) : null;
                     return card
@@ -129,7 +129,7 @@ function PaymentForm({ method, count, onDone, save }: { method: PaymentMethod | 
       <Field label="Kod" required error={errors.code?.message} htmlFor="pm-code"><Input id="pm-code" readOnly={Boolean(method)} {...register('code')} /></Field>
       <Field label="Turi" htmlFor="pm-kind"><Select id="pm-kind" {...register('kind')}>{Object.entries(payKindLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
       {kind === 'online' && (
-        <Field label="Provayder" error={errors.provider?.message} htmlFor="pm-prov" hint="Integratsiya va kalitlarsiz checkout’da ko‘rinmaydi">
+        <Field label="Provayder" error={errors.provider?.message} htmlFor="pm-prov" hint="Kalitlar pastdagi Click / Payme boʻlimida kiritiladi">
           <Select id="pm-prov" {...register('provider')}><option value="">—</option><option value="click">Click</option><option value="payme">Payme</option><option value="uzum">Uzum</option></Select>
         </Field>
       )}

@@ -403,6 +403,12 @@ export async function notifyCustomer(orderId: string, kind: NotifyKind, extra: {
     // Kartaga toʻlov: “qabul qilindi” oʻrniga “toʻlovni kutyapmiz”
     const card = kind === 'new' ? await methodCard(o.payment_method_id as string | null) : null;
     if (card) key = 'awaitPayment';
+    // Onlayn toʻlov (Click / Payme): “toʻlash” tugmasi bilan
+    let online: string | null = null;
+    if (kind === 'new' && !card && o.payment_method_id) {
+      const { data: pm } = await db().from('payment_methods').select('kind, provider, name').eq('id', o.payment_method_id).maybeSingle();
+      if (pm?.kind === 'online' && pm.provider) { key = 'awaitOnline'; online = pm.name as string; }
+    }
     const { data: subs } = await db().from('telegram_subscribers').select('chat_id').eq('user_id', o.user_id).eq('via', 'shop');
     if (!subs?.length) return;
     const { brand } = await getSettings();
@@ -410,6 +416,7 @@ export async function notifyCustomer(orderId: string, kind: NotifyKind, extra: {
       raqam: o.number, mijoz: String(o.customer_name ?? '').split(' ')[0], summa: formatPrice(Number(o.total), 'soʻm'),
       soni: o.items_count ? `${o.items_count} dona` : '', trek: o.tracking_number ?? '', dokon: brand.name || 'Doʻkon', sabab: extra.sabab ?? '',
       karta: card ? formatCardNumber(card.number) : '', egasi: card?.holder ?? '',
+      tolov: online ?? '',
       usul: o.shipping_method_name ?? '', punkt: o.shipping_method_name ?? '',
       manzil: pickup ? (pickup.pickup_address || pickup.description || '') : addressLine(o.address as Record<string, string | null> | null),
       vaqt: pickup?.work_hours ?? '', narx: Number(o.delivery_fee) > 0 ? formatPrice(Number(o.delivery_fee), 'soʻm') : 'bepul',
@@ -648,4 +655,26 @@ export async function prepareReferralShare(opts: { tgUserId: number; link: strin
     user_id: opts.tgUserId, result, allow_user_chats: true, allow_bot_chats: false, allow_group_chats: true, allow_channel_chats: true,
   }) as { id?: string } | null;
   return res?.id ?? null;
+}
+
+/** Mijozga (barcha bogʻlangan chatlariga) shablon xabar: savat eslatmasi, qayta keldi, kargo. Yuborilgan boʻlsa — true. */
+export async function sendToUser(userId: string, key: CustomerMsgKey, values: Record<string, string | number | null | undefined>, path: string, logLabel: string): Promise<boolean> {
+  const config = await getShopBot().catch(() => null);
+  if (!config) return false;
+  const chats = await chatsOf(userId);
+  if (!chats.length) return false;
+  const { brand } = await getSettings();
+  let sent = false;
+  for (const c of chats) {
+    const msg = await customerMessage(key, { dokon: brand.name || 'Doʻkon', mijoz: String(c.name ?? '').split(' ')[0], ...values }, { path });
+    if (!msg) return false;
+    try { await sendRich(config.token, Number(c.chat_id), msg); sent = true; await logSend(`customer:${key}`, `mijoz:${logLabel}`, msg.html, null); }
+    catch (e) { await logSend(`customer:${key}`, `mijoz:${logLabel}`, msg.html, e); }
+  }
+  return sent;
+}
+
+/** Shablon oʻchirilmaganmi (Ega “Mijozga” boʻlimida oʻchirib qoʻyishi mumkin). */
+export async function customerMsgOn(key: CustomerMsgKey) {
+  return !(await getCustomerMsgSettings())[key]?.off;
 }

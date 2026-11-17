@@ -5,7 +5,8 @@
 import type { TemplateVar } from './templates';
 
 export type CustomerMsgKey =
-  | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'arrived' | 'deliveryApproved' | 'pickupReady' | 'delivered' | 'cancelled' | 'returned' | 'coupon' | 'referralInvite';
+  | 'orderNew' | 'awaitPayment' | 'paid' | 'receiptRejected' | 'confirmed' | 'processing' | 'shipped' | 'arrived' | 'deliveryApproved' | 'pickupReady' | 'delivered' | 'cancelled' | 'returned' | 'coupon' | 'referralInvite'
+  | 'awaitOnline' | 'cartReminder' | 'cartCoupon' | 'backInStock' | 'cargoUpdate';
 
 /** Standart rasm (kartochka) uchun yozuvlar va ranglar. */
 export interface CardArt { title: string; subtitle: string; from: string; to: string; icon: CardIcon }
@@ -139,6 +140,41 @@ export const CUSTOMER_MESSAGES: CustomerMsgDef[] = [
     text: '🎁 *{{dokon}}*\nMen {{dokon}} hamkorlik dasturida qatnashyapman 🤝 Doʻstlarni taklif qilib, *{{jami}}lik kuponlarni* qoʻlga kiritish mumkin.\n\n💰 *Siz ham boshqalarni taklif qilib pul ishlashingiz mumkin!*\n\nShu tugma orqali roʻyxatdan oʻting va {{bonus}}lik sovgʻa kupon oling 👇',
     button: 'Roʻyxatdan oʻtib bonus olish',
     art: { title: 'DOʻSTINGIZDAN\nSOVGʻA', subtitle: 'Roʻyxatdan oʻting va kupon oling', from: '#e0192d', to: '#7a0c18', icon: 'users' },
+  },
+  {
+    key: 'awaitOnline', title: 'Toʻlov kutilmoqda (Click / Payme)', hint: 'Onlayn toʻlov bilan buyurtma berilganda — tugma toʻlov sahifasini ochadi',
+    vars: [RAQAM, MIJOZ, SUMMA, SONI, { name: 'tolov', label: 'Toʻlov usuli', sample: 'Payme' }, DOKON],
+    text: '💳 *Buyurtma №{{raqam}} — toʻlovni kutyapmiz*\n\n💰 Summa: *{{summa}}*\n📲 {{tolov}} orqali toʻlang. Toʻlov tushishi bilan buyurtmangiz avtomatik tasdiqlanadi.',
+    button: 'Toʻlash',
+    art: { title: 'TOʻLOVNI\nKUTYAPMIZ', subtitle: 'Bir bosishda onlayn toʻlang', from: '#00a3ff', to: '#0b4f8a', icon: 'card' },
+  },
+  {
+    key: 'cartReminder', title: 'Savatda mahsulot qoldi', hint: 'Mijoz savatga qoʻshib, buyurtma bermasa (Marketing → Savat eslatmasi)',
+    vars: [MIJOZ, SONI, SUMMA, { name: 'mahsulotlar', label: 'Mahsulotlar', sample: '• Simsiz quloqchin\n• Telefon gʻilofi' }, DOKON],
+    text: '🛒 *{{mijoz}}, savatingizda mahsulotlar qoldi!*\n\n{{mahsulotlar}}\n\n💰 Jami: *{{summa}}*\nTugab qolmasidan buyurtma bering 👇',
+    button: 'Savatni ochish',
+    art: { title: 'SAVATINGIZ\nKUTYAPTI', subtitle: 'Buyurtmani yakunlang', from: '#2a7de1', to: '#163f7a', icon: 'cart' },
+  },
+  {
+    key: 'cartCoupon', title: 'Savat eslatmasi + kupon', hint: 'Savat eslatmasida shaxsiy kupon berilganda',
+    vars: [MIJOZ, SONI, SUMMA, { name: 'mahsulotlar', label: 'Mahsulotlar', sample: '• Simsiz quloqchin' }, { name: 'qiymat', label: 'Chegirma', sample: '5%' }, { name: 'kod', label: 'Kupon kodi', sample: 'DKA1B2C3D4' }, { name: 'muddat', label: 'Amal qilish muddati', sample: '20.11.2026' }, DOKON],
+    text: '🎁 *{{mijoz}}, savatingiz uchun sovgʻa!*\n\n{{mahsulotlar}}\n\n🎟 Sizga *{{qiymat}}* chegirma: `{{kod}}`\n⏳ {{muddat}} gacha amal qiladi.',
+    button: 'Chegirma bilan olish',
+    art: { title: 'SAVATINGIZGA\nCHEGIRMA', subtitle: 'Faqat siz uchun kupon', from: '#e0192d', to: '#a30c1b', icon: 'ticket' },
+  },
+  {
+    key: 'backInStock', title: 'Mahsulot qayta keldi', hint: '“Kelganda xabar ber” bosgan (yoki sevimlilarga qoʻshgan) mijozga, mahsulot omborga qaytganda',
+    vars: [MIJOZ, { name: 'mahsulot', label: 'Mahsulot', sample: 'Simsiz quloqchin' }, { name: 'narx', label: 'Narx', sample: '249 000 soʻm' }, { name: 'qoldiq', label: 'Qoldiq', sample: '12 dona' }, DOKON],
+    text: '🔔 *Siz kutgan mahsulot keldi!*\n\n📦 {{mahsulot}}\n💰 {{narx}}\n\nTez tugab qolishi mumkin — ulguring 👇',
+    button: 'Koʻrish',
+    art: { title: 'MAHSULOT\nQAYTA KELDI', subtitle: 'Siz kutgan mahsulot sotuvda', from: '#1fa45a', to: '#0f6a3a', icon: 'box' },
+  },
+  {
+    key: 'cargoUpdate', title: 'Yuk qayerda (kargo bosqichi)', hint: 'Xodim buyurtmaning kargo bosqichini yangilaganda (Savdo → Kargo)',
+    vars: [RAQAM, MIJOZ, { name: 'bosqich', label: 'Bosqich', sample: 'Chegarada' }, { name: 'trek', label: 'Trek raqami', sample: 'YT123456789' }, { name: 'izoh', label: 'Izoh', sample: '' }, DOKON],
+    text: '📍 *Buyurtma №{{raqam}}: {{bosqich}}*\n\n🔎 Trek: {{trek}}\n{{izoh}}',
+    button: 'Kuzatish',
+    art: { title: 'YUKINGIZ\nYOʻLDA', subtitle: 'Qayerdaligini kuzating', from: '#4f46e5', to: '#312e81', icon: 'truck' },
   },
 ];
 

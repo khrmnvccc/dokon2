@@ -28,7 +28,7 @@ export const getRawSettings = unstable_cache(
     return parseSettings(data ?? []);
   },
   // v3: home_sections[].size. v2: kassa dizayni bilan sozlamalarga `brand` va `pages` qoʻshildi; eski keshdagi obyektda ular yoʻq.
-  ['site-settings-v5'],
+  ['site-settings-v6'],
   { tags: [TAGS.settings], revalidate: REVALIDATE },
 );
 
@@ -382,3 +382,33 @@ export const getReviewStats = unstable_cache(
   ['review-stats'],
   { tags: [TAGS.reviews], revalidate: 300 },
 );
+
+// ---------- Tavsiyalar ----------
+const fetchBoughtTogether = unstable_cache(
+  async (idsKey: string, limit: number): Promise<string[]> => {
+    if (!isSupabaseConfigured) return [];
+    const { data, error } = await getPublicSupabase().rpc('bought_together', { p_ids: idsKey.split(','), p_limit: limit });
+    if (error) { console.error('bought_together', error.message); return []; }
+    return (data ?? []) as string[];
+  },
+  ['bought-together'],
+  { tags: [TAGS.products], revalidate: 3600 },
+);
+
+/** “Birga olinadi”: shu mahsulot(lar) bilan bitta buyurtmada olinganlar. Kam boʻlsa — xitlar bilan toʻldiriladi (sozlamaga koʻra). */
+export async function getBoughtTogether(productIds: string[], limit: number, fill: boolean): Promise<ProductCard[]> {
+  const ids = [...new Set(productIds)].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).sort().slice(0, 30);
+  if (!ids.length) return [];
+  const together = await fetchBoughtTogether(ids.join(','), limit);
+  let cards: ProductCard[] = [];
+  if (together.length) {
+    const { items } = await getCatalog({ ids: together, limit: together.length });
+    cards = together.map((id) => items.find((p) => p.id === id)).filter((p): p is ProductCard => Boolean(p));
+  }
+  if (fill && cards.length < limit) {
+    const { items } = await getCatalog({ sort: 'popular', in_stock: true, limit: limit + ids.length + cards.length });
+    const have = new Set([...ids, ...cards.map((c) => c.id)]);
+    cards = [...cards, ...items.filter((p) => !have.has(p.id))].slice(0, limit);
+  }
+  return cards;
+}

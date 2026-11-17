@@ -6,6 +6,7 @@ import { orderStatusLabel } from '@/lib/order-status';
 import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify, type TgPhoto } from './server';
 import { notifyCustomer, notifyReferralRewards } from './shop-bot';
+import { processStockEvents } from '@/lib/jobs/stock';
 import type { OrderStatus } from '@/lib/types';
 
 // Doʻkon hodisalari → Telegram. Hammasi after() ichida chaqiriladi: xaridor va xodim kutmaydi,
@@ -33,6 +34,8 @@ const base = (o: OrderRow) => ({
 
 export async function onNewOrder(orderId: string) {
   await notifyCustomer(orderId, 'new');
+  // Buyurtmadan keyin qoldiq kamaygan boʻlsa — darhol ogohlantirish (fon ishini kutmasdan)
+  await processStockEvents().catch((e) => console.error('stock events', e));
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);
   if (!o) return;
@@ -46,16 +49,6 @@ export async function onNewOrder(orderId: string) {
     manzil: a ? [a.region, a.city, a.street, a.apartment, a.landmark].filter(Boolean).join(', ') : '',
     havola: `${ADMIN_URL}/admin/orders/${o.id}`,
   }, { link: `/admin/orders/${o.id}` });
-  await checkLowStock((items ?? []).map((i) => i.product_id).filter(Boolean));
-}
-
-/** Buyurtmadagi mahsulotlardan qoldigʻi chegaradan tushganlari. */
-async function checkLowStock(productIds: string[]) {
-  if (!productIds.length) return;
-  const { data } = await getServiceSupabase().from('products')
-    .select('name, stock, low_stock_threshold, track_stock, has_variants').in('id', productIds);
-  const low = (data ?? []).filter((p) => p.track_stock && !p.has_variants && p.stock <= p.low_stock_threshold);
-  if (low.length) await notify('lowStock', { royxat: low.map((p) => `• ${p.name} — ${p.stock} dona`).join('\n') }, { link: '/admin/inventory' });
 }
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {
@@ -72,6 +65,16 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   }
   if (change.payment === 'paid') await notify('paymentReceived', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
   if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
+}
+
+/** Click / Payme toʻlovi tushdi: mijozga “Toʻlov tasdiqlandi”, xodimlarga “Toʻlov qabul qilindi”. */
+export async function onOnlinePaid(orderId: string, provider: 'click' | 'payme') {
+  await notifyCustomer(orderId, 'paid');
+  await notifyReferralRewards();
+  if (!(await getTelegram())?.chatId) return;
+  const o = await loadOrder(orderId);
+  if (!o) return;
+  await notify('paymentReceived', { ...base(o), kim: provider === 'click' ? 'Click' : 'Payme' }, { link: `/admin/orders/${o.id}` });
 }
 
 /** Mijoz “Oʻzbekistonda” boʻlgan buyurtma uchun yetkazishga ariza qoldirdi yoki olib ketishni tanladi. */
@@ -114,27 +117,56 @@ function tashkentDay(now = new Date()) {
 
 const MONTHS = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 
-/** Kechki hisobot: bugungi savdo, toʻlov turlari, bekor qilingan va yetkazilmaganlar. Faqat Egaga. */
-export async function sendDailyReport(storeName: string) {
-  if (!(await getTelegram())?.chatId) return false;
-  const { start, end, local } = tashkentDay();
+/** Davr statistikasi (Toshkent vaqti chegaralari bilan): savdo, foyda, eng koʻp sotilganlar. */
+export async function periodStats(start: Date, end: Date, topCount = 3) {
   const s = getServiceSupabase();
-  const [{ data: orders }, { count: open }] = await Promise.all([
-    s.from('orders').select('total, status, payment_method_name').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(10_000),
-    s.from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped', 'arrived']),
-  ]);
+  const { data: orders } = await s.from('orders').select('id, total, status, payment_method_name')
+    .gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).limit(20_000);
   const rows = orders ?? [];
   const live = rows.filter((o) => o.status !== 'cancelled' && o.status !== 'returned');
+  const liveIds = live.map((o) => o.id as string);
+  const items: { product_name: string; quantity: number; line_total: number; cost_price: number | null }[] = [];
+  for (let i = 0; i < liveIds.length; i += 300) {
+    const { data } = await s.from('order_items').select('product_name, quantity, line_total, cost_price').in('order_id', liveIds.slice(i, i + 300));
+    items.push(...((data ?? []) as typeof items));
+  }
+  const byName = new Map<string, number>();
+  let profit = 0;
+  for (const it of items) {
+    byName.set(it.product_name, (byName.get(it.product_name) ?? 0) + Number(it.quantity));
+    if (it.cost_price !== null) profit += Number(it.line_total) - Number(it.cost_price) * Number(it.quantity);
+  }
   const byPay = new Map<string, number>();
   for (const o of live) byPay.set(o.payment_method_name, (byPay.get(o.payment_method_name) ?? 0) + Number(o.total));
+  const total = live.reduce((a, o) => a + Number(o.total), 0);
+  return {
+    total, count: live.length, cancelled: rows.length - live.length, profit,
+    payTypes: [...byPay].sort((a, b) => b[1] - a[1]),
+    top: [...byName].sort((a, b) => b[1] - a[1]).slice(0, topCount).map(([n, q], i) => `${i + 1}. ${n} — ${q} dona`),
+  };
+}
+
+/** Kechki hisobot: bugungi savdo, foyda, toʻlov turlari, eng koʻp sotilganlar, kam qolganlar. Faqat Egaga. */
+export async function sendDailyReport(storeName: string, opts: { topCount?: number; lowStock?: string[] } = {}) {
+  if (!(await getTelegram())?.chatId) return false;
+  const { start, end, local } = tashkentDay();
+  const [st, { count: open }] = await Promise.all([
+    periodStats(start, end, opts.topCount ?? 3),
+    getServiceSupabase().from('orders').select('id', { count: 'exact', head: true }).in('status', ['new', 'confirmed', 'processing', 'shipped', 'arrived']),
+  ]);
   await notify('dailyReport', {
     dokon: storeName,
     sana: `${local.getUTCDate()}-${MONTHS[local.getUTCMonth()]}, ${local.getUTCFullYear()}`,
-    jami: money(live.reduce((a, o) => a + Number(o.total), 0)),
-    soni: live.length,
-    turlar: [...byPay].sort((a, b) => b[1] - a[1]).map(([k, v]) => `   ${k}: ${money(v)}`).join('\n'),
-    bekor: `${rows.length - live.length} ta`,
+    jami: money(st.total),
+    soni: st.count,
+    foyda: st.profit ? money(st.profit) : '',
+    turlar: st.payTypes.map(([k, v]) => `   ${k}: ${money(v)}`).join('\n'),
+    bekor: `${st.cancelled} ta`,
     yetkazilmagan: `${open ?? 0} ta`,
+    top: st.top.join('\n'),
+    kam: (opts.lowStock ?? []).join('\n'),
   }, { personalOnly: true });
   return true;
 }
+
+export { MONTHS, tashkentDay };

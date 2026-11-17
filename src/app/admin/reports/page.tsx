@@ -10,14 +10,22 @@ import { cn } from '@/components/ui/cn';
 import { PageHeader, Panel, StatCard, Table, EmptyRow, FilterBar, FilterField, inputSm } from '@/components/admin/ui';
 import { BarChart, HBarList } from '@/components/admin/charts';
 import type { OrderStatus } from '@/lib/types';
+import { getServerSupabase } from '@/lib/supabase/server';
+import { parseSettings } from '@/lib/settings-schema';
+import { ReportsAutoSettings } from '@/components/admin/reports-auto';
+import { formatUzPhone } from '@/lib/phone';
 
 export const metadata = { title: 'Hisobotlar' };
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; g?: string; preset?: string }> }) {
-  await requirePagePermission('reports.view');
+  const ctx = await requirePagePermission('reports.view');
   const sp = await searchParams;
   const { from, to, g } = reportRange(sp);
-  const { sales, products, statuses, error } = await loadReports(from, to, g);
+  const canSettings = ctx.permissions.has('settings.write');
+  const [{ sales, products, statuses, categories, payments, customers, error }, autoRows] = await Promise.all([
+    loadReports(from, to, g),
+    canSettings ? getServerSupabase().then((sb) => sb.from('site_settings').select('key, value').eq('key', 'reports_auto')).then((r) => r.data ?? []) : Promise.resolve([]),
+  ]);
   const sum = (k: keyof (typeof sales)[number]) => sales.reduce((s, r) => s + Number(r[k]), 0);
   const revenue = sum('revenue');
   const orders = sum('orders_count');
@@ -94,6 +102,29 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           </tbody>
         </Table>
       </Panel>
+      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+        <Panel title="Kategoriyalar bo‘yicha">
+          {categories.length ? <HBarList items={categories.slice(0, 12).map((c) => ({ label: c.category_name, value: Number(c.revenue), extra: `${c.quantity} dona${c.gross_profit !== null ? ` · foyda ${p(Number(c.gross_profit))}` : ''}` }))} formatValue="money" /> : <p className="py-6 text-center text-sm text-ink-3">Maʼlumot yoʻq</p>}
+        </Panel>
+        <Panel title="To‘lov turlari bo‘yicha">
+          {payments.length ? <HBarList items={payments.map((r) => ({ label: r.payment_method_name, value: Number(r.amount), extra: `${r.orders_count} ta · toʻlangan ${p(Number(r.paid_amount))}` }))} formatValue="money" /> : <p className="py-6 text-center text-sm text-ink-3">Maʼlumot yoʻq</p>}
+        </Panel>
+        <Panel title="Eng faol mijozlar" padded={false}>
+          <Table>
+            <thead><tr><th>Mijoz</th><th className="text-right">Buyurtma</th><th className="text-right">Summa</th></tr></thead>
+            <tbody>
+              {customers.length === 0 && <EmptyRow cols={3} />}
+              {customers.slice(0, 10).map((c) => (
+                <tr key={c.customer_phone} className="tabular-nums">
+                  <td>{c.user_id ? <Link href={`/admin/customers/${c.user_id}`} className="hover:text-primary">{c.customer_name}</Link> : c.customer_name}<span className="block text-xs text-ink-3">{formatUzPhone(c.customer_phone)}</span></td>
+                  <td className="text-right">{c.orders_count}</td><td className="text-right font-semibold">{p(Number(c.amount))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Panel>
+      </div>
+      {canSettings && <div className="mt-4 max-w-2xl"><ReportsAutoSettings initial={parseSettings(autoRows).reports_auto} /></div>}
       <p className="mt-3 text-xs text-ink-3">Yalpi foyda = mahsulot tushumi (chegirmadan keyin) − tannarx. Tannarxi kiritilmagan mahsulotlar foydaga qo‘shilmaydi. Tannarx buyurtma paytidagi qiymat bo‘yicha olinadi.</p>
     </div>
   );

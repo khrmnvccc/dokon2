@@ -26,6 +26,18 @@ export async function PUT(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'invalid' }, { status: 400 });
 
   const supabase = await getServerSupabase();
+  // Tarkib oʻzgarmagan boʻlsa — hech narsa yozilmaydi (updated_at savat eslatmasi uchun “oxirgi oʻzgarish” vaqti)
+  const want = new Map<string, number>();
+  for (const i of parsed.data) {
+    const k = `${i.productId}:${i.variantId ?? ''}`;
+    want.set(k, Math.min(999, (want.get(k) ?? 0) + i.quantity));
+  }
+  const { data: current } = await supabase.from('carts').select('id, cart_items(product_id, variant_id, quantity)').eq('user_id', user.id).maybeSingle();
+  if (current) {
+    const have = (current.cart_items ?? []) as { product_id: string; variant_id: string | null; quantity: number }[];
+    const same = have.length === want.size && have.every((i) => want.get(`${i.product_id}:${i.variant_id ?? ''}`) === i.quantity);
+    if (same) return NextResponse.json({ ok: true });
+  }
   const { data: cart, error } = await supabase
     .from('carts')
     .upsert({ user_id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })

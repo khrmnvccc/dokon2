@@ -197,6 +197,7 @@ export interface Order {
   payment_method_id?: string | null;
   payment_method_name: string;
   payment_provider: string | null;
+  cargo_stage?: string | null;
   shipping_method_name: string;
   customer_name: string;
   customer_phone: string;

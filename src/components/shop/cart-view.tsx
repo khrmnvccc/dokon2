@@ -13,6 +13,8 @@ import { myActiveCoupons } from '@/lib/actions/referral';
 import { couponErrorText, lineErrorText, type PricedLine, type QuoteResult } from '@/lib/pricing';
 import { ProductImage } from './product-image';
 import { useQuote } from './use-quote';
+import { ProductRail } from './product-card';
+import type { ProductCard as ProductCardType } from '@/lib/types';
 
 const COUPON_KEY = 'dk_coupon';
 
@@ -35,7 +37,13 @@ export function CartView() {
   const { t } = useApp();
   const cart = useCart();
   const confirm = useConfirm();
-  const [coupon, setCoupon] = useState<string | null>(() => (typeof window === 'undefined' ? null : readSavedCoupon()));
+  // Botdagi “Chegirma bilan olish” tugmasi: /cart?coupon=KOD — kod avtomatik qoʻllanadi
+  const [coupon, setCoupon] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const fromLink = new URLSearchParams(window.location.search).get('coupon')?.trim().toUpperCase();
+    if (fromLink && /^[A-Z0-9_-]{3,32}$/.test(fromLink)) { saveCoupon(fromLink); return fromLink; }
+    return readSavedCoupon();
+  });
   const { quote, loading, error } = useQuote(cart.items, cart.ready, coupon, null);
 
   if (!cart.ready || (loading && !quote && cart.items.length)) return <CartSkeleton />;
@@ -81,7 +89,28 @@ export function CartView() {
           {quote && <Summary quote={quote} loading={loading} />}
         </aside>
       </div>
+      <CartRecommendations ids={cart.items.map((i) => i.productId)} />
     </div>
+  );
+}
+
+/** “Bunga qoʻshib oling”: savatdagi mahsulotlar bilan birga olinganlar (Sozlamalar → Tavsiyalar). */
+function CartRecommendations({ ids }: { ids: string[] }) {
+  const key = [...new Set(ids)].sort().join(',');
+  const [data, setData] = useState<{ title: string; items: ProductCardType[] } | null>(null);
+  useEffect(() => {
+    if (!key) return;
+    let alive = true;
+    fetch(`/api/recommend?ids=${key}`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive) setData(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [key]);
+  const items = (data?.items ?? []).filter((p) => !ids.includes(p.id));
+  if (!data || items.length < 2) return null;
+  return (
+    <section className="mt-8">
+      <h2 className="mb-3 text-lg font-semibold tracking-tight">{data.title}</h2>
+      <ProductRail products={items} />
+    </section>
   );
 }
 
