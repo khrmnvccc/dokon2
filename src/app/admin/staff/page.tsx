@@ -5,6 +5,7 @@ import { StaffManager } from '@/components/admin/staff-manager';
 import { ROLE_LABELS } from '@/lib/admin/nav';
 import type { StaffRow } from '@/components/admin/staff-access';
 import { getBranchState } from '@/lib/admin/branch';
+import { getServiceSupabase } from '@/lib/supabase/admin';
 
 export const metadata = { title: 'Xodimlar va rollar' };
 
@@ -25,13 +26,24 @@ export default async function StaffPage() {
     supabase.from('role_permissions').select('role, permission'),
     getBranchState(),
   ]);
+  // Telegram orqali kirgan xodimlarda email ichki (tg…@telegram.user): roʻyxatda ID, telefon va Telegram holati koʻrsatiladi.
+  const rows = (staff ?? []) as StaffRow[];
+  const ids = rows.map((r) => r.user_id);
+  const service = getServiceSupabase();
+  const [{ data: extra }, { data: tgLinked }] = ids.length ? await Promise.all([
+    service.from('profiles').select('id, client_no, phone').in('id', ids),
+    service.from('telegram_people').select('user_id').in('user_id', ids),
+  ]) : [{ data: [] }, { data: [] }];
+  const extraBy = new Map((extra ?? []).map((e) => [e.id as string, e as { client_no: number | null; phone: string | null }]));
+  const tgSet = new Set((tgLinked ?? []).map((t) => t.user_id as string));
+  const enriched = rows.map((r) => ({ ...r, client_no: extraBy.get(r.user_id)?.client_no ?? null, phone: extraBy.get(r.user_id)?.phone ?? null, telegram: tgSet.has(r.user_id) }));
   const roles = Object.keys(ROLE_LABELS);
   const perms = Object.keys(PERM_LABELS);
   const has = new Set((matrix ?? []).map((m) => `${m.role}:${m.permission}`));
   return (
     <div>
-      <PageHeader title="Xodimlar va rollar" description="Rol berish uchun xodim avval saytda oddiy foydalanuvchi sifatida ro‘yxatdan o‘tishi kerak." />
-      <StaffManager staff={(staff ?? []) as StaffRow[]} currentEmail={ctx.email} myPerms={[...ctx.permissions]}
+      <PageHeader title="Xodimlar va rollar" description="Xodim avval doʻkon botini ochib roʻyxatdan oʻtadi, soʻng uning ID raqami yoki telefoni bilan rol beriladi. Gmail shart emas." />
+      <StaffManager staff={enriched} currentEmail={ctx.email} myPerms={[...ctx.permissions]}
         isOwner={ctx.roles.includes('super_admin')} branches={branch.all.filter((b) => b.is_active).map(({ id, name }) => ({ id, name }))} />
       <Panel title="Rollar va ruxsatlar" className="mt-4" padded={false}>
         <div className="overflow-x-auto">
