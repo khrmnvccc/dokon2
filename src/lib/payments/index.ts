@@ -1,43 +1,43 @@
 import 'server-only';
-// To'lov provayderlari uchun kengaytiriladigan arxitektura.
-// Hozircha naqd va yetkazib berishda to'lov ishlaydi. Click/Payme ulanishi uchun merchant hisob va
-// kalitlar kerak: ular .env.local orqali beriladi va provayder modulini yozish kerak (README ga qarang).
-// Kalitlar bo'lmasa provayder "ulanmagan" hisoblanadi va checkout'da ko'rinmaydi. Soxta "to'landi" javobi yo'q.
+// Onlayn toʻlov (Click / Payme). Kalitlar Ega tomonidan admin panelda kiritiladi (app_meta 'payments').
+// Kalit kiritilmagan yoki oʻchirilgan provayder “ulanmagan” hisoblanadi va checkout'da koʻrinmaydi.
+// Toʻlov holatini faqat provayderning serverdan-serverga soʻrovi (imzo/kalit bilan) oʻzgartiradi — soxta “toʻlandi” yoʻq.
 
 import type { PaymentMethod } from '@/lib/types';
+import { SITE_URL } from '@/lib/env';
+import { getPaymentKeys, providerReady, type PaymentKeys } from './config';
 
-export interface PaymentSession {
-  redirectUrl: string;
-}
+export type OnlineProvider = 'click' | 'payme';
+export const PROVIDER_LABEL: Record<string, string> = { click: 'Click', payme: 'Payme', uzum: 'Uzum' };
 
-export interface PaymentProvider {
-  id: 'click' | 'payme' | 'uzum';
-  isConfigured(): boolean;
-  /** To'lov sahifasiga yo'naltirish havolasini yaratish */
-  createPayment(order: { id: string; number: number; total: number }): Promise<PaymentSession>;
-}
-
-class NotImplementedProvider implements PaymentProvider {
-  // Integratsiya kodi yozilganda true qilinadi. Kalitlar bo'lsa ham, kod bo'lmasa ulanmagan hisoblanadi.
-  private readonly implemented: boolean = false;
-  constructor(public id: PaymentProvider['id'], private envKeys: string[]) {}
-  isConfigured() {
-    return this.implemented && this.envKeys.every((k) => Boolean(process.env[k]));
-  }
-  async createPayment(): Promise<PaymentSession> {
-    throw new Error(`${this.id} to'lov provayderi hali ulanmagan`);
-  }
-}
-
-export const providers: Record<PaymentProvider['id'], PaymentProvider> = {
-  click: new NotImplementedProvider('click', ['CLICK_SERVICE_ID', 'CLICK_MERCHANT_ID', 'CLICK_SECRET_KEY']),
-  payme: new NotImplementedProvider('payme', ['PAYME_MERCHANT_ID', 'PAYME_SECRET_KEY']),
-  uzum: new NotImplementedProvider('uzum', ['UZUM_TERMINAL_ID', 'UZUM_API_KEY']),
-};
-
-/** Checkout'da ko'rsatish mumkin bo'lgan to'lov usuli: offline yoki ulangan onlayn provayder */
-export function isPaymentMethodUsable(method: PaymentMethod): boolean {
+/** Checkout'da koʻrsatish mumkin bo'lgan to'lov usuli: offline yoki ulangan onlayn provayder */
+export function isPaymentMethodUsable(method: PaymentMethod, keys: PaymentKeys): boolean {
   if (!method.is_active) return false;
   if (method.kind !== 'online') return true;
-  return Boolean(method.provider && providers[method.provider]?.isConfigured());
+  return providerReady(keys, method.provider);
+}
+
+export async function usablePaymentMethods(methods: PaymentMethod[]) {
+  const keys = await getPaymentKeys();
+  return methods.filter((m) => isPaymentMethodUsable(m, keys));
+}
+
+/** Provayderning toʻlov sahifasi havolasi. Summa — soʻmda. */
+export function providerPayUrl(keys: PaymentKeys, provider: OnlineProvider, order: { number: number; total: number }, returnPath: string): string | null {
+  const back = `${SITE_URL}${returnPath}`;
+  if (provider === 'payme') {
+    const k = keys.payme;
+    const params = `m=${k.merchant_id};ac.${k.account_field}=${order.number};a=${Math.round(order.total * 100)};c=${back};l=uz`;
+    const host = k.test_mode ? 'https://checkout.test.paycom.uz' : 'https://checkout.paycom.uz';
+    return `${host}/${Buffer.from(params).toString('base64')}`;
+  }
+  if (provider === 'click') {
+    const k = keys.click;
+    const q = new URLSearchParams({
+      service_id: k.service_id, merchant_id: k.merchant_id, amount: String(order.total), transaction_param: String(order.number), return_url: back,
+    });
+    if (k.merchant_user_id) q.set('merchant_user_id', k.merchant_user_id);
+    return `https://my.click.uz/services/pay?${q}`;
+  }
+  return null;
 }

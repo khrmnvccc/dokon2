@@ -99,6 +99,83 @@ export const settingsSchemas = {
   }),
   // Har sahifadagi bloklar oʻlchami (tahrir rejimidagi S/M/L): {"product.gallery": "lg"}. md — saqlanmaydi.
   block_sizes: z.record(z.string().regex(/^[a-z0-9_.-]{1,60}$/), z.enum(['sm', 'lg'])).refine((r) => Object.keys(r).length <= 200),
+  // Tashlab ketilgan savat: botdan eslatma (+ ixtiyoriy shaxsiy kupon). Marketing → Savat eslatmasi.
+  cart_reminder: z.object({
+    enabled: z.boolean().default(false),
+    /** Savat oxirgi oʻzgarganidan necha soat keyin eslatiladi */
+    delay_hours: z.coerce.number().int().min(1).max(168).default(3),
+    /** Ikkinchi eslatma (0 — yoʻq): birinchisidan necha soat keyin */
+    second_after_hours: z.coerce.number().int().min(0).max(336).default(24),
+    min_cart_total: z.coerce.number().int().min(0).default(0),
+    coupon: z.object({
+      enabled: z.boolean().default(true),
+      /** Qaysi eslatmada kupon beriladi: 1 — birinchisida, 2 — ikkinchisida */
+      on_step: z.coerce.number().int().min(1).max(2).default(2),
+      type: z.enum(['percent', 'fixed']).default('percent'),
+      value: z.coerce.number().int().min(1).max(100_000_000).default(5),
+      max_discount: z.coerce.number().int().min(0).default(0),
+      min_order: z.coerce.number().int().min(0).default(0),
+      days: z.coerce.number().int().min(1).max(90).default(3),
+    }).default({}),
+    /** Tunda yozmaslik (Toshkent vaqti) */
+    quiet_from: z.coerce.number().int().min(0).max(23).default(22),
+    quiet_to: z.coerce.number().int().min(0).max(23).default(9),
+  }),
+  // Ombor: kam qoldiq ogohlantirishi va “Kelganda xabar ber”. Katalog → Ombor → Sozlamalar.
+  stock_alerts: z.object({
+    low_alert: z.boolean().default(true),
+    out_alert: z.boolean().default(true),
+    include_variants: z.boolean().default(true),
+    default_threshold: z.coerce.number().int().min(0).max(100_000).default(5),
+    /** Kechki hisobotga kam qolganlar roʻyxati */
+    in_daily_report: z.boolean().default(true),
+    restock_enabled: z.boolean().default(true),
+    /** Mahsulot sahifasida “Kelganda xabar ber” tugmasi */
+    restock_button: z.boolean().default(true),
+    /** Sevimlilarga qoʻshganlarga ham qayta kelganda xabar */
+    restock_wishlist: z.boolean().default(true),
+  }),
+  // Tavsiyalar: mahsulot sahifasi va savatchada. Sozlamalar → Tavsiyalar.
+  recommendations: z.object({
+    similar_enabled: z.boolean().default(true),
+    similar_title: z.string().trim().max(60).default('Bunga oʻxshash'),
+    similar_limit: z.coerce.number().int().min(2).max(20).default(10),
+    together_enabled: z.boolean().default(true),
+    together_title: z.string().trim().max(60).default('Birga olinadi'),
+    together_limit: z.coerce.number().int().min(2).max(20).default(8),
+    cart_enabled: z.boolean().default(true),
+    cart_title: z.string().trim().max(60).default('Bunga qoʻshib oling'),
+    /** Sotuvi boʻlmasa — oʻsha kategoriyadagi xitlar bilan toʻldirish */
+    fill_with_popular: z.boolean().default(true),
+  }),
+  // Kargo: yuk bosqichlari (mijoz koʻradi), trek boʻyicha kuzatish. Savdo → Kargo.
+  cargo: z.object({
+    enabled: z.boolean().default(true),
+    notify: z.boolean().default(true),
+    track_by_number: z.boolean().default(true),
+    /** Tashuvchi saytidagi kuzatish havolasi: {{trek}} oʻrniga trek raqami qoʻyiladi (boʻsh — yoʻq) */
+    carrier_url: z.string().trim().max(300).default(''),
+    stages: z.array(z.object({
+      key: z.string().regex(/^[a-z0-9_]{1,30}$/),
+      label: z.string().trim().min(1).max(60),
+      icon: z.enum(['warehouse', 'plane', 'truck', 'border', 'customs', 'pin', 'box', 'check']).default('box'),
+      /** Shu bosqichda buyurtma holati ham oʻzgaradi */
+      status: z.enum(['none', 'shipped', 'arrived']).default('none'),
+    })).min(1).max(15),
+  }),
+  // Avtomatik hisobotlar (admin botiga). Hisobotlar → Avtomatik.
+  reports_auto: z.object({
+    daily: z.boolean().default(true),
+    daily_hour: z.coerce.number().int().min(0).max(23).default(21),
+    weekly: z.boolean().default(false),
+    monthly: z.boolean().default(true),
+    top_count: z.coerce.number().int().min(0).max(10).default(3),
+  }),
+  // Onlayn toʻlov (Click/Payme) — sirli boʻlmagan qismi. Kalitlar app_meta 'payments' da.
+  online_payments: z.object({
+    auto_confirm: z.boolean().default(true),
+    redirect_after_checkout: z.boolean().default(true),
+  }),
   // Sayt matnlarining ruscha tarjimasi: {"ru": {"announcement.text": "…"}} (Sozlamalar → Tarjimalar).
   translations: z.object({ ru: z.record(z.string().max(120), z.string().max(2000)).default({}) }),
 };
@@ -122,6 +199,31 @@ export const defaultSettings: SiteSettings = {
   advantages: [],
   announcement: { enabled: false, text: '', link: null },
   translations: { ru: {} },
+  cart_reminder: {
+    enabled: false, delay_hours: 3, second_after_hours: 24, min_cart_total: 0, quiet_from: 22, quiet_to: 9,
+    coupon: { enabled: true, on_step: 2, type: 'percent', value: 5, max_discount: 0, min_order: 0, days: 3 },
+  },
+  stock_alerts: {
+    low_alert: true, out_alert: true, include_variants: true, default_threshold: 5, in_daily_report: true,
+    restock_enabled: true, restock_button: true, restock_wishlist: true,
+  },
+  recommendations: {
+    similar_enabled: true, similar_title: 'Bunga oʻxshash', similar_limit: 10,
+    together_enabled: true, together_title: 'Birga olinadi', together_limit: 8,
+    cart_enabled: true, cart_title: 'Bunga qoʻshib oling', fill_with_popular: true,
+  },
+  cargo: {
+    enabled: true, notify: true, track_by_number: true, carrier_url: '',
+    stages: [
+      { key: 'china_warehouse', label: 'Xitoy omborida', icon: 'warehouse', status: 'none' },
+      { key: 'sent', label: 'Xitoydan joʻnatildi', icon: 'truck', status: 'shipped' },
+      { key: 'border', label: 'Chegarada', icon: 'border', status: 'none' },
+      { key: 'customs', label: 'Bojxonada', icon: 'customs', status: 'none' },
+      { key: 'tashkent', label: 'Toshkent omborida', icon: 'pin', status: 'arrived' },
+    ],
+  },
+  reports_auto: { daily: true, daily_hour: 21, weekly: false, monthly: true, top_count: 3 },
+  online_payments: { auto_confirm: true, redirect_after_checkout: true },
   block_sizes: {},
   help_center: {
     support_title: 'Telegram qoʻllab-quvvatlash', status: 'Onlayn · hozir javob beradi', reply_time: '~2 daq', hours: '24 / 7',

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { getPaymentMethods, getSettings, getShippingMethods } from '@/lib/data/public';
 import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { isPaymentMethodUsable } from '@/lib/payments';
+import { usablePaymentMethods } from '@/lib/payments';
 import { CheckoutForm } from '@/components/shop/checkout-form';
 import type { Address } from '@/lib/types';
 
@@ -26,7 +26,7 @@ export default async function CheckoutPage() {
     <CheckoutForm
       shippingMethods={shipping}
       // Ulanmagan onlayn to'lovlar (Click/Payme) ko'rsatilmaydi
-      paymentMethods={payments.filter(isPaymentMethodUsable)}
+      paymentMethods={await usablePaymentMethods(payments)}
       addresses={addresses}
       defaults={{ name: profile?.full_name ?? '', phone: profile?.phone ?? '', email: visibleEmail(profile?.email ?? user?.email) ?? '' }}
       isGuest={!user}

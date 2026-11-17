@@ -10,7 +10,8 @@ import type { Address } from '@/lib/types';
 import { OrderDetails, type PublicOrder } from '@/components/shop/order-view';
 import { CancelOrderButton } from '@/components/shop/account-forms';
 import { CardPayment } from '@/components/payment/card-payment';
-import { getOrderPayment } from '@/lib/payments/receipts';
+import { getOnlinePayment, getOrderPayment } from '@/lib/payments/receipts';
+import { OnlinePay } from '@/components/payment/online-pay';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -31,7 +32,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       raw.status === 'delivered' ? supabase.from('reviews').select('product_id, rating').in('product_id', ids).eq('user_id', user.id) : Promise.resolve({ data: [] as { product_id: string; rating: number }[] }),
     ])
     : [{ data: [] as { id: string }[] }, { data: [] as { product_id: string; rating: number }[] }];
-  const payment = await getOrderPayment(raw.id).catch(() => null);
+  const [payment, online] = await Promise.all([getOrderPayment(raw.id).catch(() => null), getOnlinePayment(raw.id).catch(() => null)]);
   const needsChoice = raw.status === 'arrived';
   const [methods, { data: addrs }] = needsChoice
     ? await Promise.all([getShippingMethods(), supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false })])
@@ -46,6 +47,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     <div>
       <Link href="/account/orders" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink"><ChevronLeft className="h-4 w-4" /> {L("Buyurtmalarim")}</Link>
       {payment && <div className="mb-4"><CardPayment data={payment} symbol={settings.localization.currency_symbol} /></div>}
+      {online && (online.payable || online.paid) && <div className="mb-4"><OnlinePay data={online} symbol={settings.localization.currency_symbol} /></div>}
       {(order.status === 'arrived' || order.status === 'delivered') && (
         <div className="mb-4">
           <FulfillmentPanel

@@ -63,3 +63,22 @@ export async function getReceiptsForStaff(orderId: string) {
   }));
 }
 export type StaffReceipt = Awaited<ReturnType<typeof getReceiptsForStaff>>[number];
+
+export interface OnlinePaymentInfo { orderId: string; provider: 'click' | 'payme'; label: string; total: number; paid: boolean; payable: boolean; href: string }
+
+/** Click / Payme bilan berilgan buyurtma: “Toʻlash” tugmasi uchun. Onlayn boʻlmasa null. */
+export async function getOnlinePayment(orderId: string, token?: string | null): Promise<OnlinePaymentInfo | null> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const o = await loadOrderAccess(orderId);
+  if (!o?.payment_method_id) return null;
+  const { data: pm } = await db().from('payment_methods').select('kind, provider, name').eq('id', o.payment_method_id).maybeSingle();
+  if (pm?.kind !== 'online' || (pm.provider !== 'click' && pm.provider !== 'payme')) return null;
+  const { getPaymentKeys, providerReady } = await import('./config');
+  const ready = providerReady(await getPaymentKeys(), pm.provider);
+  const paid = o.payment_status === 'paid';
+  return {
+    orderId, provider: pm.provider, label: pm.name as string, total: Number(o.total), paid,
+    payable: ready && !paid && o.status !== 'cancelled' && o.status !== 'returned',
+    href: `/api/pay/go/${o.id}${token ? `?t=${encodeURIComponent(token)}` : ''}`,
+  };
+}

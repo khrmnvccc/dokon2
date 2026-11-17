@@ -460,6 +460,7 @@ function ChatRow({ label, checked, disabled, onChange }: { label: string; checke
 // ---------- Mijozga xabarlar (doʻkon boti) ----------
 const CUSTOMER_ICONS: Record<CustomerMsgKey, LucideIcon> = {
   orderNew: ShoppingCart, awaitPayment: CreditCard, paid: BadgeCheck, receiptRejected: XCircle, confirmed: CheckCircle2, processing: Package, shipped: Truck, arrived: MapPin, deliveryApproved: Truck, pickupReady: Store, delivered: Gift, cancelled: Ban, returned: Undo2, coupon: Ticket, referralInvite: Users,
+  awaitOnline: CreditCard, cartReminder: ShoppingCart, cartCoupon: Ticket, backInStock: Package, cargoUpdate: Truck,
 };
 
 function CustomerTab({ data }: { data: MessagesData }) {

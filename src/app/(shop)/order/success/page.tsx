@@ -9,7 +9,8 @@ import { buttonClass } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/misc';
 import { OrderDetails, type PublicOrder } from '@/components/shop/order-view';
 import { CardPayment } from '@/components/payment/card-payment';
-import { getOrderPayment } from '@/lib/payments/receipts';
+import { getOnlinePayment, getOrderPayment } from '@/lib/payments/receipts';
+import { OnlinePay } from '@/components/payment/online-pay';
 
 export const metadata: Metadata = { title: 'Buyurtma qabul qilindi', robots: { index: false } };
 
@@ -27,7 +28,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
       action={<Link href="/track" className={buttonClass('primary')}>{L("Buyurtmani kuzatish")}</Link>} />;
   }
 
-  const payment = await getOrderPayment(order.id).catch(() => null);
+  const [payment, online] = await Promise.all([getOrderPayment(order.id).catch(() => null), getOnlinePayment(order.id, token).catch(() => null)]);
   return (
     <div className="mx-auto max-w-3xl">
       {payment && payment.paymentStatus !== 'paid' ? (
@@ -53,6 +54,7 @@ export default async function OrderSuccessPage({ searchParams }: { searchParams:
       </div>
       )}
       {payment && <div className="mb-4"><CardPayment data={payment} token={token} symbol={settings.localization.currency_symbol} /></div>}
+      {online && (online.payable || online.paid) && <div className="mb-4"><OnlinePay data={online} symbol={settings.localization.currency_symbol} /></div>}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
     </div>
   );

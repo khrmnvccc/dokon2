@@ -74,6 +74,16 @@ export async function onOrderUpdate(orderId: string, change: { status?: OrderSta
   if (change.payment === 'refunded' || change.payment === 'failed') await notify('paymentVoid', { ...base(o), kim: change.by }, { link: `/admin/orders/${o.id}` });
 }
 
+/** Click / Payme toʻlovi tushdi: mijozga “Toʻlov tasdiqlandi”, xodimlarga “Toʻlov qabul qilindi”. */
+export async function onOnlinePaid(orderId: string, provider: 'click' | 'payme') {
+  await notifyCustomer(orderId, 'paid');
+  await notifyReferralRewards();
+  if (!(await getTelegram())?.chatId) return;
+  const o = await loadOrder(orderId);
+  if (!o) return;
+  await notify('paymentReceived', { ...base(o), kim: provider === 'click' ? 'Click' : 'Payme' }, { link: `/admin/orders/${o.id}` });
+}
+
 /** Mijoz “Oʻzbekistonda” boʻlgan buyurtma uchun yetkazishga ariza qoldirdi yoki olib ketishni tanladi. */
 export async function onDeliveryRequest(orderId: string) {
   if (!(await getTelegram())?.chatId) return;

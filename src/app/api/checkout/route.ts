@@ -7,6 +7,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { getCurrentProfile, getCurrentUser } from '@/lib/auth';
 import { getPaymentMethods, getSettings } from '@/lib/data/public';
 import { isPaymentMethodUsable } from '@/lib/payments';
+import { getPaymentKeys } from '@/lib/payments/config';
 import { getClientIp, rateLimit } from '@/lib/rate-limit';
 import { couponErrorText, lineErrorText } from '@/lib/pricing';
 import { formatPrice } from '@/lib/format';
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     return fail('Yetkazib berish manzilini kiriting', 400, { fieldErrors: { 'address.street': 'Manzilni kiriting' } });
   }
   const paymentMethod = (await getPaymentMethods()).find((m) => m.id === input.paymentMethodId);
-  if (!paymentMethod || !isPaymentMethodUsable(paymentMethod)) return fail('Bu to‘lov usuli hozir mavjud emas', 400);
+  if (!paymentMethod || !isPaymentMethodUsable(paymentMethod, await getPaymentKeys())) return fail('Bu to‘lov usuli hozir mavjud emas', 400);
 
   const lineError = quote.lines.find((l) => l.error);
   if (lineError) {
@@ -135,5 +136,8 @@ export async function POST(request: Request) {
   revalidateTag(TAGS.products);
   // Telegram: javobni kutdirmaydi, fonda yuboriladi.
   if (!order.duplicate) after(() => onNewOrder(order.id));
-  return NextResponse.json({ ok: true, number: order.number, token: order.token });
+  // Onlayn toʻlov: buyurtmadan soʻng darhol Click / Payme sahifasiga (sozlamada oʻchirsa boʻladi)
+  const payUrl = paymentMethod.kind === 'online' && settings.online_payments.redirect_after_checkout
+    ? `/api/pay/go/${order.id}?t=${order.token}` : null;
+  return NextResponse.json({ ok: true, number: order.number, token: order.token, payUrl });
 }

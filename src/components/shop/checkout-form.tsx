@@ -145,6 +145,8 @@ export function CheckoutForm({ shippingMethods, paymentMethods, addresses, defau
       done.current = true;
       cart.clear();
       saveCoupon(null);
+      // Onlayn toʻlov (Click / Payme): toʻlov sahifasiga, toʻlagach mijoz buyurtma sahifasiga qaytadi
+      if (typeof data.payUrl === 'string' && data.payUrl.startsWith('/api/pay/go/')) { window.location.assign(data.payUrl); return; }
       router.replace(`/order/success?token=${encodeURIComponent(data.token)}`);
     } catch {
       // Tarmoq xatosi: bir xil idempotency kalit bilan qayta yuborish xavfsiz (dublikat yaratilmaydi)
