@@ -199,7 +199,8 @@ export function customerImage(siteUrl: string, key: CustomerMsgKey, setting: Cus
   const img = setting?.image;
   if (img === 'none') return null;
   if (img && /^https:\/\//i.test(img)) return img;
-  return `${siteUrl}/api/tg-card/${key}${extra}`;
+  // v — rasm dizayni oʻzgarganda Telegram eski rasmni keshdan bermasligi uchun
+  return `${siteUrl}/api/tg-card/${key}${extra}${extra.includes('?') ? '&' : '?'}v=2`;
 }
 
 /** Oʻz rasmi uchun manzilni tekshiradi: faqat https, uzun emas. */
