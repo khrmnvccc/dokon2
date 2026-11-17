@@ -482,20 +482,27 @@ $$;
 -- Kalit app_meta 'jobs_key' da (bir marta yaratiladi), soʻrov sarlavhasida yuboriladi.
 -- ---------------------------------------------------------------------
 insert into public.app_meta (key, value)
-values ('jobs_key', to_jsonb(encode(extensions.gen_random_bytes(24), 'hex')))
+values ('jobs_key', to_jsonb(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '')))
 on conflict (key) do nothing;
 insert into public.app_meta (key, value)
 values ('jobs_url', '"https://dokon2.vercel.app/api/cron/jobs"')
 on conflict (key) do nothing;
 
-create extension if not exists pg_cron;
-create extension if not exists pg_net with schema extensions;
-
--- Har 10 daqiqada (manzil va kalit app_meta dan oʻqiladi — matnda sir yoʻq)
-select cron.schedule('dokon-jobs', '*/10 * * * *', $job$
-  select net.http_get(
-    url := (select value #>> '{}' from public.app_meta where key = 'jobs_url'),
-    headers := jsonb_build_object('x-jobs-key', (select value #>> '{}' from public.app_meta where key = 'jobs_key')),
-    timeout_milliseconds := 60000
-  );
-$job$);
+-- pg_cron va pg_net boʻlsa (Supabase’da bor) — jadval yaratiladi; oddiy Postgres (testlar) da oʻtkazib yuboriladi.
+do $do$
+begin
+  if exists (select 1 from pg_available_extensions where name = 'pg_cron')
+     and exists (select 1 from pg_available_extensions where name = 'pg_net') then
+    create extension if not exists pg_cron;
+    create extension if not exists pg_net with schema extensions;
+    -- Har 10 daqiqada (manzil va kalit app_meta dan oʻqiladi — matnda sir yoʻq)
+    perform cron.schedule('dokon-jobs', '*/10 * * * *', $job$
+      select net.http_get(
+        url := (select value #>> '{}' from public.app_meta where key = 'jobs_url'),
+        headers := jsonb_build_object('x-jobs-key', (select value #>> '{}' from public.app_meta where key = 'jobs_key')),
+        timeout_milliseconds := 60000
+      );
+    $job$);
+  end if;
+end
+$do$;
