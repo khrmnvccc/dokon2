@@ -7,6 +7,7 @@ import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify, type TgPhoto } from './server';
 import { notifyCustomer, notifyReferralRewards, sendToUser } from './shop-bot';
 import { processStockEvents } from '@/lib/jobs/stock';
+import { notifyOrderSms } from '@/lib/sms/notify';
 import type { OrderStatus } from '@/lib/types';
 
 // Doʻkon hodisalari → Telegram. Hammasi after() ichida chaqiriladi: xaridor va xodim kutmaydi,
@@ -34,6 +35,7 @@ const base = (o: OrderRow) => ({
 
 export async function onNewOrder(orderId: string) {
   await notifyCustomer(orderId, 'new');
+  await notifyOrderSms(orderId, 'orderNew');
   // Buyurtmadan keyin qoldiq kamaygan boʻlsa — darhol ogohlantirish (fon ishini kutmasdan)
   await processStockEvents().catch((e) => console.error('stock events', e));
   if (!(await getTelegram())?.chatId) return;
@@ -53,6 +55,8 @@ export async function onNewOrder(orderId: string) {
 
 export async function onOrderUpdate(orderId: string, change: { status?: OrderStatus | null; payment?: string | null; note?: string | null; by: string }) {
   if (change.status) await notifyCustomer(orderId, change.status);
+  if (change.status) await notifyOrderSms(orderId, change.status);
+  if (change.payment === 'paid') await notifyOrderSms(orderId, 'paid');
   // Doʻst taklifi: holat oʻzgarishi bilan bazada yaratilgan bosqich kuponlarini egasiga yuborish
   if (change.status) await notifyReferralRewards();
   if (change.status === 'delivered') await notifyBonusEarned(orderId).catch((e) => console.error('bonus notify', e));
@@ -81,6 +85,7 @@ async function notifyBonusEarned(orderId: string) {
 /** Click / Payme toʻlovi tushdi: mijozga “Toʻlov tasdiqlandi”, xodimlarga “Toʻlov qabul qilindi”. */
 export async function onOnlinePaid(orderId: string, provider: 'click' | 'payme') {
   await notifyCustomer(orderId, 'paid');
+  await notifyOrderSms(orderId, 'paid');
   await notifyReferralRewards();
   if (!(await getTelegram())?.chatId) return;
   const o = await loadOrder(orderId);

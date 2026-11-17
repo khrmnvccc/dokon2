@@ -6,6 +6,7 @@ import { ADMIN_URL } from '@/lib/env';
 import { getTelegram, notify } from '@/lib/telegram/server';
 import { sendToUser } from '@/lib/telegram/shop-bot';
 import { linkHost, type ImportRequestRow } from './import-requests';
+import { notifyImportSms } from '@/lib/sms/notify';
 
 const BUCKET = 'import-requests';
 const db = () => getServiceSupabase();
@@ -64,6 +65,7 @@ export async function notifyImportCustomer(id: string) {
     } else if (r.status === 'rejected') {
       await sendToUser(r.user_id, 'importRejected', { sorov: r.number, sabab: r.reject_reason ?? '' }, '/account/requests', `soʻrov:${r.number}`);
     }
+    if (r.status === 'quoted') await notifyImportSms(r.id);
     await db().from('notifications').insert({
       user_id: r.user_id, type: 'import',
       title: r.status === 'quoted' ? `Soʻrov №${r.number}: narx tayyor` : `Soʻrov №${r.number} rad etildi`,
