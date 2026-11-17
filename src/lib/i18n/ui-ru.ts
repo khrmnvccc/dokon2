@@ -421,6 +421,17 @@ export const UI_RU: Record<string, string> = {
   'Hisobingiz bloklangan': 'Ваш аккаунт заблокирован', 'Yangi buyurtma berib boʻlmaydi.': 'Новые заказы оформить нельзя.',
   'Operatorimiz tez orada qoʻngʻiroq qilib, buyurtmani tasdiqlaydi:': 'Оператор скоро позвонит, чтобы подтвердить заказ:',
   'Chegirmalar': 'Скидки', 'Amal qiladi:': 'Действует:', 'Sabab:': 'Причина:', 'dona': 'шт.',
+  // Onlayn toʻlov, “Kelganda xabar ber”, tavsiyalar, kargo
+  'Toʻlov qabul qilindi': 'Оплата получена', 'Toʻlov kutilmoqda': 'Ожидается оплата', 'orqali toʻlash': '— оплатить',
+  'Toʻlov tushishi bilan buyurtma avtomatik tasdiqlanadi': 'Заказ подтвердится автоматически после оплаты',
+  'Mahsulot kelishi bilan xabar beramiz': 'Сообщим, как только товар появится', 'Kelganda xabar beramiz ✓': 'Сообщим о поступлении ✓',
+  'Kelganda xabar ber': 'Сообщить о поступлении',
+  'Tugagan mahsulot qayta kelsa, Telegram botimiz orqali xabar beramiz': 'Если товар закончился, мы сообщим в Telegram, когда он снова появится',
+  'Birga olinadi': 'Покупают вместе', 'Bunga oʻxshash': 'Похожие товары', 'Bunga qoʻshib oling': 'Добавьте к заказу',
+  'Yuk qayerda': 'Где мой груз', 'Trek:': 'Трек:', 'Tashuvchi saytida kuzatish': 'Отследить на сайте перевозчика',
+  'Buyurtma raqami bilan': 'По номеру заказа', 'Trek raqami bilan': 'По трек-номеру', 'Trek raqami': 'Трек-номер',
+  'Xitoy omborida': 'На складе в Китае', 'Xitoydan joʻnatildi': 'Отправлен из Китая', 'Chegarada': 'На границе',
+  'Bojxonada': 'На таможне', 'Toshkent omborida': 'На складе в Ташкенте',
 };
 
 /** Matnni joriy tilga oʻgiradi (tarjimasi boʻlmasa — oʻzbekchasi). */

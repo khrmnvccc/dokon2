@@ -14,6 +14,9 @@ import { ReceiptReview } from '@/components/admin/receipt-review';
 import { FulfillmentReview } from '@/components/admin/fulfillment-review';
 import { getReceiptsForStaff, methodCard } from '@/lib/payments/receipts';
 import { ProductImage } from '@/components/shop/product-image';
+import { CargoOrderControl } from '@/components/admin/cargo-ui';
+import { getRawSettings } from '@/lib/data/public';
+import { getServiceSupabase } from '@/lib/supabase/admin';
 import type { Order, OrderItem, OrderStatus } from '@/lib/types';
 
 export const metadata = { title: 'Buyurtma' };
@@ -46,6 +49,16 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   // Kartaga oʻtkazma: chek rasmlari (yopiq bucket, 10 daqiqalik havola)
   const card = process.env.SUPABASE_SERVICE_ROLE_KEY ? await methodCard(o.payment_method_id ?? null).catch(() => null) : null;
   const receipts = card ? await getReceiptsForStaff(o.id).catch(() => []) : [];
+  // Kargo bosqichlari va onlayn toʻlov tranzaksiyalari (Click / Payme)
+  const settings = await getRawSettings();
+  const cargo = settings.cargo;
+  const { data: cargoEvents } = await supabase.from('cargo_events').select('id, stage, note, created_at').eq('order_id', o.id).order('created_at');
+  const { data: txs } = process.env.SUPABASE_SERVICE_ROLE_KEY && o.payment_provider
+    ? await getServiceSupabase().from('payment_transactions').select('id, provider, ext_id, amount, state, created_at').eq('order_id', o.id).order('created_at')
+    : { data: null };
+  const TX_STATE: Record<number, string> = { 1: 'kutilmoqda', 2: 'toʻlandi', [-1]: 'bekor qilindi', [-2]: 'qaytarildi' };
+  const stageLabel = (k: string) => cargo.stages.find((s) => s.key === k)?.label ?? k;
+  const showCargo = cargo.enabled && !['cancelled', 'returned', 'new'].includes(o.status);
 
   return (
     <div>
@@ -132,6 +145,31 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               canFulfill={ctx.permissions.has('orders.write') || ctx.permissions.has('orders.fulfill')}
             />
           </Panel>
+          {showCargo && (
+            <Panel title="Kargo: yuk qayerda">
+              {ctx.permissions.has('orders.write') && <CargoOrderControl orderId={o.id} stages={cargo.stages} current={o.cargo_stage ?? null} />}
+              {(cargoEvents ?? []).length > 0 && (
+                <ol className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
+                  {(cargoEvents ?? []).map((e) => (
+                    <li key={e.id} className="flex justify-between gap-2"><span>{stageLabel(e.stage)}{e.note && <span className="block text-xs text-ink-3">{e.note}</span>}</span><span className="shrink-0 text-xs text-ink-3">{formatDateTime(e.created_at)}</span></li>
+                  ))}
+                </ol>
+              )}
+              {!o.tracking_number && <p className="mt-2 text-xs text-ink-3">Trek raqamini “Boshqaruv”da kiriting — mijoz u bilan kuzata oladi.</p>}
+            </Panel>
+          )}
+          {txs && txs.length > 0 && (
+            <Panel title="Onlayn toʻlov">
+              <ul className="space-y-1.5 text-sm">
+                {txs.map((t) => (
+                  <li key={t.id} className="flex justify-between gap-2">
+                    <span>{t.provider === 'click' ? 'Click' : 'Payme'} · {formatPrice(Number(t.amount))}<span className="block font-mono text-xs text-ink-3">{t.ext_id}</span></span>
+                    <span className="shrink-0 text-xs">{TX_STATE[t.state as number] ?? t.state}<span className="block text-ink-3">{formatDateTime(t.created_at)}</span></span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
           <Panel title="Mijoz">
             <dl className="space-y-2 text-sm">
               <div><dt className="text-xs text-ink-3">Ism</dt><dd className="font-medium">{o.customer_name}</dd></div>

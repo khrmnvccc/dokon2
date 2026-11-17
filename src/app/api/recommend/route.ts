@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getBoughtTogether, getSettings } from '@/lib/data/public';
+import { getBoughtTogether, getSettings, currentLang } from '@/lib/data/public';
+import { tr } from '@/lib/i18n/ui-ru';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,5 +12,5 @@ export async function GET(request: Request) {
   const ids = (new URL(request.url).searchParams.get('ids') ?? '').split(',').filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 30);
   if (!ids.length) return NextResponse.json({ title: rec.cart_title, items: [] });
   const items = await getBoughtTogether(ids, rec.together_limit, rec.fill_with_popular);
-  return NextResponse.json({ title: rec.cart_title, items }, { headers: { 'cache-control': 'private, max-age=60' } });
+  return NextResponse.json({ title: tr(await currentLang(), rec.cart_title), items }, { headers: { 'cache-control': 'private, max-age=60' } });
 }

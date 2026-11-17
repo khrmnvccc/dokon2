@@ -12,6 +12,7 @@ import { CancelOrderButton } from '@/components/shop/account-forms';
 import { CardPayment } from '@/components/payment/card-payment';
 import { getOnlinePayment, getOrderPayment } from '@/lib/payments/receipts';
 import { OnlinePay } from '@/components/payment/online-pay';
+import { CargoTimeline } from '@/components/shop/cargo-timeline';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -56,6 +57,9 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             addresses={(addrs ?? []) as Address[]}
           />
         </div>
+      )}
+      {settings.cargo.enabled && order.status !== 'cancelled' && order.status !== 'returned' && (
+        <div className="mb-4"><CargoTimeline stages={settings.cargo.stages} events={order.cargo ?? []} current={order.cargo_stage ?? null} tracking={order.tracking_number} carrierUrl={settings.cargo.carrier_url} lang={await getLang()} /></div>
       )}
       <OrderDetails order={order} symbol={settings.localization.currency_symbol} lang={await getLang()} />
       {order.status === 'new' && <div className="mt-4"><CancelOrderButton orderId={order.id} /></div>}

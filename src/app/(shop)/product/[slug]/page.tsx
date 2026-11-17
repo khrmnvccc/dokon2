@@ -158,8 +158,8 @@ export default async function ProductPage({ params }: Props) {
       </section>
       </SizeBlock>
 
-      {togetherShown.length >= 2 && <div className="mt-8"><ProductSection title={rec.together_title || L("Birga olinadi")} products={togetherShown} href="/catalog?sort=popular" /></div>}
-      {related.length > 0 && <div className="mt-8"><ProductSection title={rec.similar_title || L("O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
+      {togetherShown.length >= 2 && <div className="mt-8"><ProductSection title={L(rec.together_title || "Birga olinadi")} products={togetherShown} href="/catalog?sort=popular" /></div>}
+      {related.length > 0 && <div className="mt-8"><ProductSection title={L(rec.similar_title || "O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
     </>
   );
 }

@@ -410,6 +410,33 @@ $$;
 revoke all on function public.track_cargo(text) from public;
 grant execute on function public.track_cargo(text) to anon, authenticated, service_role;
 
+-- Raqam + telefon bilan kuzatishda ham kargo bosqichlari
+create or replace function public.track_order(p_number bigint, p_phone text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare v_order public.orders;
+begin
+  select * into v_order from public.orders where number = p_number and customer_phone = p_phone;
+  if not found then
+    return null;
+  end if;
+  return jsonb_build_object(
+    'number', v_order.number, 'status', v_order.status, 'total', v_order.total, 'items_count', v_order.items_count,
+    'shipping_method_name', v_order.shipping_method_name, 'tracking_number', v_order.tracking_number,
+    'created_at', v_order.created_at, 'cargo_stage', v_order.cargo_stage,
+    'cargo', coalesce((select jsonb_agg(jsonb_build_object('stage', e.stage, 'note', e.note, 'created_at', e.created_at) order by e.created_at)
+                       from public.cargo_events e where e.order_id = v_order.id), '[]'::jsonb),
+    'history', coalesce((
+      select jsonb_agg(jsonb_build_object('status', h.status, 'created_at', h.created_at) order by h.created_at)
+      from public.order_status_history h where h.order_id = v_order.id), '[]'::jsonb)
+  );
+end;
+$$;
+
 -- Mijozga koʻrinadigan buyurtma maʼlumotiga kargo bosqichlari qoʻshiladi
 create or replace function public._order_public_json(p_order public.orders)
 returns jsonb

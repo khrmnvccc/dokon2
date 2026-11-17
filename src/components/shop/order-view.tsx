@@ -38,6 +38,8 @@ export interface PublicOrder {
   created_at: string;
   items: { id: string; product_name: string; variant_name: string | null; image_url: string | null; unit_price: number; quantity: number; line_total: number; slug: string | null; product_id?: string | null; my_rating?: number | null }[];
   history: { status: OrderStatus; note?: string | null; created_at: string }[];
+  cargo_stage?: string | null;
+  cargo?: { stage: string; note: string | null; created_at: string }[];
 }
 
 export function StatusTimeline({ status, history, lang = 'uz' }: { status: OrderStatus; history: { status: OrderStatus; created_at: string }[]; lang?: Lang }) {

@@ -19,6 +19,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     icon: 'ShoppingBag',
     items: [
       { href: '/admin/orders', label: 'Buyurtmalar', icon: 'ShoppingBag', perm: 'orders.read' },
+      { href: '/admin/cargo', label: 'Kargo', icon: 'Plane', perm: 'orders.write' },
       { href: '/admin/customers', label: 'Mijozlar', icon: 'Users', perm: 'customers.read' },
       { href: '/admin/reviews', label: 'Sharhlar', icon: 'MessageSquare', perm: 'reviews.moderate' },
     ],
