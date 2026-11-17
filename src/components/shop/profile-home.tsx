@@ -45,8 +45,8 @@ export function ProfileHome(p: Props) {
     <div className="mx-auto max-w-xl space-y-4">
       {/* Karta */}
       <SizeBlock id="profile.card" label="Profil kartasi">
-      <section className="relative overflow-hidden rounded-[28px] p-4 text-white shadow-pop sm:p-5"
-        style={{ background: 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 70%, #0b1f3a), color-mix(in srgb, var(--primary) 30%, #071426))' }}>
+      <section className="relative overflow-hidden rounded-[28px] p-4 text-[var(--hero-ink)] shadow-pop sm:p-5"
+        style={{ background: 'linear-gradient(140deg, var(--hero-a), var(--hero-b))' }}>
         <svg aria-hidden className="pointer-events-none absolute inset-0 size-full opacity-[0.13]" viewBox="0 0 400 220" preserveAspectRatio="none">
           {Array.from({ length: 14 }, (_, i) => (
             <path key={i} d={`M-20 ${30 + i * 14} C 90 ${-10 + i * 16}, 220 ${90 + i * 10}, 420 ${10 + i * 15}`} fill="none" stroke="white" strokeWidth="1" />
@@ -70,15 +70,15 @@ export function ProfileHome(p: Props) {
         </Link>
         <div className="relative mt-4 grid grid-cols-2 gap-2.5">
           <Link href="/account/referral" className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur transition hover:bg-white/15">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[color-mix(in_srgb,var(--primary)_70%,#0b1f3a)]"><Wallet className="size-5" /></span>
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--hero-a)]"><Wallet className="size-5" /></span>
             <span className="min-w-0">
               <span className="block text-[13px] opacity-80">{L('Hamyon')}</span>
               <span className="num block truncate text-[17px] font-bold">{price(p.wallet)}</span>
             </span>
           </Link>
           <Link href="/account/referral" className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur transition hover:bg-white/15">
-            <span className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-bold text-[color-mix(in_srgb,var(--primary)_70%,#0b1f3a)]"
-              style={{ background: `conic-gradient(var(--primary) ${pct * 360}deg, white 0)` }}>
+            <span className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-bold text-[var(--hero-a)]"
+              style={{ background: `conic-gradient(var(--hero-a) ${pct * 360}deg, white 0)` }}>
               <span className="num flex size-9 items-center justify-center rounded-full bg-white">{p.friends}/{p.goal}</span>
             </span>
             <span className="min-w-0">
@@ -130,7 +130,7 @@ export function ProfileHome(p: Props) {
   );
 }
 
-const TONES = { default: 'bg-surface-2 text-[color-mix(in_srgb,var(--primary)_70%,#0b1f3a)] dark:text-primary', green: 'bg-success-soft text-success', purple: 'bg-[color-mix(in_srgb,#8a3ffc_14%,transparent)] text-[#8a3ffc]' } as const;
+const TONES = { default: 'bg-surface-2 text-[var(--hero-a)] dark:text-primary', green: 'bg-success-soft text-success', purple: 'bg-[color-mix(in_srgb,#8a3ffc_14%,transparent)] text-[#8a3ffc]' } as const;
 
 function Row({ href, onClick, icon: Icon, title, sub, end, tone = 'default' }: {
   href?: string; onClick?: () => void; icon: LucideIcon; title: string; sub?: string; end?: ReactNode; tone?: keyof typeof TONES;

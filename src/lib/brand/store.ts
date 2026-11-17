@@ -21,6 +21,7 @@ function apply(b: BrandSettings) {
     document.head.appendChild(tag);
   }
   tag.textContent = brandCss(b);
+  document.documentElement.dataset.look = b.look;
 }
 
 /** Server yuborgan (saqlangan) ko'rinish. */

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { getSettings } from '@/lib/data/public';
 import { getCurrentProfile, getCurrentUser, getStaffContext } from '@/lib/auth';
@@ -12,6 +12,8 @@ import { brandCss } from '@/lib/brand/css';
 import { themeBoot } from '@/lib/theme-boot';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter', display: 'swap' });
+// Heaven uslubidagi sarlavhalar uchun (logodagi kabi baland kontrastli serif); boshqa uslubda ishlatilmaydi.
+const serif = Playfair_Display({ subsets: ['latin', 'cyrillic'], weight: ['500', '600', '700'], variable: '--font-serif', display: 'swap' });
 
 export async function generateMetadata(): Promise<Metadata> {
   const { seo, store, brand } = await getSettings();
@@ -35,15 +37,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f2f2f7' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
-};
+export async function generateViewport(): Promise<Viewport> {
+  const { brand } = await getSettings();
+  const heaven = brand.look === 'heaven';
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover',
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: heaven ? '#efe9da' : '#f2f2f7' },
+      { media: '(prefers-color-scheme: dark)', color: heaven ? '#1a2318' : '#000000' },
+    ],
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [settings, user, lang] = await Promise.all([getSettings(), getCurrentUser(), getLang()]);
@@ -52,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const brand = settings.brand;
 
   return (
-    <html lang={lang} className={inter.variable} suppressHydrationWarning>
+    <html lang={lang} className={`${inter.variable} ${serif.variable}`} data-look={brand.look} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot(brand.theme, brand.themeLock) }} />
         <style id="brand" dangerouslySetInnerHTML={{ __html: brandCss(brand) }} />

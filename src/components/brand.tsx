@@ -12,7 +12,7 @@ import { Effects } from '@/components/effects';
 /** Egasining logosi yoki standart belgi (asosiy rangdagi dumaloq-kvadrat ichida sumka). */
 export function BrandMark({ brand, className }: { brand: BrandSettings; className?: string }) {
   // eslint-disable-next-line @next/next/no-img-element
-  if (brand.logo) return <img src={brand.logo} alt="" className={cn('w-auto object-contain', className)} />;
+  if (brand.logo) return <img src={brand.logo} alt="" className={cn('w-auto object-contain', brand.look === 'heaven' && 'rounded-[24%]', className)} />;
   return (
     <span className={cn('inline-flex aspect-square items-center justify-center rounded-[28%] bg-primary text-primary-fg shadow-soft', className)} aria-hidden>
       <ShoppingBag className="size-[58%]" strokeWidth={2} />
@@ -27,7 +27,7 @@ export function Logo({ compact, className }: { compact?: boolean; className?: st
     <span className={cn('flex min-w-0 items-center gap-2.5', className)}>
       <BrandMark brand={brand} className={cn('max-w-[72px] shrink-0', compact ? 'h-7' : 'h-8')} />
       <span className="min-w-0 leading-tight">
-        <span className="block truncate text-[15px] font-semibold tracking-tight text-ink">{brand.name}</span>
+        <span className="brand-word block truncate text-[15px] font-semibold tracking-tight text-ink">{brand.name}</span>
         {brand.tagline && <span className={cn('block truncate text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3', compact && 'hidden sm:block')}>{brand.tagline}</span>}
       </span>
     </span>

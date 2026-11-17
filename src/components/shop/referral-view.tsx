@@ -104,7 +104,7 @@ export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyRe
   return (
     <div className="space-y-5">
       {/* Bosqichlar + ulashish (bitta ixcham karta) */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#1d4f80] to-[#0f2f52] text-white shadow-soft">
+      <section className="overflow-hidden rounded-2xl bg-[linear-gradient(135deg,var(--hero-a),var(--hero-b))] text-white shadow-soft">
         <div className="px-4 pt-4 sm:px-5 sm:pt-5">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-[17px] font-semibold tracking-tight">{L('Doʻstni taklif qilish')}</h2>
@@ -121,7 +121,7 @@ export function ReferralView({ data, link, shopName, wallet = [] }: { data: MyRe
           <button type="button" onClick={() => setFriendsOpen(true)} className="flex min-w-0 items-center gap-2 rounded-full py-1 pl-1 pr-2 text-sm font-medium text-white/90 hover:bg-white/10">
             <span className="flex -space-x-2">
               {(data.friends.length ? data.friends.slice(0, 3) : [{ name: '?' }]).map((f, i) => (
-                <span key={i} className="flex size-7 items-center justify-center rounded-full border-2 border-[#163f69] bg-white text-[11px] font-semibold text-[#1d4f80]">{f.name.charAt(0).toUpperCase()}</span>
+                <span key={i} className="flex size-7 items-center justify-center rounded-full border-2 border-[var(--hero-b)] bg-white text-[11px] font-semibold text-[var(--hero-a)]">{f.name.charAt(0).toUpperCase()}</span>
               ))}
             </span>
             <span className="truncate num">{data.friends.length} {L('doʻst')}</span>
@@ -231,7 +231,7 @@ function Ladder({ steps, qualified, partnerCfg, partnerActive, lastFriends }: { 
             <div className="flex w-full items-center">
               <span className={cn('h-0.5 flex-1', i === 0 ? 'bg-transparent' : done || current ? 'bg-white/70' : 'bg-white/20')} />
               <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition',
-                done ? 'border-white bg-white text-[#1d4f80]' : current ? 'border-[#ffd34d] bg-[#ffd34d]/20 text-[#ffd34d] ring-4 ring-[#ffd34d]/20' : 'border-white/25 text-white/50')}>
+                done ? 'border-white bg-white text-[var(--hero-a)]' : current ? 'border-[#ffd34d] bg-[#ffd34d]/20 text-[#ffd34d] ring-4 ring-[#ffd34d]/20' : 'border-white/25 text-white/50')}>
                 {done ? <Check className="size-5" strokeWidth={3} /> : current ? <Gift className="size-5" /> : <Lock className="size-4" />}
               </span>
               <span className={cn('h-0.5 flex-1', done ? 'bg-white/70' : 'bg-white/20')} />

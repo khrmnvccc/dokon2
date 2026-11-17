@@ -28,7 +28,14 @@ export interface BrandSettings {
   theme: 'system' | 'light' | 'dark';
   /** true: shoppers can't switch the mode themselves (the moon/sun button is hidden on the shop). */
   themeLock: boolean;
+  /** Whole-site style: 'classic' (iOS-like blue/grey) or 'heaven' (forest green + ivory, serif titles — like the Heaven Baddies logo). */
+  look: 'classic' | 'heaven';
 }
+
+export const LOOKS = [
+  { value: 'classic', label: 'Klassik', hint: 'Oq-kulrang, iOS uslubi', swatch: ['#f2f2f7', '#007aff'] },
+  { value: 'heaven', label: 'Heaven (yashil)', hint: 'Toʻq yashil va fil suyagi rang, nafis serif yozuvlar', swatch: ['#26311f', '#e9e1c8'] },
+] as const;
 
 export const EFFECTS = [
   { value: 'none', label: 'Oddiy (harakatsiz)' },
@@ -59,9 +66,11 @@ export const DEFAULT_BRAND: BrandSettings = {
   effectLayer: 'front',
   theme: 'system',
   themeLock: false,
+  look: 'classic',
 };
 
 export const COLOR_PRESETS: Array<{ value: string; label: string }> = [
+  { value: '#34432f', label: 'Oʻrmon yashil' },
   { value: '#007aff', label: 'Koʻk' },
   { value: '#5856d6', label: 'Binafsha' },
   { value: '#00204f', label: 'Toʻq koʻk' },
@@ -101,6 +110,7 @@ export function cleanBrand(raw: unknown): BrandSettings {
     effectLayer: r.effectLayer === 'back' ? 'back' : 'front',
     theme: r.theme === 'light' || r.theme === 'dark' ? r.theme : 'system',
     themeLock: r.themeLock === true,
+    look: r.look === 'heaven' ? 'heaven' : 'classic',
   };
 }
 

@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
-import { BRAND_LIMITS, COLOR_PRESETS, DEFAULT_BRAND, MENU_GROUPS, EFFECTS, cleanBrand, type BrandSettings, type EffectName } from '@/lib/brand/config';
+import { BRAND_LIMITS, COLOR_PRESETS, DEFAULT_BRAND, LOOKS, MENU_GROUPS, EFFECTS, cleanBrand, type BrandSettings, type EffectName } from '@/lib/brand/config';
 import { groupLabel, previewBrand, setBrand, useBrand } from '@/lib/brand/store';
 import { saveSetting } from '@/lib/actions/admin/settings';
 import { BrandMark } from '@/components/brand';
@@ -107,6 +107,22 @@ export function BrandCard() {
             <Field label="Nom ostidagi yozuv" htmlFor="br-tag" hint="Boʻsh qoldirsangiz koʻrinmaydi"><Input id="br-tag" value={b.tagline} maxLength={BRAND_LIMITS.tagline} onChange={(e) => edit({ tagline: e.target.value })} placeholder={DEFAULT_BRAND.tagline} /></Field>
           </div>
 
+          <Field label="Uslub" hint="Butun saytning koʻrinishi: fon, kartalar, yozuv shrifti. Rangni pastda alohida tanlaysiz">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {LOOKS.map((l) => (
+                <button key={l.value} type="button" aria-pressed={b.look === l.value}
+                  onClick={() => edit(l.value === 'heaven' && b.look !== 'heaven' ? { look: l.value, color: '#34432f', effect: 'none' } : { look: l.value })}
+                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${b.look === l.value ? 'border-primary bg-primary-soft' : 'border-line bg-surface-2 hover:bg-surface-3'}`}>
+                  <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-[13px] font-semibold" style={{ background: l.swatch[0], color: l.swatch[1], fontFamily: l.value === 'heaven' ? 'var(--font-serif), Georgia, serif' : undefined }}>Aa</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-ink">{l.label}</span>
+                    <span className="block text-[12px] text-ink-3">{l.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Field>
+
           <Field label="Logotip" hint="PNG, JPG yoki SVG. Kvadrat yoki yotiq rasm yaxshi koʻrinadi">
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex h-14 w-24 items-center justify-center rounded-lg border border-line bg-surface-2 p-2"><BrandMark brand={b} className="max-h-10 w-auto max-w-20" /></span>
@@ -184,7 +200,7 @@ export function BrandCard() {
             <div className="flex items-center gap-2.5">
               <BrandMark brand={b} className="h-7 w-auto max-w-[64px] shrink-0" />
               <div className="min-w-0 leading-tight">
-                <div className="truncate text-[15px] font-semibold tracking-tight text-ink">{b.name || DEFAULT_BRAND.name}</div>
+                <div className="brand-word truncate text-[15px] font-semibold tracking-tight text-ink">{b.name || DEFAULT_BRAND.name}</div>
                 {b.tagline && <div className="truncate text-[11px] font-medium uppercase tracking-[0.08em] text-ink-3">{b.tagline}</div>}
               </div>
             </div>
