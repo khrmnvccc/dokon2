@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3, Bell, ChartPie, Handshake, HelpCircle, Languages, Lightbulb, BellRing, Bot, Building2, Circle, ExternalLink, FileText, FolderTree, Gift, History, Image, LayoutDashboard, LogOut, Megaphone,
   Menu, MessageSquare, MessagesSquare, Moon, Package, PanelLeftClose, PanelLeftOpen, Percent, Plus, Search, Send, Settings, ShieldCheck, ShoppingBag, Sun,
-  TicketPercent, Truck, Users, Warehouse, X, type LucideIcon,
+  TicketPercent, Truck, Users, Warehouse, X, ShoppingCart, Plane, type LucideIcon,
 } from 'lucide-react';
 import { NAV_RU, type AdminNavGroup, type AdminNavItem } from '@/lib/admin/nav';
 import { useApp } from '@/components/providers';
@@ -35,6 +35,7 @@ import type { Notification } from '@/lib/types';
 const NAV_ICONS: Record<string, LucideIcon> = {
   LayoutDashboard, ShoppingBag, Users, BarChart3, Package, FolderTree, Warehouse, MessageSquare, Image, Percent,
   TicketPercent, FileText, Truck, Settings, ShieldCheck, History, Send, Bot, Megaphone, BellRing, Gift, Lightbulb, Languages, Handshake, ChartPie, MessagesSquare,
+  ShoppingCart, Plane,
 };
 
 const isActive = (pathname: string, href: string) => (href === '/admin' ? pathname === '/admin' : pathname === href || pathname.startsWith(href + '/'));

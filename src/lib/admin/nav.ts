@@ -38,6 +38,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     items: [
       { href: '/admin/promotions', label: 'Aksiyalar', icon: 'Gift', perm: 'promotions.write' },
       { href: '/admin/coupons', label: 'Promo-kodlar', icon: 'TicketPercent', perm: 'coupons.write' },
+      { href: '/admin/cart-reminders', label: 'Savat eslatmasi', icon: 'ShoppingCart', perm: 'coupons.write' },
       { href: '/admin/partners', label: 'Hamkorlar', icon: 'Handshake', perm: 'partners.manage' },
       { href: '/admin/referral-stats', label: 'Foydalanish', icon: 'ChartPie', perm: 'partners.manage' },
       { href: '/admin/banners', label: 'Bannerlar', icon: 'Image', perm: 'banners.write' },
@@ -80,7 +81,7 @@ export const NAV_RU: Record<string, string> = {
   'Boshqaruv paneli': 'Панель управления', 'Hisobotlar': 'Отчёты', 'Faoliyat jurnali': 'Журнал действий',
   'Savdo': 'Продажи', 'Buyurtmalar': 'Заказы', 'Mijozlar': 'Клиенты', 'Sharhlar': 'Отзывы',
   'Katalog': 'Каталог', 'Mahsulotlar': 'Товары', 'Kategoriyalar': 'Категории', 'Ombor': 'Склад',
-  'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры', 'Hamkorlar': 'Партнёры', 'Foydalanish': 'Использование',
+  'Marketing': 'Маркетинг', 'Aksiyalar': 'Акции', 'Promo-kodlar': 'Промокоды', 'Bannerlar': 'Баннеры', 'Hamkorlar': 'Партнёры', 'Savat eslatmasi': 'Брошенные корзины', 'Kargo': 'Карго', 'Foydalanish': 'Использование',
   'Telegram': 'Telegram', 'Murojaatlar': 'Обращения', 'Botlar': 'Боты', 'Xabarlar va Push': 'Сообщения и Push', 'Mening Telegramim': 'Мой Telegram',
   'Sozlamalar': 'Настройки', 'Xodimlar': 'Сотрудники', 'Yetkazish va toʻlov': 'Доставка и оплата', 'Sahifalar': 'Страницы', 'Yoʻl-yoʻriq': 'Подсказки', 'Tarjimalar (ruscha)': 'Переводы',
   // Qobiq matnlari

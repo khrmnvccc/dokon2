@@ -1,7 +1,7 @@
 import { getL } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getCatalog, getCategories, getProduct, getProductReviews, getSettings } from '@/lib/data/public';
+import { getBoughtTogether, getCatalog, getCategories, getProduct, getProductReviews, getSettings } from '@/lib/data/public';
 import { SITE_URL } from '@/lib/env';
 import { formatDate } from '@/lib/format';
 import { Breadcrumbs } from '@/components/shop/breadcrumbs';
@@ -46,7 +46,15 @@ export default async function ProductPage({ params }: Props) {
     cur = cur.parent_id ? categories.find((c) => c.id === cur!.parent_id) : undefined;
   }
   const category = chain[chain.length - 1];
-  const related = category ? (await getCatalog({ category: category.slug, limit: 11 })).items.filter((p) => p.id !== product.id).slice(0, 10) : [];
+  // Tavsiyalar (Sozlamalar → Tavsiyalar): “Bunga oʻxshash” — shu kategoriyadan, “Birga olinadi” — birga sotib olinganlar
+  const rec = settings.recommendations;
+  const [related, together] = await Promise.all([
+    rec.similar_enabled && category
+      ? getCatalog({ category: category.slug, sort: 'popular', limit: rec.similar_limit + 1 }).then((r) => r.items.filter((p) => p.id !== product.id).slice(0, rec.similar_limit))
+      : Promise.resolve([]),
+    rec.together_enabled ? getBoughtTogether([product.id], rec.together_limit, false) : Promise.resolve([]),
+  ]);
+  const togetherShown = together.filter((p) => !related.some((r) => r.id === p.id) || together.length <= 3);
 
   const inStock = product.has_variants ? variants.some((v) => v.stock > 0) : !product.track_stock || product.stock > 0;
   const lowestPrice = variants.length ? Math.min(...variants.map((v) => v.price ?? product.price)) : product.price;
@@ -150,7 +158,8 @@ export default async function ProductPage({ params }: Props) {
       </section>
       </SizeBlock>
 
-      {related.length > 0 && <div className="mt-8"><ProductSection title={L("O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
+      {togetherShown.length >= 2 && <div className="mt-8"><ProductSection title={rec.together_title || L("Birga olinadi")} products={togetherShown} href="/catalog?sort=popular" /></div>}
+      {related.length > 0 && <div className="mt-8"><ProductSection title={rec.similar_title || L("O‘xshash mahsulotlar")} products={related} href={`/category/${category!.slug}`} /></div>}
     </>
   );
 }

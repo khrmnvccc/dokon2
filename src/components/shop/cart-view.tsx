@@ -13,6 +13,8 @@ import { myActiveCoupons } from '@/lib/actions/referral';
 import { couponErrorText, lineErrorText, type PricedLine, type QuoteResult } from '@/lib/pricing';
 import { ProductImage } from './product-image';
 import { useQuote } from './use-quote';
+import { ProductRail } from './product-card';
+import type { ProductCard as ProductCardType } from '@/lib/types';
 
 const COUPON_KEY = 'dk_coupon';
 
@@ -87,7 +89,28 @@ export function CartView() {
           {quote && <Summary quote={quote} loading={loading} />}
         </aside>
       </div>
+      <CartRecommendations ids={cart.items.map((i) => i.productId)} />
     </div>
+  );
+}
+
+/** “Bunga qoʻshib oling”: savatdagi mahsulotlar bilan birga olinganlar (Sozlamalar → Tavsiyalar). */
+function CartRecommendations({ ids }: { ids: string[] }) {
+  const key = [...new Set(ids)].sort().join(',');
+  const [data, setData] = useState<{ title: string; items: ProductCardType[] } | null>(null);
+  useEffect(() => {
+    if (!key) return;
+    let alive = true;
+    fetch(`/api/recommend?ids=${key}`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (alive) setData(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, [key]);
+  const items = (data?.items ?? []).filter((p) => !ids.includes(p.id));
+  if (!data || items.length < 2) return null;
+  return (
+    <section className="mt-8">
+      <h2 className="mb-3 text-lg font-semibold tracking-tight">{data.title}</h2>
+      <ProductRail products={items} />
+    </section>
   );
 }
 

@@ -15,6 +15,7 @@ import { Panel } from './ui';
 import { BrandCard } from './brand-card';
 import { BranchesTab, PagesTab, type BranchRow } from './owner-tabs';
 import { HelpTab } from './help-settings';
+import { RecommendationsTab } from './recommendations-settings';
 
 const TABS = [
   { id: 'brand', label: 'Brend va dizayn' },
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'contact', label: 'Aloqa va ijtimoiy tarmoqlar' },
   { id: 'help', label: 'Yordam markazi' },
   { id: 'home', label: 'Bosh sahifa' },
+  { id: 'recommendations', label: 'Tavsiyalar' },
   { id: 'menu', label: 'Menyu va footer' },
   { id: 'checkout', label: 'Buyurtma' },
   { id: 'localization', label: 'Til va valyuta' },
@@ -87,6 +89,7 @@ export function SettingsEditor({ initial, isOwner, branches, initialTab }: { ini
         {tab === 'contact' && <ContactTab contact={initial.contact} social={initial.social} />}
         {tab === 'help' && <HelpTab initial={initial.help_center} contactPhone={initial.contact.phone} />}
         {tab === 'home' && <HomeTab sections={initial.home_sections} advantages={initial.advantages} announcement={initial.announcement} />}
+        {tab === 'recommendations' && <RecommendationsTab initial={initial.recommendations} />}
         {tab === 'menu' && <MenuTab menu={initial.header_menu} footer={initial.footer} />}
         {tab === 'checkout' && <CheckoutTab initial={initial.checkout} />}
         {tab === 'localization' && <LocalizationTab initial={initial.localization} />}
