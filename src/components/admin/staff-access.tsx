@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/toast';
 export interface StaffRow {
   user_id: string; email: string | null; full_name: string | null; roles: string[];
   perms: string[] | null; branch_ids: number[] | null;
+  client_no?: number | null; phone?: string | null; telegram?: boolean;
 }
 
 /**

@@ -7,6 +7,10 @@ import { getServiceSupabase } from '@/lib/supabase/admin';
 import { dbErrorText, withPermission } from '@/lib/admin/action';
 import { TAGS } from '@/lib/cache-tags';
 import type { ActionResult } from '@/lib/types';
+import { normalizeUzPhone } from '@/lib/phone';
+import { ROLE_LABELS } from '@/lib/admin/nav';
+import { getTelegram, tg } from '@/lib/telegram/server';
+import { getShopBot } from '@/lib/telegram/shop-bot';
 
 export async function setCustomerBlocked(userId: string, blocked: boolean, reason?: string): Promise<ActionResult> {
   return withPermission('customers.block', async (ctx) => {
@@ -65,21 +69,84 @@ export async function replyReview(id: string, reply: string): Promise<ActionResu
   });
 }
 
-const roleSchema = z.object({ email: z.string().trim().toLowerCase().email('Email noto‘g‘ri'), role: z.enum(['super_admin', 'manager', 'operator', 'warehouse']), grant: z.boolean() });
+const roleSchema = z.object({
+  // Mijoz ID (1001), telefon (+998…) yoki email — Telegram orqali kirganlarda haqiqiy email yoʻq
+  who: z.string().trim().min(1, 'ID, telefon yoki emailni kiriting').max(200),
+  role: z.enum(['super_admin', 'manager', 'operator', 'warehouse']),
+  grant: z.boolean(),
+});
+
+type FoundUser = { id: string; email: string | null; full_name: string | null; client_no: number | null };
+
+/** Xodimni ID, telefon yoki email boʻyicha topadi. */
+async function findPerson(who: string): Promise<FoundUser | { error: string }> {
+  const db = getServiceSupabase();
+  const q = db.from('profiles').select('id, email, full_name, client_no');
+  const raw = who.trim().replace(/^#/, '');
+  let res;
+  if (raw.includes('@')) res = await q.ilike('email', raw.toLowerCase()).limit(2);
+  else if (/^\d{1,7}$/.test(raw)) res = await q.eq('client_no', Number(raw)).limit(2);
+  else {
+    const digits = raw.replace(/\D/g, '');
+    const phone = normalizeUzPhone(digits) ?? (digits.length >= 7 ? `+${digits}` : null);
+    if (!phone) return { error: 'ID, telefon yoki email notoʻgʻri' };
+    res = await q.eq('phone', phone).limit(2);
+  }
+  if (res.error) return { error: dbErrorText(res.error) };
+  const rows = (res.data ?? []) as FoundUser[];
+  if (!rows.length) return { error: 'Bunday foydalanuvchi topilmadi. Xodim avval doʻkon botini ochib, roʻyxatdan oʻtsin, keyin Profil sahifasidagi ID raqamini sizga aytsin' };
+  if (rows.length > 1) return { error: 'Bu telefon bir nechta akkauntda bor. ID raqami bilan kiriting' };
+  return rows[0];
+}
+
+/**
+ * Telegram orqali roʻyxatdan oʻtgan xodimning Telegrami admin botga avtomatik ulanadi:
+ * shunda u admin botni ochib, menyu tugmasi orqali email/parolsiz kiradi. Doʻkon boti orqali xabar ham boradi.
+ */
+async function linkStaffTelegram(userId: string, roleText: string) {
+  try {
+    const db = getServiceSupabase();
+    const [{ data: authUser }, { data: sub }, { data: linked }] = await Promise.all([
+      db.auth.admin.getUserById(userId),
+      db.from('telegram_subscribers').select('chat_id, name').eq('user_id', userId).eq('via', 'shop').limit(1).maybeSingle(),
+      db.from('telegram_people').select('chat_id').eq('user_id', userId).maybeSingle(),
+    ]);
+    const meta = (authUser.user?.user_metadata ?? {}) as { telegram_id?: number; full_name?: string };
+    const chatId = Number(sub?.chat_id ?? meta.telegram_id ?? 0);
+    if (!chatId) return;
+    if (!linked) {
+      await db.from('telegram_people').insert({ user_id: userId, chat_id: chatId, chat_name: (sub?.name as string | undefined) ?? meta.full_name ?? null });
+    }
+    const [admin, shop] = await Promise.all([getTelegram().catch(() => null), getShopBot().catch(() => null)]);
+    if (!shop) return;
+    const text = admin
+      ? `✅ Sizga doʻkonda “${roleText}” roli berildi.\n\nAdmin panelni ochish: @${admin.botName} botini oching, “Start” bosing va pastdagi menyu tugmasini bosing. Email yoki parol kerak emas.`
+      : `✅ Sizga doʻkonda “${roleText}” roli berildi.`;
+    const extra = admin ? { reply_markup: { inline_keyboard: [[{ text: 'Admin botni ochish', url: `https://t.me/${admin.botName}` }]] } } : {};
+    await tg(shop.token, 'sendMessage', { chat_id: chatId, text, ...extra }).catch(() => undefined);
+  } catch (e) {
+    console.error('staff tg link', e);
+  }
+}
 
 /** Rol berish/olish. Tekshiruv (staff.manage, oxirgi super admin) bazadagi admin_set_role ichida. */
 export async function setStaffRole(input: z.input<typeof roleSchema>): Promise<ActionResult> {
   return withPermission('staff.manage', async (ctx) => {
     const parsed = roleSchema.safeParse(input);
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Noto‘g‘ri so‘rov' };
-    if (!parsed.data.grant && parsed.data.email === ctx.email?.toLowerCase() && parsed.data.role === 'super_admin') {
+    const person = await findPerson(parsed.data.who);
+    if ('error' in person) return { ok: false, error: person.error };
+    if (!person.email) return { ok: false, error: 'Akkauntda email yoʻq' };
+    if (!parsed.data.grant && person.id === ctx.userId && parsed.data.role === 'super_admin') {
       return { ok: false, error: 'O‘zingizdan super admin rolini ololmaysiz' };
     }
     const supabase = await getServerSupabase();
-    const { error } = await supabase.rpc('admin_set_role', { p_email: parsed.data.email, p_role: parsed.data.role, p_grant: parsed.data.grant });
+    const { error } = await supabase.rpc('admin_set_role', { p_email: person.email, p_role: parsed.data.role, p_grant: parsed.data.grant });
     if (error) return { ok: false, error: dbErrorText(error) };
+    if (parsed.data.grant) await linkStaffTelegram(person.id, ROLE_LABELS[parsed.data.role] ?? parsed.data.role);
     revalidatePath('/admin/staff');
-    return { ok: true, message: parsed.data.grant ? 'Rol berildi' : 'Rol olib tashlandi' };
+    const name = person.full_name || (person.client_no ? `ID ${person.client_no}` : 'Xodim');
+    return { ok: true, message: parsed.data.grant ? `${name}ga rol berildi` : 'Rol olib tashlandi' };
   });
 }
 

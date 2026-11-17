@@ -12,6 +12,8 @@ import { Field, Input, Select } from '@/components/ui/field';
 import { Panel, Table } from './ui';
 import { StaffAccessButton, type StaffRow } from './staff-access';
 import { roleLabel } from '@/lib/perms';
+import { visibleEmail } from '@/lib/format';
+import { formatUzPhone } from '@/lib/phone';
 
 type Role = 'super_admin' | 'manager' | 'operator' | 'warehouse';
 
@@ -19,16 +21,16 @@ export function StaffManager({ staff, currentEmail, myPerms, isOwner, branches }
   staff: StaffRow[]; currentEmail: string | null; myPerms: string[]; isOwner: boolean; branches: { id: number; name: string }[];
 }) {
   const branchName = new Map(branches.map((b) => [b.id, b.name]));
-  const [email, setEmail] = useState('');
+  const [who, setWho] = useState('');
   const [role, setRole] = useState<Role>('operator');
   const [pending, start] = useTransition();
   const toast = useToast();
   const confirm = useConfirm();
   const router = useRouter();
-  const run = (input: { email: string; role: Role; grant: boolean }) => start(async () => {
+  const run = (input: { who: string; role: Role; grant: boolean }) => start(async () => {
     const res = await setStaffRole(input);
     toast(res.ok ? res.message ?? 'Bajarildi' : res.error, res.ok ? 'success' : 'error');
-    if (res.ok) { setEmail(''); router.refresh(); }
+    if (res.ok) { setWho(''); router.refresh(); }
   });
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_360px] xl:items-start">
@@ -38,7 +40,11 @@ export function StaffManager({ staff, currentEmail, myPerms, isOwner, branches }
           <tbody>
             {staff.map((s) => (
               <tr key={s.user_id}>
-                <td><div className="font-medium">{s.full_name || '—'}</div><div className="text-xs text-ink-3">{s.email}{s.email === currentEmail && ' (siz)'}</div></td>
+                <td><div className="font-medium">{s.full_name || '—'}</div><div className="text-xs text-ink-3">
+                  {[s.client_no ? `ID ${s.client_no}` : null, s.phone ? formatUzPhone(s.phone) : null, visibleEmail(s.email)].filter(Boolean).join(' · ') || '—'}
+                  {s.email === currentEmail && ' (siz)'}
+                </div>
+                {s.telegram && <div className="mt-0.5 text-[11px] font-medium text-success">Telegram ulangan · admin bot orqali kiradi</div>}</td>
                 <td>
                   <div className="flex flex-wrap gap-1.5">
                     {s.roles.map((r) => (
@@ -46,7 +52,7 @@ export function StaffManager({ staff, currentEmail, myPerms, isOwner, branches }
                         {ROLE_LABELS[r] ?? r}
                         {s.email && (
                           <button aria-label={`${ROLE_LABELS[r]} rolini olib tashlash`} disabled={pending} onClick={async () => {
-                            if (await confirm({ title: `${s.email} dan “${ROLE_LABELS[r]}” rolini olish?`, danger: true, confirmText: 'Olib tashlash' })) run({ email: s.email!, role: r as Role, grant: false });
+                            if (await confirm({ title: `${s.full_name || (s.client_no ? `ID ${s.client_no}` : 'Xodim')} dan “${ROLE_LABELS[r]}” rolini olish?`, danger: true, confirmText: 'Olib tashlash' })) run({ who: s.email!, role: r as Role, grant: false });
                           }}><X className="h-3 w-3" /></button>
                         )}
                       </span>
@@ -70,16 +76,24 @@ export function StaffManager({ staff, currentEmail, myPerms, isOwner, branches }
         <form className="space-y-3" onSubmit={async (e) => {
           e.preventDefault();
           if (role === 'super_admin' && !(await confirm({ title: 'Super admin rolini berish?', text: 'Super admin barcha sozlamalar, xodimlar va ma’lumotlarni boshqara oladi.', confirmText: 'Berish' }))) return;
-          run({ email, role, grant: true });
+          run({ who, role, grant: true });
         }}>
-          <Field label="Foydalanuvchi emaili" htmlFor="staff-email"><Input id="staff-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
+          <Field label="Xodimning ID raqami yoki telefoni" htmlFor="staff-who" hint="Profil sahifasidagi ID (masalan 1003) yoki +998… raqam. Email ham boʻladi.">
+            <Input id="staff-who" required value={who} placeholder="1003 yoki +998 90 123 45 67" autoComplete="off" onChange={(e) => setWho(e.target.value)} />
+          </Field>
           <Field label="Rol" htmlFor="staff-role">
             <Select id="staff-role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
               {Object.entries(ROLE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
           </Field>
-          <Button type="submit" className="w-full" loading={pending} disabled={!email}>Rol berish</Button>
+          <Button type="submit" className="w-full" loading={pending} disabled={!who.trim()}>Rol berish</Button>
         </form>
+        <ol className="mt-4 list-decimal space-y-1 border-t border-line pt-3 pl-4 text-xs text-ink-3">
+          <li>Xodim doʻkon botini ochib, raqamini yuborib roʻyxatdan oʻtadi.</li>
+          <li>Profil sahifasidagi ID raqamini sizga aytadi.</li>
+          <li>Siz shu yerda ID bilan rol berasiz. Unga botda xabar boradi.</li>
+          <li>Xodim admin botni ochib, menyu tugmasi orqali panelga kiradi. Gmail ham, parol ham kerak emas.</li>
+        </ol>
       </Panel>
     </div>
   );
