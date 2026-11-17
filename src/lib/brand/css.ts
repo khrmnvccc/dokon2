@@ -20,7 +20,8 @@ export function forDark(color: string) {
 
 /** Sahifa ko'rinishi: asosiy rang (va qorong'i egizagi), ustidagi matn rangi va burchaklar. */
 export function brandCss(b: BrandSettings) {
-  const dark = forDark(b.color);
+  // Heaven: qorongʻi rejimda tugmalar logodagidek fil suyagi rangida, ustida toʻq yashil yozuv.
+  const dark = b.look === 'heaven' ? '#e6dcc0' : forDark(b.color);
   const [md, lg, xl, xxl] = CORNERS[b.corners];
   // html:root / html.dark stylesheet'dagi :root / .dark dan kuchliroq, qaysi biri keyin yuklansa ham.
   return `html:root{--primary:${b.color};--primary-fg:${textOn(b.color)};--r-md:${md};--r-lg:${lg};--r-xl:${xl};--r-2xl:${xxl}}`

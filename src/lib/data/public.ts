@@ -27,8 +27,8 @@ export const getRawSettings = unstable_cache(
     }
     return parseSettings(data ?? []);
   },
-  // v3: home_sections[].size. v2: kassa dizayni bilan sozlamalarga `brand` va `pages` qoʻshildi; eski keshdagi obyektda ular yoʻq.
-  ['site-settings-v6'],
+  // v7: brand.look (Heaven uslubi). v3: home_sections[].size. v2: kassa dizayni bilan sozlamalarga `brand` va `pages` qoʻshildi; eski keshdagi obyektda ular yoʻq.
+  ['site-settings-v7'],
   { tags: [TAGS.settings], revalidate: REVALIDATE },
 );
 

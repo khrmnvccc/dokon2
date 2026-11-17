@@ -35,15 +35,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f2f2f7' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
-};
+export async function generateViewport(): Promise<Viewport> {
+  const { brand } = await getSettings();
+  const heaven = brand.look === 'heaven';
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover',
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: heaven ? '#efe9da' : '#f2f2f7' },
+      { media: '(prefers-color-scheme: dark)', color: heaven ? '#1a2318' : '#000000' },
+    ],
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [settings, user, lang] = await Promise.all([getSettings(), getCurrentUser(), getLang()]);
@@ -52,7 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const brand = settings.brand;
 
   return (
-    <html lang={lang} className={inter.variable} suppressHydrationWarning>
+    <html lang={lang} className={inter.variable} data-look={brand.look} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot(brand.theme, brand.themeLock) }} />
         <style id="brand" dangerouslySetInnerHTML={{ __html: brandCss(brand) }} />

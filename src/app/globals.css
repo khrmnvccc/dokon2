@@ -236,7 +236,9 @@ button:not(:disabled):active { transform: scale(0.98); transition: transform 80m
 /* ===== Admin panel: yuqori toʻq panel, tekis oq kartalar =====
    Admin koʻp maʼlumotli ish joyi: shisha (blur) va rangli fon iPad va telefonda har aylantirishda
    qayta chizilib, sahifani qotirardi. Shuning uchun admin ichida blur va fon gradienti oʻchirilgan. */
-:root { --panel: #ffffff; --admin-bg: #f1f4f8; --admin-bar: #14253b; --admin-tabs: #e7ecf2; }
+:root { --panel: #ffffff; --admin-bg: #f1f4f8; --admin-bar: #14253b; --admin-tabs: #e7ecf2;
+  /* Profil/hamkor kabi katta brend kartalari foni (Heaven uslubida yashil). */
+  --hero-a: color-mix(in srgb, var(--primary) 70%, #0b1f3a); --hero-b: color-mix(in srgb, var(--primary) 30%, #071426); --hero-ink: #ffffff; --auth-bg: #0b0d10; }
 .dark { --panel: #1c1c1e; --admin-bg: #0d0e11; --admin-bar: #0b1626; --admin-tabs: #15171b; }
 body:has(.admin-ui) { background: var(--admin-bg); background-attachment: scroll; }
 body:has(.admin-ui)::before { display: none; }
@@ -272,3 +274,81 @@ body:has(.admin-ui)::before { display: none; }
     font-size: 16px;
   }
 }
+
+/* Heaven sarlavhalari uchun Playfair Display (OFL), public/fonts'da: faqat shu uslubda ishlatilganda yuklanadi. */
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 500 700; font-display: swap; src: url('/fonts/playfair-cyrillic.woff2') format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 500 700; font-display: swap; src: url('/fonts/playfair-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Playfair Display'; font-style: normal; font-weight: 500 700; font-display: swap; src: url('/fonts/playfair-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+:root { --font-serif: 'Playfair Display'; }
+
+/* ===== "Heaven" uslubi (Brend → Uslub): logodagidek toʻq oʻrmon yashili, fil suyagi rang, serif sarlavhalar =====
+   Asosiy rang (--primary) brandCss'dan keladi; bu yerda faqat fon, yuzalar, matn va shriftlar. */
+html[data-look='heaven'] {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  --bg: #efe9da;
+  --backdrop:
+    var(--grain),
+    radial-gradient(70rem 46rem at 50% 0%, rgb(255 252 242 / 0.85), transparent 65%),
+    radial-gradient(60rem 40rem at 100% 100%, rgb(52 67 47 / 0.10), transparent 60%),
+    #ece5d3;
+  --surface: rgb(252 249 240 / 0.78);
+  --surface-solid: rgb(251 248 239 / 0.94);
+  --panel: #fbf8ef;
+  --surface-2: rgb(52 67 47 / 0.07);
+  --surface-3: rgb(52 67 47 / 0.13);
+  --line: rgb(42 55 38 / 0.12);
+  --line-strong: rgb(42 55 38 / 0.24);
+  --ink: #1d271b;
+  --ink-2: rgb(29 39 27 / 0.78);
+  --ink-3: rgb(29 39 27 / 0.55);
+  --card: #4b5f43;
+  --glass-edge: rgb(255 255 255 / 0.7);
+  --hero-a: #3a4a34;
+  --hero-b: #1f2a1c;
+  --hero-ink: #efe7cf;
+  --auth-bg: #1f2a1c;
+  --admin-bg: #ece6d6;
+  --admin-bar: #26321f;
+  --admin-tabs: #e2dbc8;
+  --shadow: 0 0 0 0.5px rgb(30 40 25 / 0.06), 0 2px 6px rgb(30 40 25 / 0.05), 0 10px 26px -8px rgb(30 40 25 / 0.14);
+}
+html[data-look='heaven'].dark {
+  --bg: #1a2318;
+  --backdrop:
+    var(--grain),
+    radial-gradient(64rem 44rem at 50% 30%, rgb(78 96 70 / 0.55), transparent 70%),
+    radial-gradient(90rem 60rem at 50% 50%, transparent 40%, rgb(8 12 7 / 0.55)),
+    #1e281c;
+  --surface: rgb(44 56 41 / 0.66);
+  --surface-solid: rgb(34 45 32 / 0.92);
+  --panel: #243022;
+  --surface-2: rgb(233 225 200 / 0.07);
+  --surface-3: rgb(233 225 200 / 0.13);
+  --line: rgb(233 225 200 / 0.12);
+  --line-strong: rgb(233 225 200 / 0.22);
+  --ink: #eee7d2;
+  --ink-2: rgb(238 231 210 / 0.76);
+  --ink-3: rgb(238 231 210 / 0.5);
+  --card: #cfc39f;
+  --glass-edge: rgb(255 255 255 / 0.06);
+  --hero-a: #46573f;
+  --hero-b: #161e14;
+  --hero-ink: #efe7cf;
+  --admin-bg: #151c13;
+  --admin-bar: #10170e;
+  --admin-tabs: #1d261b;
+  --shadow: 0 0 0 0.5px rgb(255 255 255 / 0.04), 0 10px 28px -10px rgb(0 0 0 / 0.65);
+}
+/* Logodagi kabi baland kontrastli serif: sarlavhalar, narxlar emas. */
+html[data-look='heaven'] :where(h1, h2, .font-display) {
+  font-family: var(--font-serif), 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  font-variant-numeric: lining-nums;
+}
+html[data-look='heaven'] :where(h3) { font-family: var(--font-serif), Georgia, serif; font-weight: 600; letter-spacing: 0.005em; font-variant-numeric: lining-nums; }
+html[data-look='heaven'] .admin-ui :where(h1, h2, h3) { font-family: inherit; letter-spacing: -0.01em; }
+html[data-look='heaven'] .brand-word { font-family: var(--font-serif), Georgia, serif; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+html[data-look='heaven'] .faq summary::after { font-family: var(--font-serif), Georgia, serif; }
+/* Tanlangan matn va fokus: zaytun rangda */
+html[data-look='heaven'] ::selection { background: rgb(75 95 67 / 0.25); }
