@@ -30,6 +30,8 @@ export interface PublicOrder {
   subtotal: number;
   discount_total: number;
   coupon_code: string | null;
+  bonus_used?: number;
+  installment?: { provider?: string; months?: number; monthly?: number; total?: number; markup?: number } | null;
   shipping_cost: number;
   total: number;
   items_count: number;
@@ -103,6 +105,7 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
               <div><dt className="inline text-ink-3">{L('Manzil:')} </dt><dd className="inline">{[order.address.region, order.address.city, order.address.street, order.address.apartment, order.address.landmark].filter(Boolean).join(', ')}</dd></div>
             )}
             <div><dt className="inline text-ink-3">{L('To‘lov:')} </dt><dd className="inline">{L(order.payment_method_name)}</dd></div>
+            {order.installment?.months ? <div><dt className="inline text-ink-3">{L('Boʻlib toʻlash')}: </dt><dd className="inline">{order.installment.provider} · {order.installment.months} {L('oy')} · {p(order.installment.monthly ?? 0)}/{L('oy')}</dd></div> : null}
             {order.comment && <div><dt className="inline text-ink-3">{L('Izoh:')} </dt><dd className="inline">{order.comment}</dd></div>}
           </dl>
         </div>
@@ -110,7 +113,8 @@ export function OrderDetails({ order, symbol, lang = 'uz' }: { order: PublicOrde
           <h3 className="mb-3 font-semibold">{L("Summa")}</h3>
           <dl className="space-y-1.5">
             <div className="flex justify-between"><dt className="text-ink-3">{L('Mahsulotlar')} ({order.items_count})</dt><dd>{p(order.subtotal)}</dd></div>
-            {order.discount_total > 0 && <div className="flex justify-between text-success"><dt>{L('Chegirma')} {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total)}</dd></div>}
+            {order.discount_total - (order.bonus_used ?? 0) > 0 && <div className="flex justify-between text-success"><dt>{L('Chegirma')} {order.coupon_code && `(${order.coupon_code})`}</dt><dd>−{p(order.discount_total - (order.bonus_used ?? 0))}</dd></div>}
+            {(order.bonus_used ?? 0) > 0 && <div className="flex justify-between text-success"><dt>{L('Bonus')}</dt><dd>−{p(order.bonus_used ?? 0)}</dd></div>}
             <div className="flex justify-between"><dt className="text-ink-3">{L("Yetkazib berish")}</dt><dd>{order.shipping_cost ? p(order.shipping_cost) : order.shipping_method_name === 'Keyin tanlanadi' && !order.fulfillment ? L('Keyin tanlanadi') : L("Bepul")}</dd></div>
             {!!order.delivery_fee && <div className="flex justify-between text-ink-2"><dt className="text-ink-3">{L('Yetkazish (yetkazganda toʻlanadi)')}</dt><dd>{p(order.delivery_fee)}</dd></div>}
             <div className="flex justify-between border-t border-line pt-2 text-base font-semibold"><dt>{L("Jami")}</dt><dd>{p(order.total)}</dd></div>

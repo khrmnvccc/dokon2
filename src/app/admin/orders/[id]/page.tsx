@@ -95,7 +95,8 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             </Table>
             <dl className="space-y-1.5 border-t border-line p-4 text-sm sm:px-5">
               <div className="flex justify-between"><dt className="text-ink-3">Mahsulotlar</dt><dd className="tabular-nums">{p(o.subtotal)}</dd></div>
-              {o.discount_total > 0 && <div className="flex justify-between text-success"><dt>Chegirma {o.coupon_code && `(${o.coupon_code})`}</dt><dd className="tabular-nums">−{p(o.discount_total)}</dd></div>}
+              {o.discount_total - (o.bonus_used ?? 0) > 0 && <div className="flex justify-between text-success"><dt>Chegirma {o.coupon_code && `(${o.coupon_code})`}</dt><dd className="tabular-nums">−{p(o.discount_total - (o.bonus_used ?? 0))}</dd></div>}
+              {(o.bonus_used ?? 0) > 0 && <div className="flex justify-between text-success"><dt>Bonus bilan toʻlandi</dt><dd className="tabular-nums">−{p(o.bonus_used ?? 0)}</dd></div>}
               <div className="flex justify-between"><dt className="text-ink-3">Yetkazib berish</dt><dd className="tabular-nums">{o.shipping_cost ? p(o.shipping_cost) : 'Bepul'}</dd></div>
               <div className="flex justify-between text-base font-semibold"><dt>Jami</dt><dd className="tabular-nums">{p(o.total)}</dd></div>
               {showCost && <div className="flex justify-between text-xs text-ink-3"><dt>Tannarx / yalpi foyda</dt><dd className="tabular-nums">{p(o.cost_total!)} / {p(o.subtotal - o.discount_total - o.cost_total!)}</dd></div>}
@@ -183,6 +184,12 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
               <div><dt className="text-xs text-ink-3">Usul</dt><dd>{o.shipping_method_name}</dd></div>
               {o.address && <div><dt className="text-xs text-ink-3">Manzil</dt><dd>{[o.address.region, o.address.city, o.address.street, o.address.apartment].filter(Boolean).join(', ')}{o.address.landmark && <span className="block text-ink-3">Mo‘ljal: {o.address.landmark}</span>}</dd></div>}
               <div><dt className="text-xs text-ink-3">To‘lov</dt><dd>{o.payment_method_name} · {paymentStatusLabel[o.payment_status]}</dd></div>
+              {(() => {
+                const inst = o.installment as { provider?: string; months?: number; markup?: number; monthly?: number; total?: number } | null | undefined;
+                return inst?.months ? (
+                  <div><dt className="text-xs text-ink-3">Boʻlib toʻlash</dt><dd className="rounded-lg bg-primary-soft p-2">{inst.provider} · <b>{inst.months} oy</b> · oyiga {p(inst.monthly ?? 0)}{inst.markup ? ` (ustama ${inst.markup}%, jami ${p(inst.total ?? 0)})` : ''}<span className="block text-xs text-ink-3">Mijoz bilan bogʻlanib, shartnomani provayder kabinetida rasmiylashtiring</span></dd></div>
+                ) : null;
+              })()}
               {o.comment && <div><dt className="text-xs text-ink-3">Mijoz izohi</dt><dd className="rounded-lg bg-warn-soft p-2">{o.comment}</dd></div>}
             </dl>
           </Panel>

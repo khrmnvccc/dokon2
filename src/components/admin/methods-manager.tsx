@@ -16,6 +16,7 @@ import { Panel } from './ui';
 import type { PaymentMethod, ShippingMethod } from '@/lib/types';
 import { CARD_THEMES, CARD_THEME_KEYS, cleanCard, formatCardNumber, type CardTheme } from '@/lib/payment-card';
 import { CardVisual } from '@/components/payment/card-visual';
+import { parseInstallment } from '@/lib/installments';
 
 const kindLabel = { courier: 'Kuryer', pickup: 'Olib ketish', post: 'Pochta' } as const;
 const payKindLabel = { cash: 'Naqd', card_on_delivery: 'Karta (qabulda)', bank_transfer: 'Kartaga / bank o‘tkazmasi', online: 'Onlayn' } as const;
@@ -55,8 +56,10 @@ export function MethodsManager({ shipping, payment, configured }: { shipping: Sh
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-warn"><AlertTriangle className="h-3.5 w-3.5" /> Ulanmagan — checkout’da ko‘rinmaydi (pastdagi “Click / Payme” boʻlimida kalitlarni kiriting)</p>
                   ) : (() => {
                     const card = m.kind === 'bank_transfer' ? cleanCard(m.card) : null;
+                    const inst = parseInstallment(m.installment);
                     return card
                       ? <p className="num text-xs text-ink-3">Karta: {formatCardNumber(card.number)}{card.holder ? ` · ${card.holder}` : ''} · chek bilan tasdiqlanadi</p>
+                      : inst ? <p className="text-xs text-ink-3">Boʻlib toʻlash · {inst.provider}: {inst.plans.map((p) => `${p.months} oy${p.markup ? ` +${p.markup}%` : ''}`).join(', ')}</p>
                       : m.description && <p className="text-xs text-ink-3">{m.description}</p>;
                   })()}
                 </div>
@@ -109,7 +112,15 @@ function ShippingForm({ method, count, onDone, save }: { method: ShippingMethod 
   );
 }
 
-type PayFormIn = Omit<z.input<typeof paymentMethodSchema>, 'card'> & { card: { number: string; holder: string; bank: string; theme: CardTheme } };
+type InstIn = { enabled: boolean; provider: string; plans: { months: string; markup: string }[]; min_amount: string; max_amount: string };
+type PayFormIn = Omit<z.input<typeof paymentMethodSchema>, 'card' | 'installment'> & { card: { number: string; holder: string; bank: string; theme: CardTheme }; installment: InstIn };
+const PLAN_ROWS = 5;
+function instDefaults(v: unknown): InstIn {
+  const c = parseInstallment(v);
+  const plans = (c?.plans ?? [{ months: 3, markup: 0 }, { months: 6, markup: 12 }, { months: 12, markup: 24 }]).map((p) => ({ months: String(p.months), markup: String(p.markup) }));
+  while (plans.length < PLAN_ROWS) plans.push({ months: '', markup: '' });
+  return { enabled: Boolean(c), provider: c?.provider ?? 'Uzum Nasiya', plans, min_amount: c ? String(c.min_amount || '') : '', max_amount: c ? String(c.max_amount || '') : '' };
+}
 
 function PaymentForm({ method, count, onDone, save }: { method: PaymentMethod | null; count: number; onDone: () => void; save: ReturnType<typeof useCrud>['save'] }) {
   const card = cleanCard(method?.card);
@@ -118,8 +129,11 @@ function PaymentForm({ method, count, onDone, save }: { method: PaymentMethod | 
     defaultValues: {
       ...(method ? { ...method, description: method.description ?? '', instructions: method.instructions ?? '', provider: method.provider ?? '' } : { code: '', name: '', kind: 'cash', provider: '', is_active: true, sort_order: count * 10 }),
       card: { number: card ? formatCardNumber(card.number) : '', holder: card?.holder ?? '', bank: card?.bank ?? '', theme: card?.theme ?? 'dark' },
+      installment: instDefaults(method?.installment),
     },
   });
+  const inst = watch('installment');
+  const instErr = errors.installment as { message?: string; provider?: { message?: string }; plans?: { message?: string } } | undefined;
   const kind = watch('kind');
   const c = watch('card');
   const cardErr = errors.card ?? {};
@@ -159,6 +173,34 @@ function PaymentForm({ method, count, onDone, save }: { method: PaymentMethod | 
           <div className="sm:col-span-2">
             <CardVisual card={{ number: (c.number ?? '').replace(/\D/g, '') || '0000000000000000', holder: c.holder ?? '', bank: c.bank ?? '', theme: c.theme ?? 'dark' }} />
           </div>
+        </div>
+      )}
+ {kind !== 'online' && kind !== 'bank_transfer' && (
+        <div className="grid gap-3 rounded-xl border border-line bg-surface-2/50 p-4 sm:col-span-2">
+          <Checkbox label="Boʻlib toʻlash usuli (Uzum Nasiya, Alif Nasiya va h.k.)" {...register('installment.enabled')} />
+          {inst?.enabled && (
+            <>
+              <p className="text-xs text-ink-3">Mijoz checkout’da muddatni tanlaydi va oylik toʻlovni koʻradi. Shartnomani operator provayder kabinetida rasmiylashtiradi. Mahsulot sahifasida “Oyiga …dan” chiqadi.</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Provayder nomi" error={instErr?.provider?.message} htmlFor="pm-iprov"><Input id="pm-iprov" placeholder="Uzum Nasiya" {...register('installment.provider')} /></Field>
+                <Field label="Minimal summa" hint="soʻm" htmlFor="pm-imin"><Input id="pm-imin" inputMode="numeric" {...register('installment.min_amount')} /></Field>
+                <Field label="Maksimal summa" hint="Boʻsh — cheksiz" htmlFor="pm-imax"><Input id="pm-imax" inputMode="numeric" {...register('installment.max_amount')} /></Field>
+              </div>
+              <div>
+                <p className="mb-1.5 text-sm font-medium">Muddatlar va ustama</p>
+                <div className="grid gap-2 sm:grid-cols-5">
+                  {Array.from({ length: PLAN_ROWS }, (_, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <Input inputMode="numeric" placeholder="oy" aria-label="Oy" {...register(`installment.plans.${i}.months` as const)} />
+                      <Input inputMode="decimal" placeholder="%" aria-label="Ustama foizi" {...register(`installment.plans.${i}.markup` as const)} />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-ink-3">Har katakda: oy soni va ustama foizi (0 — ustamasiz). Boʻsh qatorlar hisobga olinmaydi.</p>
+                {(instErr?.plans?.message || instErr?.message) && <p className="mt-1 text-xs text-danger">Kamida bitta muddat kiriting (2–36 oy)</p>}
+              </div>
+            </>
+          )}
         </div>
       )}
       <Field label="Tavsif" className="sm:col-span-2" htmlFor="pm-desc"><Input id="pm-desc" {...register('description')} /></Field>
